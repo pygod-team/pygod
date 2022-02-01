@@ -5,14 +5,12 @@ the input dataset for benchmarking
 """
 
 from typing import Tuple
-import random as rd
 import numpy as np
 
 import torch
 import torch_geometric
 
 # set the random seed
-rd.seed(999)
 np.random.seed(999)
 
 
@@ -95,7 +93,7 @@ def gen_attribute_outliers(data: torch_geometric.datasets.data, n: int,
     Returns
     -------
     data : torch_geometric.datasets.data
-        The structural outlier graph with injected edges.
+        The attribute outlier graph with modified node attributes.
     y_outlier : torch.tensor
         The outlier label tensor where 1 represents outliers and 0 represents
         regular nodes.
