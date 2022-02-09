@@ -1,0 +1,13 @@
+# editor
+.idea
+.clangd
+.vscode
+
+# OS
+.DS_Store
+
+# python
+__pycache__/
+
+# data
+data/
