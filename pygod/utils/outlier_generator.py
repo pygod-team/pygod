@@ -14,8 +14,8 @@ import torch_geometric
 np.random.seed(999)
 
 
-def gen_structural_outliers(data: torch_geometric.datasets.Data, m: int,
-                            n: int) -> Tuple[torch_geometric.datasets.Data,
+def gen_structural_outliers(data: torch_geometric.data.Data, m: int,
+                            n: int) -> Tuple[torch_geometric.data.Data,
                                              torch.tensor]:
     """Generating structural outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
@@ -69,8 +69,8 @@ def gen_structural_outliers(data: torch_geometric.datasets.Data, m: int,
     return data, y_outlier
 
 
-def gen_attribute_outliers(data: torch_geometric.datasets.Data, n: int,
-                           k: int) -> Tuple[torch_geometric.datasets.Data,
+def gen_attribute_outliers(data: torch_geometric.data.Data, n: int,
+                           k: int) -> Tuple[torch_geometric.data.Data,
                                             torch.tensor]:
     """Generating attribute outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"

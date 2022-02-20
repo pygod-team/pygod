@@ -16,15 +16,10 @@ class EarlyStopping:
         Whether to print information
         Default: False
 
-    Examples
-    --------
-    >>> es = EarlyStopping(patience=100)
-    >>> if es.step(acc, model):
-            break
     """
     def __init__(self,
                  patience: int = 10,
-                 verbose: bool = False):
+                 verbose: bool = True):
         self.patience = patience
         self.verbose = verbose
         self.counter = 0
