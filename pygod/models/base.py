@@ -234,9 +234,6 @@ class BaseDetector(object):
         args : argparse object.
             Corresponding hyperparameters
 
-        return_confidence : boolean, optional(default=False)
-            If True, also return the confidence of prediction.
-
         Returns
         -------
         confidence : numpy array of shape (n_samples,)
