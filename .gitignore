@@ -11,6 +11,9 @@ __pycache__/
 # Data
 data/
 
+# checkpoint
+es_checkpoint.pt
+
 # C extensions
 *.so
 
