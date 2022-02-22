@@ -3,8 +3,9 @@
 This file including functions to generate different types of outliers given
 the input dataset for benchmarking
 """
+# Author: Yingtong Dou <ytongdou@gmail.com>
+# License: BSD 2 clause
 
-from typing import Tuple
 import numpy as np
 
 import torch
@@ -14,9 +15,7 @@ import torch_geometric
 np.random.seed(999)
 
 
-def gen_structural_outliers(data: torch_geometric.data.Data, m: int,
-                            n: int) -> Tuple[torch_geometric.data.Data,
-                                             torch.tensor]:
+def gen_structure_outliers(data, m, n):
     """Generating structural outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
@@ -28,7 +27,7 @@ def gen_structural_outliers(data: torch_geometric.data.Data, m: int,
 
     Parameters
     ----------
-    data : torch_geometric.datasets.data
+    data : torch_geometric.datasets.Data
         PyG dataset object.
     m : int
         Number nodes in the outlier cliques.
@@ -36,7 +35,7 @@ def gen_structural_outliers(data: torch_geometric.data.Data, m: int,
         Number of outlier cliques.
     Returns
     -------
-    data : torch_geometric.datasets.data
+    data : torch_geometric.datasets.Data
         The structural outlier graph with injected edges.
     y_outlier : torch.tensor
         The outlier label tensor where 1 represents outliers and 0 represents
@@ -69,9 +68,7 @@ def gen_structural_outliers(data: torch_geometric.data.Data, m: int,
     return data, y_outlier
 
 
-def gen_attribute_outliers(data: torch_geometric.data.Data, n: int,
-                           k: int) -> Tuple[torch_geometric.data.Data,
-                                            torch.tensor]:
+def gen_attribute_outliers(data, n, k):
     """Generating attribute outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
@@ -84,7 +81,7 @@ def gen_attribute_outliers(data: torch_geometric.data.Data, n: int,
 
     Parameters
     ----------
-    data : torch_geometric.datasets.data
+    data : torch_geometric.datasets.Data
         PyG dataset object.
     n : int
         Number of nodes converting to outliers.
@@ -92,7 +89,7 @@ def gen_attribute_outliers(data: torch_geometric.data.Data, n: int,
         Number of candidate nodes for each outlier node.
     Returns
     -------
-    data : torch_geometric.datasets.data
+    data : torch_geometric.datasets.Data
         The attribute outlier graph with modified node attributes.
     y_outlier : torch.tensor
         The outlier label tensor where 1 represents outliers and 0 represents
