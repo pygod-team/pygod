@@ -9,7 +9,7 @@ from sklearn.metrics import roc_auc_score
 from torch_geometric.datasets import AttributedGraphDataset
 from sklearn.utils.validation import check_is_fitted
 
-from base import BaseDetector
+from .base import BaseDetector
 
 
 class Dominant(BaseDetector):
@@ -71,8 +71,8 @@ class Dominant(BaseDetector):
             loss, struct_loss, feat_loss = loss_func(adj_label, A_hat, attrs,
                                                      X_hat, args.alpha)
             score = loss.detach().cpu().numpy()
-            print("Epoch:", '%04d' % (epoch), 'Auc',
-                  roc_auc_score(labels, score))
+            # print("Epoch:", '%04d' % (epoch), 'Auc',
+            #       roc_auc_score(labels, score))
 
         self.decision_scores_ = score
         self._process_decision_scores()
@@ -104,6 +104,12 @@ class Dominant(BaseDetector):
 
         # construct the vector for holding the reconstruction error
         # outlier_scores = torch.zeros([attrs.shape[0], ])
+        if args.device == 'cuda':
+            device = torch.device(args.device)
+            adj = adj.to(device)
+            adj_label = adj_label.to(device)
+            attrs = attrs.to(device)
+
         A_hat, X_hat = self.model(attrs, adj)
         outlier_scores, _, _ = loss_func(adj_label, A_hat, attrs,
                                          X_hat, args.alpha)

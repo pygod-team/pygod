@@ -10,7 +10,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..utils import EarlyStopping
-from ..utils import gen_attribute_outliers, gen_structural_outliers
+from ..utils import gen_attribute_outliers, gen_structure_outliers
 
 
 class MLPAE(BaseDetector):
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'Cora')
     data = Planetoid(path, 'Cora', transform=T.NormalizeFeatures())[0]
 
-    data, ys = gen_structural_outliers(data, 10, 10)
+    data, ys = gen_structure_outliers(data, 10, 10)
     data, yf = gen_attribute_outliers(data, 100, 30)
     data.y = torch.logical_or(ys, yf)
 
