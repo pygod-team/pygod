@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""Deep Anomaly Detection on Attributed Networks (Dominant)
+"""
+# Author: Zekuan Liu <zliu234@uic.edu>
+# License: BSD 2 clause
+
 import torch
 import argparse
 import os.path as osp
@@ -14,19 +20,43 @@ from .base import BaseDetector
 
 class Dominant(BaseDetector):
     """Let us decide the documentation later
-    Dominant_Base (Deep Anomaly Detection on Attributed Networks)
-    Dominant_Base is an anomaly detector consisting of a shared graph
+    Dominant(Deep Anomaly Detection on Attributed Networks)
+    Dominant is an anomaly detector consisting of a shared graph
     convolutional encoder, a structure reconstruction decoder, and an attribute
     reconstruction decoder. The reconstruction mean sqare error of the decoders
     are defined as structure anomaly score and attribute anomaly score,
     respectively.
-    Reference: <https://www.public.asu.edu/~kding9/pdf/SDM2019_Deep.pdf>
+
+    See :cite:`ding2019deep` for details.
+
+
+    Parameters
+    ----------
+    contamination : float in (0., 0.5), optional (default=0.1)
+        The amount of contamination of the data set,
+        i.e. the proportion of outliers in the data set. Used when fitting to
+        define the threshold on the decision function.
     """
 
     def __init__(self, contamination=0.1):
         super(Dominant, self).__init__(contamination=contamination)
 
     def fit(self, G, args):
+        """Fit detector. y is ignored in unsupervised methods.
+
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input graph.
+
+        args : argparse object.
+            Corresponding hyperparameters
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         # todo: need to decide which parameters are needed
 
         # 1. first call the data process
@@ -116,6 +146,23 @@ class Dominant(BaseDetector):
         return outlier_scores.detach().cpu().numpy()
 
     def process_graph(self, G, args):
+        """Process the raw PyG data object into a tuple of sub data objects
+        needed for the underlying model. For instance, if the training of the
+        model need the node feature and edge index, return (G.x, G.edge_index).
+
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input graph.
+
+        args : argparse object.
+            Corresponding hyperparameters
+
+        Returns
+        -------
+        processed_data : tuple of data object
+            The necessary information from the raw PyG Data object.
+        """
         # todo: need some assert or try/catch to make sure certain attributes
         # are presented.
 
@@ -135,8 +182,6 @@ class Dominant(BaseDetector):
         # return data objects needed for the network
         return adj, adj_label, attrs, labels
 
-
-# below is for the specific model
 
 class Encoder(nn.Module):
     def __init__(self, nfeat, nhid, dropout):
@@ -186,13 +231,12 @@ class Structure_Decoder(nn.Module):
 
 
 class Dominant_Base(nn.Module):
-    r"""Dominant_Base (Deep Anomaly Detection on Attributed Networks)
+    """Dominant_Base (Deep Anomaly Detection on Attributed Networks)
     Dominant_Base is an anomaly detector consisting of a shared graph
     convolutional encoder, a structure reconstruction decoder, and an attribute
     reconstruction decoder. The reconstruction mean sqare error of the
     decoders are defined as structure anamoly
     score and attribute anomaly score, respectively.
-    Reference: <https://www.public.asu.edu/~kding9/pdf/SDM2019_Deep.pdf>
 
     Parameters
     ----------
@@ -247,56 +291,3 @@ def loss_func(adj, A_hat, attrs, X_hat, alpha):
             1 - alpha) * structure_reconstruction_errors
 
     return cost, structure_cost, attribute_cost
-
-
-if __name__ == '__main__':
-    # todo: need a default args template
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default='BlogCatalog',
-                        help='dataset name: Flickr/BlogCatalog')
-    parser.add_argument('--hidden_size', type=int, default=64,
-                        help='dimension of hidden embedding (default: 64)')
-    parser.add_argument('--epoch', type=int, default=3, help='Training epoch')
-    parser.add_argument('--lr', type=float, default=5e-3, help='learning rate')
-    parser.add_argument('--dropout', type=float, default=0.3,
-                        help='Dropout rate')
-    parser.add_argument('--alpha', type=float, default=0.8,
-                        help='balance parameter')
-    parser.add_argument('--device', default='cpu', type=str, help='cuda/cpu')
-
-    args = parser.parse_args()
-
-    # data loading
-    path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                    args.dataset)
-
-    # this gives us a PyG data object
-    G = AttributedGraphDataset(path, 'BlogCatalog')[0]
-
-    # model initialization
-    clf = Dominant()
-
-    print('training...')
-    clf.fit(G, args)
-    print()
-
-    print('predicting for probability')
-    prob = clf.predict_proba(G, args)
-    print('Probability', prob)
-    print()
-
-    print('predicting for raw scores')
-    outlier_scores = clf.decision_function(G, args)
-    print('Raw scores', outlier_scores)
-    print()
-
-    print('predicting for labels')
-    labels = clf.predict(G, args)
-    print('Labels', labels)
-    print()
-
-    print('predicting for labels with confidence')
-    labels, confidence = clf.predict(G, args, return_confidence=True)
-    print('Labels', labels)
-    print('Confidence', confidence)
-    print()
