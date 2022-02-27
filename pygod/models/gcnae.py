@@ -16,7 +16,8 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..utils import EarlyStopping
-from ..utils import gen_attribute_outliers, gen_structure_outliers
+from ..utils.outlier_generator import gen_attribute_outliers,\
+    gen_structure_outliers
 
 
 class GCNAE(BaseDetector):
@@ -56,6 +57,7 @@ class GCNAE(BaseDetector):
             device = 'cpu'
 
         x = x.to(device)
+        edge_index = edge_index.to(device)
         self.model = self.model.to(device)
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=self.weight_decay)
@@ -94,12 +96,14 @@ class GCNAE(BaseDetector):
 
         x, edge_index, _ = self.process_graph(G, args)
 
+        # 4. check cuda
         if args.gpu >= 0 and torch.cuda.is_available():
             device = 'cuda:{}'.format(args.gpu)
         else:
             device = 'cpu'
 
         x = x.to(device)
+        edge_index = edge_index.to(device)
 
         x_ = self.model(x, edge_index)
         outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1).detach().cpu().numpy()
@@ -133,7 +137,7 @@ if __name__ == '__main__':
 
     data, ys = gen_structure_outliers(data, 10, 10)
     data, yf = gen_attribute_outliers(data, 100, 30)
-    data.y = torch.logical_or(ys, yf)
+    data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
 
     # model initialization
     clf = GCNAE()
