@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+""" Multilayer Perceptron Autoencoder
+"""
+# Author: Kay Liu <zliu234@uic.edu>
+# License: BSD 2 clause
+
 import torch
 import argparse
 import os.path as osp

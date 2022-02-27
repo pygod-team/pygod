@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
 """
+Early Stopping Counter
 Adapted from https://github.com/dmlc/dgl/blob/master/examples/pytorch/caregnn/utils.py
 """
+# Author: Kay Liu <zliu234@uic.edu>
+# License: BSD 2 clause
+
 import torch
 
 

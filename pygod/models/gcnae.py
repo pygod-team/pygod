@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+""" Graph Convolutional Network Autoencoder
+"""
+# Author: Kay Liu <zliu234@uic.edu>
+# License: BSD 2 clause
+
 import torch
 import argparse
 import os.path as osp
@@ -10,7 +16,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..utils import EarlyStopping
-from ..utils import gen_attribute_outliers, gen_structural_outliers
+from ..utils import gen_attribute_outliers, gen_structure_outliers
 
 
 class GCNAE(BaseDetector):
@@ -87,6 +93,14 @@ class GCNAE(BaseDetector):
         self.model.eval()
 
         x, edge_index, _ = self.process_graph(G, args)
+
+        if args.gpu >= 0 and torch.cuda.is_available():
+            device = 'cuda:{}'.format(args.gpu)
+        else:
+            device = 'cpu'
+
+        x = x.to(device)
+
         x_ = self.model(x, edge_index)
         outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1).detach().cpu().numpy()
         return outlier_scores
@@ -100,7 +114,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--hidden_size', type=int, default=16, help='dimension of hidden embedding (default: 16)')
-    parser.add_argument('--num_layers', type=int, default=2, help='number of linear layers in GCN (default: 2)')
+    parser.add_argument('--num_layers', type=int, default=2, help='number of hidden layers in GCN (default: 2)')
     parser.add_argument('--epoch', type=int, default=100, help='maximum training epoch')
     parser.add_argument('--lr', type=float, default=4e-3, help='learning rate')
     parser.add_argument('--dropout', type=float, default=0.1, help='dropout rate')
@@ -117,7 +131,7 @@ if __name__ == '__main__':
     path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'Cora')
     data = Planetoid(path, 'Cora', transform=T.NormalizeFeatures())[0]
 
-    data, ys = gen_structural_outliers(data, 10, 10)
+    data, ys = gen_structure_outliers(data, 10, 10)
     data, yf = gen_attribute_outliers(data, 100, 30)
     data.y = torch.logical_or(ys, yf)
 
