@@ -59,12 +59,12 @@ class MLPAE(BaseDetector):
 
         # 4. check cuda
         if args.gpu >= 0 and torch.cuda.is_available():
-            device = 'cuda:{}'.format(args.gpu)
+            self.device = 'cuda:{}'.format(args.gpu)
         else:
-            device = 'cpu'
+            self.device = 'cpu'
 
-        x = x.to(device)
-        self.model = self.model.to(device)
+        x = x.to(self.device)
+        self.model = self.model.to(self.device)
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=self.weight_decay)
 
@@ -101,6 +101,8 @@ class MLPAE(BaseDetector):
         self.model.eval()
 
         x, _ = self.process_graph(G, args)
+        x = x.to(self.device)
+
         x_ = self.model(x)
         outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1).detach().cpu().numpy()
         return outlier_scores

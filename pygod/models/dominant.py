@@ -80,14 +80,14 @@ class Dominant(BaseDetector):
 
         # 4. check cuda
         if args.gpu >= 0 and torch.cuda.is_available():
-            device = 'cuda:{}'.format(args.gpu)
+            self.device = 'cuda:{}'.format(args.gpu)
         else:
-            device = 'cpu'
+            self.device = 'cpu'
 
-        edge_index = edge_index.to(device)
-        adj_label = adj_label.to(device)
-        attrs = attrs.to(device)
-        self.model = self.model.to(device)
+        edge_index = edge_index.to(self.device)
+        adj_label = adj_label.to(self.device)
+        attrs = attrs.to(self.device)
+        self.model = self.model.to(self.device)
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=self.weight_decay)
 
@@ -145,15 +145,10 @@ class Dominant(BaseDetector):
         self.model.eval()
 
         # construct the vector for holding the reconstruction error
-        # outlier_scores = torch.zeros([attrs.shape[0], ])
-        if args.gpu >= 0 and torch.cuda.is_available():
-            device = 'cuda:{}'.format(args.gpu)
-        else:
-            device = 'cpu'
 
-        edge_index = edge_index.to(device)
-        adj_label = adj_label.to(device)
-        attrs = attrs.to(device)
+        edge_index = edge_index.to(self.device)
+        adj_label = adj_label.to(self.device)
+        attrs = attrs.to(self.device)
 
         A_hat, X_hat = self.model(attrs, edge_index)
         outlier_scores = loss_func(adj_label, A_hat, attrs, X_hat, args.alpha)
