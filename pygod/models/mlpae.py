@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     data, ys = gen_structure_outliers(data, 10, 10)
     data, yf = gen_attribute_outliers(data, 100, 30)
-    data.y = torch.logical_or(ys, yf)
+    data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
 
     # model initialization
     clf = MLPAE()

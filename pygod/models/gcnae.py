@@ -16,7 +16,8 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..utils import EarlyStopping
-from ..utils import gen_attribute_outliers, gen_structure_outliers
+from ..utils.outlier_generator import gen_attribute_outliers,\
+    gen_structure_outliers
 
 
 class GCNAE(BaseDetector):
@@ -130,7 +131,7 @@ if __name__ == '__main__':
 
     data, ys = gen_structure_outliers(data, 10, 10)
     data, yf = gen_attribute_outliers(data, 100, 30)
-    data.y = torch.logical_or(ys, yf)
+    data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
 
     # model initialization
     clf = GCNAE()
