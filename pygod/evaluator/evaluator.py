@@ -20,12 +20,16 @@ class Evaluator(object):
     """
     def __init__(self, dataset, outlier_type, **kwargs):
 
+        # the clean graph used for training
+        self.old_G = dataset
+
+        # generate outliers in the graph
         if outlier_type == 'structure':
-            self.G, self.y_outlier = \
+            self.new_G, self.y_outlier = \
                 outlier_generator.gen_structure_outliers(dataset, kwargs[
                     'm'], kwargs['n'])
         if outlier_type == 'attribute':
-            self.G, self.y_outlier = \
+            self.new_G, self.y_outlier = \
                 outlier_generator.gen_attribute_outliers(dataset, kwargs[
                     'n'], kwargs['k'])
 
@@ -52,11 +56,11 @@ class Evaluator(object):
         """
         if verbose:
             print('training...')
-        clf.fit(self.G, args)
+        clf.fit(self.old_G, args)
 
         if verbose:
             print('predicting for probability')
-        prob = clf.predict_proba(self.G, args)
+        prob = clf.predict_proba(self.new_G, args)
 
         if verbose:
             print('Probability', prob)
