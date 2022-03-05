@@ -61,16 +61,13 @@ class BaseDetector(object):
 
         self.contamination = contamination
 
-    def fit(self, G, args):
+    def fit(self, G):
         """Fit detector. y is ignored in unsupervised methods.
 
         Parameters
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
-
-        args : argparse object.
-            Corresponding hyperparameters
 
         Returns
         -------
@@ -79,7 +76,7 @@ class BaseDetector(object):
         """
         pass
 
-    def decision_function(self, G, args):
+    def decision_function(self, G):
         """Predict raw anomaly scores of X using the fitted detector.
         The anomaly score of an input sample is computed based on the fitted
         detector. For consistency, outliers are assigned with
@@ -90,9 +87,6 @@ class BaseDetector(object):
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
 
-        args : argparse object.
-            Corresponding hyperparameters
-
         Returns
         -------
         anomaly_scores : numpy array of shape (n_samples,)
@@ -100,7 +94,7 @@ class BaseDetector(object):
         """
         pass
 
-    def process_graph(self, G, args):
+    def process_graph(self, G):
         """Process the raw PyG data object into a tuple of sub data objects
         needed for the underlying model. For instance, if the training of the
         model need the node feature and edge index, return (G.x, G.edge_index).
@@ -110,9 +104,6 @@ class BaseDetector(object):
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
 
-        args : argparse object.
-            Corresponding hyperparameters
-
         Returns
         -------
         processed_data : tuple of data object
@@ -120,16 +111,13 @@ class BaseDetector(object):
         """
         pass
 
-    def predict(self, G, args, return_confidence=False):
+    def predict(self, G, return_confidence=False):
         """Predict if a particular sample is an outlier or not.
 
         Parameters
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
-
-        args : argparse object.
-            Corresponding hyperparameters
 
         Returns
         -------
@@ -143,16 +131,16 @@ class BaseDetector(object):
         """
 
         check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
-        pred_score = self.decision_function(G, args)
+        pred_score = self.decision_function(G)
         prediction = (pred_score > self.threshold_).astype('int').ravel()
 
         if return_confidence:
-            confidence = self.predict_confidence(G, args)
+            confidence = self.predict_confidence(G)
             return prediction, confidence
 
         return prediction
 
-    def predict_proba(self, G, args, method='linear', return_confidence=False):
+    def predict_proba(self, G, method='linear', return_confidence=False):
         """Predict the probability of a sample being outlier. Two approaches
         are possible:
         1. simply use Min-max conversion to linearly transform the outlier
@@ -164,9 +152,6 @@ class BaseDetector(object):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
-
-        args : argparse object.
-            Corresponding hyperparameters
 
         method : str, optional (default='linear')
             probability conversion method. It must be one of
@@ -188,7 +173,7 @@ class BaseDetector(object):
         check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
         train_scores = self.decision_scores_
 
-        test_scores = self.decision_function(G, args)
+        test_scores = self.decision_function(G)
 
         probs = np.zeros([len(test_scores), 2])
 
@@ -199,7 +184,7 @@ class BaseDetector(object):
             probs[:, 0] = 1 - probs[:, 1]
 
             if return_confidence:
-                confidence = self.predict_confidence(G, args)
+                confidence = self.predict_confidence(G)
                 return probs, confidence
 
             return probs
@@ -213,7 +198,7 @@ class BaseDetector(object):
             probs[:, 0] = 1 - probs[:, 1]
 
             if return_confidence:
-                confidence = self.predict_confidence(G, args)
+                confidence = self.predict_confidence(G)
                 return probs, confidence
 
             return probs
@@ -221,7 +206,7 @@ class BaseDetector(object):
             raise ValueError(method,
                              'is not a valid probability conversion method')
 
-    def predict_confidence(self, G, args):
+    def predict_confidence(self, G):
         """Predict the model's confidence in making the same prediction
         under slightly different training sets.
         See :cite:`perini2020quantifying`.
@@ -230,9 +215,6 @@ class BaseDetector(object):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
-
-        args : argparse object.
-            Corresponding hyperparameters
 
         Returns
         -------
@@ -249,7 +231,7 @@ class BaseDetector(object):
 
         # todo: this has an optimization opportunity since the scores may
         # already be available
-        test_scores = self.decision_function(G, args)
+        test_scores = self.decision_function(G)
 
         count_instances = np.vectorize(
             lambda x: np.count_nonzero(self.decision_scores_ <= x))
