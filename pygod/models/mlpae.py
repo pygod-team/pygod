@@ -5,73 +5,125 @@
 # License: BSD 2 clause
 
 import torch
-import argparse
-import os.path as osp
 import torch.nn.functional as F
 from torch_geometric.nn import MLP
-import torch_geometric.transforms as T
 from sklearn.metrics import roc_auc_score
-from torch_geometric.datasets import Planetoid
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
-from ..utils import EarlyStopping
-from ..utils import gen_attribute_outliers, gen_structure_outliers
 
 
 class MLPAE(BaseDetector):
-    """Let us decide the documentation later
-
     """
-    def __init__(self, contamination=0.1):
+    Vanila Multilayer Perceptron Autoencoder
+
+    Parameters
+    ----------
+    hid_dim :  int, optional
+        Hidden dimension of model. Defaults: ``0``.
+    num_layers : int, optional
+        Total number of layers in autoencoders. Defaults: ``4``.
+    dropout : float, optional
+        Dropout rate. Defaults: ``0.``.
+    weight_decay : float, optional
+        Weight decay (L2 penalty). Defaults: ``0.``.
+    act : callable activation function or None, optional
+        Activation function if not None.
+        Defaults: ``torch.nn.functional.relu``.
+    contamination : float, optional
+        Valid in (0., 0.5). The proportion of outliers in the data set.
+        Used when fitting to define the threshold on the decision
+        function. Defaults: ``0.1``.
+    lr : float, optional
+        Learning rate. Defaults: ``0.004``.
+    epoch : int, optional
+        Maximum number of training epoch. Defaults: ``100``.
+    gpu : int
+        GPU Index, -1 for using CPU. Defaults: ``0``.
+    verbose : bool
+        Verbosity mode. Turn on to print out log information.
+        Defaults: ``False``.
+
+    Examples
+    --------
+    >>> from pygod.models import MLPAE
+    >>> model = MLPAE()
+    >>> model.fit(data)
+    >>> prediction = model.predict(data)
+    """
+    def __init__(self,
+                 hid_dim=64,
+                 num_layers=4,
+                 dropout=0.3,
+                 weight_decay=0.,
+                 act=F.relu,
+                 contamination=0.1,
+                 lr=5e-3,
+                 epoch=100,
+                 gpu=0,
+                 verbose=False):
         super(MLPAE, self).__init__(contamination=contamination)
 
-    def fit(self, G, args):
+        # model param
+        self.hid_dim = hid_dim
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.weight_decay = weight_decay
+        self.act = act
 
-        # 1. first call the data process
-        x, labels = self.process_graph(G, args)
+        # training param
+        self.lr = lr
+        self.epoch = epoch
+        if gpu >= 0 and torch.cuda.is_available():
+            self.device = 'cuda:{}'.format(gpu)
+        else:
+            self.device = 'cpu'
 
-        # 2. set the parameters needed for the network from args.
-        self.channel_list = [x.shape[1]] + args.channel_list + [x.shape[1]]
-        self.in_channels = x.shape[1]
-        self.hidden_channels = args.hidden_size
-        self.out_channels = x.shape[1]
-        self.num_layers = args.num_layers
-        self.dropout = args.dropout
-        self.weight_decay = args.weight_decay
+        # other param
+        self.verbose = verbose
+        self.model = None
 
-        # TODO: support other activation function
-        if args.act:
-            self.act = F.relu
+    def fit(self, G):
+        """
+        Description
+        -----------
+        Fit detector with input data.
 
-        # 3. initialize the detection model
-        self.model = MLP(channel_list=self.channel_list,
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        x, labels = self.process_graph(G)
+
+        channel_list = [x.shape[1]]
+        for _ in range(self.num_layers-1):
+            channel_list.append(self.hid_dim)
+        channel_list.append(x.shape[1])
+        relu_first = self.act is not None
+        self.model = MLP(channel_list=channel_list,
                          dropout=self.dropout,
+                         relu_first=relu_first,
                          batch_norm=False)
 
         # TODO: support channel specification after next pyg release
-        # self.model = MLP(in_channels=self.in_channels,
-        #                  hidden_channels=self.hidden_channels,
-        #                  out_channels=self.out_channels,
+        # self.model = MLP(in_channels=x.shape[1],
+        #                  hidden_channels=self.hid_dim,
+        #                  out_channels=x.shape[1],
         #                  num_layers=self.num_layers,
         #                  dropout=self.dropout,
         #                  act=self.act)
 
-        # 4. check cuda
-        if args.gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(args.gpu)
-        else:
-            self.device = 'cpu'
+        optimizer = torch.optim.Adam(self.model.parameters(),
+                                     lr=self.lr,
+                                     weight_decay=self.weight_decay)
 
-        x = x.to(self.device)
-        self.model = self.model.to(self.device)
-
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=self.weight_decay)
-
-        if args.patience > 0:
-            es = EarlyStopping(args.patience, args.verbose)
-
-        for epoch in range(args.epoch):
+        for epoch in range(self.epoch):
             self.model.train()
             x_ = self.model(x)
             loss = F.mse_loss(x_, x)
@@ -80,88 +132,65 @@ class MLPAE(BaseDetector):
             loss.backward()
             optimizer.step()
 
-            # TODO: support more metrics
-            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1).detach().cpu().numpy()
-            auc = roc_auc_score(labels, score)
-            if args.verbose:
-                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}".format(epoch, loss.item(), auc))
-
-            if args.patience > 0 and es.step(auc, self.model):
-                break
-
-        if args.patience > 0:
-            self.model.load_state_dict(torch.load('es_checkpoint.pt'))
+            score = torch.mean(F.mse_loss(x_, x, reduction='none')
+                               , dim=1).detach().cpu().numpy()
+            if self.verbose:
+                # TODO: support more metrics
+                auc = roc_auc_score(labels, score)
+                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
+                      .format(epoch, loss.item(), auc))
 
         self.decision_scores_ = score
         self._process_decision_scores()
         return self
 
-    def decision_function(self, G, args):
+    def decision_function(self, G):
+        """
+        Description
+        -----------
+        Predict raw anomaly score using the fitted detector. Outliers
+        are assigned with larger anomaly scores.
+
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
+
+        Returns
+        -------
+        outlier_scores : numpy.ndarray
+            The anomaly score of shape :math:`N`.
+        """
         check_is_fitted(self, ['model'])
         self.model.eval()
 
-        x, _ = self.process_graph(G, args)
+        x, _ = self.process_graph(G)
         x = x.to(self.device)
 
         x_ = self.model(x)
-        outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1).detach().cpu().numpy()
+        outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none')
+                                    , dim=1).detach().cpu().numpy()
         return outlier_scores
 
-    def process_graph(self, G, args):
-        # return feature only
-        return G.x, G.y
+    def process_graph(self, G):
+        """
+        Description
+        -----------
+        Process the raw PyG data object into a tuple of sub data
+        objects needed for the model.
 
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--channel_list', type=list, default=[16, 16], help='dimensions of hidden layers (default: 16)')
-    parser.add_argument('--hidden_size', type=int, default=16, help='dimension of hidden embedding (default: 16)')
-    parser.add_argument('--num_layers', type=int, default=2, help='number of linear layers in MLP (default: 2)')
-    parser.add_argument('--epoch', type=int, default=100, help='maximum training epoch')
-    parser.add_argument('--lr', type=float, default=4e-3, help='learning rate')
-    parser.add_argument('--dropout', type=float, default=0.1, help='dropout rate')
-    parser.add_argument('--weight_decay', type=float, default=1e-3, help='weight decay')
-    parser.add_argument("--act", type=bool, default=True, help="using activation function or not")
-    parser.add_argument("--gpu", type=int, default=0, help="GPU Index, -1 for using CPU (default: 0)")
-    parser.add_argument("--verbose", type=bool, default=False, help="print log information")
-    parser.add_argument("--patience", type=int, default=10,
-                        help="early stopping patience, 0 for disabling early stopping (default: 10)")
-
-    args = parser.parse_args()
-
-    # data loading
-    path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'Cora')
-    data = Planetoid(path, 'Cora', transform=T.NormalizeFeatures())[0]
-
-    data, ys = gen_structure_outliers(data, 10, 10)
-    data, yf = gen_attribute_outliers(data, 100, 30)
-    data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-    # model initialization
-    clf = MLPAE()
-
-    print('training...')
-    clf.fit(data, args)
-    print()
-
-    print('predicting for probability')
-    prob = clf.predict_proba(data, args)
-    print('Probability', prob)
-    print()
-
-    print('predicting for raw scores')
-    outlier_scores = clf.decision_function(data, args)
-    print('Raw scores', outlier_scores)
-    print()
-
-    print('predicting for labels')
-    labels = clf.predict(data, args)
-    print('Labels', labels)
-    print()
-
-    print('predicting for labels with confidence')
-    labels, confidence = clf.predict(data, args, return_confidence=True)
-    print('Labels', labels)
-    print('Confidence', confidence)
-    print()
+        Returns
+        -------
+        x : torch.Tensor
+            Attribute (feature) of nodes.
+        y : torch.Tensor
+            Labels of nodes.
+        """
+        x = G.x.to(self.device)
+        y = G.y
+        return x, y
