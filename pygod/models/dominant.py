@@ -224,7 +224,7 @@ class Dominant(BaseDetector):
         return x, adj, edge_index, y
 
     def loss_func(self, x, x_, adj, adj_):
-        # Attribute reconstruction loss
+        # attribute reconstruction loss
         diff_attribute = torch.pow(x - x_, 2)
         attribute_errors = torch.sqrt(torch.sum(diff_attribute, 1))
 
