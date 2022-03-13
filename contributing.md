@@ -26,7 +26,7 @@ To prevent the problems induced by inconsistent versions of dependencies, follow
 
 python>=3.7
 torch>=1.10.1
-torch_geometry>=2.0.3
+torch_geometry>=2.0.4
 
 Contributing New Models
 -----------------------------------

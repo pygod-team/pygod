@@ -20,29 +20,29 @@ class GCNAE(BaseDetector):
     Parameters
     ----------
     hid_dim :  int, optional
-        Hidden dimension of model. Defaults: ``0``.
+        Hidden dimension of model. Default: ``0``.
     num_layers : int, optional
-        Total number of layers in autoencoders. Defaults: ``4``.
+        Total number of layers in autoencoders. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.``.
+        Dropout rate. Default: ``0.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Defaults: ``0.``.
+        Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
-        Defaults: ``torch.nn.functional.relu``.
+        Default: ``torch.nn.functional.relu``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
-        function. Defaults: ``0.1``.
+        function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Defaults: ``0.004``.
+        Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Defaults: ``0``.
+        GPU Index, -1 for using CPU. Default: ``0``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
-        Defaults: ``False``.
+        Default: ``False``.
 
     Examples
     --------

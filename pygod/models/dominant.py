@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Deep Anomaly Detection on Attributed Networks (Dominant)"""
+"""Deep Anomaly Detection on Attributed Networks (DOMINANT)"""
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
 import torch
-from math import ceil
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse import SparseTensor
 from torch_geometric.nn import GCN
+from torch_geometric.utils import to_dense_adj
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..evaluator.metric import roc_auc_score
 
 
-class Dominant(BaseDetector):
+class DOMINANT(BaseDetector):
     """
-    Dominant(Deep Anomaly Detection on Attributed Networks)
-    Dominant is an anomaly detector consisting of a shared graph
+    DOMINANT (Deep Anomaly Detection on Attributed Networks)
+    DOMINANT is an anomaly detector consisting of a shared graph
     convolutional encoder, a structure reconstruction decoder, and an
     attribute reconstruction decoder. The reconstruction mean square
     error of the decoders are defined as structure anomaly score and
@@ -29,39 +28,39 @@ class Dominant(BaseDetector):
     Parameters
     ----------
     hid_dim :  int, optional
-        Hidden dimension of model. Defaults: ``0``.
+        Hidden dimension of model. Default: ``0``.
     num_layers : int, optional
         Total number of layers in model. A half (ceil) of the layers
         are for the encoder, the other half (floor) of the layers are
-        for decoders. Defaults: ``4``.
+        for decoders. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.``.
+        Dropout rate. Default: ``0.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Defaults: ``0.``.
+        Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
-        Defaults: ``torch.nn.functional.relu``.
+        Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        loss balance weight for attribute and structure.
-        Defaults: ``0.5``.
+        Loss balance weight for attribute and structure.
+        Default: ``0.5``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
-        function. Defaults: ``0.1``.
+        function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Defaults: ``0.004``.
+        Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Defaults: ``0``.
+        GPU Index, -1 for using CPU. Default: ``0``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
-        Defaults: ``False``.
+        Default: ``False``.
 
     Examples
     --------
-    >>> from pygod.models import Dominant
-    >>> model = Dominant()
+    >>> from pygod.models import DOMINANT
+    >>> model = DOMINANT()
     >>> model.fit(data)
     >>> prediction = model.predict(data)
     """
@@ -77,7 +76,7 @@ class Dominant(BaseDetector):
                  epoch=100,
                  gpu=0,
                  verbose=False):
-        super(Dominant, self).__init__(contamination=contamination)
+        super(DOMINANT, self).__init__(contamination=contamination)
 
         # model param
         self.hid_dim = hid_dim
@@ -118,7 +117,7 @@ class Dominant(BaseDetector):
 
         x, adj, edge_index, labels = self.process_graph(G)
 
-        self.model = Dominant_Base(in_dim=x.shape[1],
+        self.model = DOMINANT_Base(in_dim=x.shape[1],
                                    hid_dim=self.hid_dim,
                                    num_layers=self.num_layers,
                                    dropout=self.dropout,
@@ -205,8 +204,8 @@ class Dominant(BaseDetector):
         
         # TODO: potential memory efficient improvement
         #  via sparse matrix operation
-        dense_adj \
-            = SparseTensor(row=edge_index[0], col=edge_index[1]).to_dense()
+
+        dense_adj = to_dense_adj(edge_index).to(self.device)
 
         # adjacency matrix normalization
         rowsum = dense_adj.sum(1)
@@ -237,7 +236,7 @@ class Dominant(BaseDetector):
         return score
 
 
-class Dominant_Base(nn.Module):
+class DOMINANT_Base(nn.Module):
     def __init__(self,
                  in_dim,
                  hid_dim,
@@ -245,11 +244,11 @@ class Dominant_Base(nn.Module):
                  dropout,
                  act):
 
-        super(Dominant_Base, self).__init__()
+        super(DOMINANT_Base, self).__init__()
 
         # split the number of layers for the encoder and decoders
-        encoder_layers = ceil(num_layers / 2)
-        decoder_layers = num_layers - encoder_layers
+        decoder_layers = int(num_layers / 2)
+        encoder_layers = num_layers - decoder_layers
 
         self.shared_encoder = GCN(in_channels=in_dim,
                                   hidden_channels=hid_dim,

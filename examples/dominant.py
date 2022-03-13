@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Example code for the Dominant model
+"""Example code for the DOMINANT model
 https://www.public.asu.edu/~kding9/pdf/SDM2019_Deep.pdf
 """
 # Author: Yingtong Dou <ytongdou@gmail.com>, Kay Liu <zliu234@uic.edu>
@@ -11,7 +11,7 @@ import torch
 import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid
 
-from pygod.models import Dominant
+from pygod.models import DOMINANT
 from pygod.utils import gen_attribute_outliers, gen_structure_outliers
 from pygod.evaluator.metric import roc_auc_score
 
@@ -29,7 +29,7 @@ data, yf = gen_attribute_outliers(data, n=100, k=50)
 data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
 
 # model initialization
-model = Dominant()
+model = DOMINANT()
 
 print('training...')
 model.fit(data)
