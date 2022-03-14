@@ -1,5 +1,5 @@
 Contribute to pyGOD
-=================
+===================
 
 This guide will tell how to contribute to pyGOD at the beginning stage. This guide may change subject to the development process. Part of this guide is  from [DGL docs](https://docs.dgl.ai/contribute.html).
 
@@ -26,7 +26,7 @@ To prevent the problems induced by inconsistent versions of dependencies, follow
 
 python>=3.7
 torch>=1.10.1
-torch_geometry>=2.0.3
+torch_geometry>=2.0.4
 
 Contributing New Models
 -----------------------------------
