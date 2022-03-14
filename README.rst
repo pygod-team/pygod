@@ -187,7 +187,7 @@ See `contribution guide <https://github.com/pygod-team/pygod/blob/master/contrib
 PyGOD Team
 ^^^^^^^^^^
 
-PyGOD is collaboratively developed by researchers from UIC, IIT, BUAA, and CMU.
+PyGOD is collaboratively developed by researchers from UIC, IIT, BUAA, ASU, and CMU.
 
 Our core team members include (alphabetical order):
 
