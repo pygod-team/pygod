@@ -4,21 +4,16 @@
 # Author: Xiyang Hu <xiyanghu@cmu.edu>
 # License: BSD 2 clause
 
-import numpy as np
 import time
-from sklearn.decomposition import NMF
-import networkx as nx
 import gc
-import os.path as osp
+import numpy as np
+import networkx as nx
+from sklearn.decomposition import NMF
 
 from sklearn.utils.validation import check_is_fitted
+from torch_geometric.utils import to_scipy_sparse_matrix, to_networkx
 
-import argparse
-
-from torch_geometric.datasets import AttributedGraphDataset
-from torch_geometric.utils import to_scipy_sparse_matrix
-
-from base import BaseDetector
+from . import BaseDetector
 
 gc.enable()
 
@@ -52,18 +47,38 @@ def calculate_G(G, alpha, outl1, H, A, gamma, outl3, U, W):
 class ONE(BaseDetector):
     """Let us decide the documentation later
     ONE (Outlier Aware Network Embedding for Attributed Networks)
-    Reference: <https://ojs.aaai.org//index.php/AAAI/article/view/3763>
+    Reference: <https://arxiv.org/pdf/1811.07609.pdf>
+
+    Parameters
+    ----------
+    K :  int, optional
+        Every vertex is a K dimensional vector, K < min(N, D).  Default: ``36``.
+    iter : int, optional
+        Number of outer Iterations for optimization.  Default: ``5``.
+
+    Examples
+    --------
+    >>> from pygod.models import ONE
+    >>> model = ONE()
+    >>> model.fit(data)
+    >>> prediction = model.predict(data)
     """
 
-    def __init__(self, contamination=0.1):
+    def __init__(self,
+                 K=36,
+                 iter=5,
+                 contamination=0.1):
         super(ONE, self).__init__(contamination=contamination)
 
-    def fit(self, Graph, args):
-        A, C, true_labels = self.process_graph(Graph, args)
+        self.K = K
+        self.iter = iter
+
+    def fit(self, Graph):
+        A, C, true_labels = self.process_graph(Graph)
 
         assert (A.shape[0] == C.shape[0] & A.shape[0] == len(true_labels))
 
-        K = args.K
+        K = self.K
 
         print("Number of Dimensions : ", K)
         self.W = np.eye(K)
@@ -86,7 +101,7 @@ class ONE(BaseDetector):
 
         outl1 = outl2 = outl3 = np.ones((A.shape[0]))
 
-        Graph = nx.from_numpy_matrix(A)
+        Graph = to_networkx(Graph)
         bet = nx.betweenness_centrality(Graph)
         for i in range(len(outl1)):
             outl1[i] = float(1) / A.shape[0] + bet[i]
@@ -97,7 +112,7 @@ class ONE(BaseDetector):
         outl2 = outl2 / sum(outl2)
         outl3 = outl3 / sum(outl3)
 
-        count_outer = args.iter  # Number of outer Iterations for optimization
+        count_outer = self.iter
 
         temp1 = A - np.matmul(self.G, self.H)
         temp1 = np.multiply(temp1, temp1)
@@ -272,7 +287,7 @@ class ONE(BaseDetector):
 
         return self
 
-    def decision_function(self, Graph, args):
+    def decision_function(self, Graph):
         """Predict raw anomaly score of X using the fitted detector.
         The anomaly score of an input sample is computed based on different
         detector algorithms. For consistency, outliers are assigned with
@@ -288,13 +303,13 @@ class ONE(BaseDetector):
         """
         check_is_fitted(self, ['W', 'G', 'H', 'U', 'V'])
 
-        A, C, true_labels = self.process_graph(Graph, args)
+        A, C, true_labels = self.process_graph(Graph)
 
         _, outl2, _ = self.cal_outlierScore(A, C)
 
         return outl2
 
-    def process_graph(self, Graph, args):
+    def process_graph(self, Graph):
         """Process the raw PyG data object into a tuple of sub data objects
         needed for the underlying model. For instance, if the training of the
         model need the node feature and edge index, return (G.x, G.edge_index).
@@ -303,9 +318,6 @@ class ONE(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
-
-        args : argparse object.
-            Corresponding hyperparameters
 
         Returns
         -------
@@ -324,8 +336,20 @@ class ONE(BaseDetector):
 
         return A, C, true_labels
 
-    def calc_lossValues(self, A, C, G, H, U, V, W, outl1, outl2, outl3, alpha,
-                        beta, gamma):
+    def calc_lossValues(self,
+                        A,
+                        C,
+                        G,
+                        H,
+                        U,
+                        V,
+                        W,
+                        outl1,
+                        outl2,
+                        outl3,
+                        alpha,
+                        beta,
+                        gamma):
         temp1 = A - np.matmul(G, H)
         temp1 = np.multiply(temp1, temp1)
         temp1 = np.multiply(np.log(np.reciprocal(outl1)),
@@ -350,7 +374,9 @@ class ONE(BaseDetector):
 
         print('\t Total Function value {}'.format(func_value))
 
-    def cal_outlierScore(self, A, C):
+    def cal_outlierScore(self,
+                         A,
+                         C):
         GH = np.matmul(self.G, self.H)
         UV = np.matmul(self.U, self.V)
         WUTrans = np.matmul(self.W, self.U.T)
@@ -381,58 +407,3 @@ class ONE(BaseDetector):
         outl3 = outl3_numer / outl3_denom
 
         return outl1, outl2, outl3
-
-
-if __name__ == '__main__':
-    # todo: need a default args template
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default='CiteSeer',
-                        help='dataset name: CiteSeer')
-    parser.add_argument('--hidden_size', type=int, default=64,
-                        help='dimension of hidden embedding (default: 64)')
-    parser.add_argument('--K', type=int, default=36,
-                        help='map every vertex to a K dimensional vector, where K < min(N,D). (default: 64)')
-    parser.add_argument('--iter', type=int, default=5,
-                        help='Number of training iterations for optimization. (default: 5)')
-    parser.add_argument('--epoch', type=int, default=3, help='Training epoch')
-    parser.add_argument('--lr', type=float, default=5e-3, help='learning rate')
-    parser.add_argument('--dropout', type=float, default=0.3,
-                        help='Dropout rate')
-    parser.add_argument('--device', default='cpu', type=str, help='cuda/cpu')
-
-    args = parser.parse_args()
-
-    # data loading
-    path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                    args.dataset)
-
-    # this gives us a PyG data object
-    Graph = AttributedGraphDataset(path, 'CiteSeer')[0]
-
-    # model initialization
-    clf = ONE()
-
-    print('training...')
-    clf.fit(Graph, args)
-    print()
-
-    print('predicting for probability')
-    prob = clf.predict_proba(Graph, args)
-    print('Probability', prob)
-    print()
-
-    print('predicting for raw scores')
-    outlier_scores = clf.decision_function(Graph, args)
-    print('Raw scores', outlier_scores)
-    print()
-
-    print('predicting for labels')
-    labels = clf.predict(Graph, args)
-    print('Labels', labels)
-    print()
-
-    print('predicting for labels with confidence')
-    labels, confidence = clf.predict(Graph, args, return_confidence=True)
-    print('Labels', labels)
-    print('Confidence', confidence)
-    print()
