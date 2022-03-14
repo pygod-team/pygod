@@ -1,5 +1,5 @@
 Contribute to pyGOD
-=================
+===================
 
 This guide will tell how to contribute to pyGOD at the beginning stage. This guide may change subject to the development process. Part of this guide is  from [DGL docs](https://docs.dgl.ai/contribute.html).
 
