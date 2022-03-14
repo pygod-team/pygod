@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Higher-order Structure based Anomaly Detection on Attributed
-    Networks (Guide)"""
+    Networks (GUIDE)"""
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
@@ -19,11 +19,11 @@ from . import BaseDetector
 from ..evaluator.metric import roc_auc_score
 
 
-class Guide(BaseDetector):
+class GUIDE(BaseDetector):
     """
-    Guide(Higher-order Structure based Anomaly Detection on Attributed
+    GUIDE (Higher-order Structure based Anomaly Detection on Attributed
     Networks)
-    Guide is an anomaly detector consisting of an attribute graph
+    GUIDE is an anomaly detector consisting of an attribute graph
     convolutional autoencoder, and a structure graph attentive
     autoencoder (not same as the graph attention networks). Instead of
     adjacency matrix, node motif degree (graphlet degree is used in
@@ -40,43 +40,43 @@ class Guide(BaseDetector):
     Parameters
     ----------
     hid_dim :  int, optional
-        Hidden dimension of model. Defaults: ``0``.
+        Hidden dimension of model. Default: ``0``.
     num_layers : int, optional
-        Total number of layers in autoencoders. Defaults: ``4``.
+        Total number of layers in autoencoders. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.``.
+        Dropout rate. Default: ``0.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Defaults: ``0.``.
+        Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
-        Defaults: ``torch.nn.functional.relu``.
+        Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        loss balance weight for attribute and structure.
-        Defaults: ``0.5``.
+        Loss balance weight for attribute and structure.
+        Default: ``0.5``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
-        function. Defaults: ``0.1``.
+        function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Defaults: ``0.004``.
+        Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Defaults: ``0``.
+        GPU Index, -1 for using CPU. Default: ``0``.
     graphlet_size : int
         The maximum graphlet size used to compute structure input.
-        Defaults: ``4``.
+        Default: ``4``.
     selected_motif : bool
         Use selected motifs which are defined in the original paper.
-        Defaults: ``False``.
+        Default: ``False``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
-        Defaults: ``False``.
+        Default: ``False``.
 
     Examples
     --------
-    >>> from pygod.models import Guide
-    >>> model = Guide()
+    >>> from pygod.models import GUIDE
+    >>> model = GUIDE()
     >>> model.fit(data)
     >>> prediction = model.predict(data)
     """
@@ -87,15 +87,15 @@ class Guide(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.8,
+                 alpha=0.1,
                  contamination=0.1,
-                 lr=5e-3,
-                 epoch=100,
+                 lr=0.001,
+                 epoch=200,
                  gpu=0,
                  graphlet_size=4,
                  selected_motif=False,
                  verbose=False):
-        super(Guide, self).__init__(contamination=contamination)
+        super(GUIDE, self).__init__(contamination=contamination)
 
         # model param
         self.hid_dim = hid_dim
@@ -116,7 +116,7 @@ class Guide(BaseDetector):
         # other param
         self.graphlet_size = graphlet_size
         if selected_motif:
-            assert self.graphlet_size != 4, \
+            assert self.graphlet_size == 4, \
                 "Graphlet size is fixed when using selected motif"
         self.selected_motif = selected_motif
         self.verbose = verbose
@@ -141,7 +141,7 @@ class Guide(BaseDetector):
 
         x, s, edge_index, labels = self.process_graph(G)
 
-        self.model = Guide_Base(x_dim=x.shape[1],
+        self.model = GUIDE_Base(x_dim=x.shape[1],
                                 s_dim=s.shape[1],
                                 hid_dim=self.hid_dim,
                                 num_layers=self.num_layers,
@@ -333,7 +333,7 @@ class Guide(BaseDetector):
         return score
 
 
-class Guide_Base(nn.Module):
+class GUIDE_Base(nn.Module):
     def __init__(self,
                  x_dim,
                  s_dim,
@@ -341,7 +341,7 @@ class Guide_Base(nn.Module):
                  num_layers,
                  dropout,
                  act):
-        super(Guide_Base, self).__init__()
+        super(GUIDE_Base, self).__init__()
 
         self.attr_ae = GCN(in_channels=x_dim,
                            hidden_channels=hid_dim,
