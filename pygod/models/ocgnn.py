@@ -351,5 +351,3 @@ class OCGNN(BaseDetector):
         return prediction
 
         
-
-        return x
