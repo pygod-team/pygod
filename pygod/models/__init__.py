@@ -2,6 +2,7 @@ from .base import BaseDetector
 from .mlpae import MLPAE
 from .gcnae import GCNAE
 from .dominant import DOMINANT
-from .guide import GUIDE
+from .one import ONE
+from .guide import Guide
 from .done import DONE
 from .adone import AdONE
