@@ -16,7 +16,7 @@ from .metric import eval_rocauc, eval_recall_at_k, eval_precision_at_k
 
 class Evaluator(object):
     """The base class for evaluating anomaly detection model performance on
-    the evaluator dataset
+    the benchmark anomaly data
     """
     def __init__(self, dataset, outlier_type, **kwargs):
 
