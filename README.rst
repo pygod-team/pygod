@@ -5,7 +5,9 @@ Python Graph Outlier Detection (PyGOD)
 -----
 
 
-**<tba>Insert the logo here<tba>**
+.. image:: pygod_logo.png
+   :width: 600
+   :alt: PyGOD Logo
 
 **<tba>Add badges here<tba>**
 
