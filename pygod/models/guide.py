@@ -163,10 +163,13 @@ class GUIDE(BaseDetector):
             optimizer.step()
 
             if self.verbose:
-                # TODO: support more metrics
-                auc = roc_auc_score(labels, score.detach().cpu().numpy())
-                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
-                      .format(epoch, loss.item(), auc))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(epoch, loss.item()), end='')
+                if labels is not None:
+                    # TODO: support more metrics
+                    auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
         self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
@@ -315,7 +318,11 @@ class GUIDE(BaseDetector):
         edge_index = edge_index.to(self.device)
         s = s.to(self.device)
         x = G.x.to(self.device)
-        y = G.y
+
+        if hasattr(G, 'y'):
+            y = G.y
+        else:
+            y = None
 
         return x, s, edge_index, y
 

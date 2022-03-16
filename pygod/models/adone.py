@@ -173,10 +173,13 @@ class AdONE(BaseDetector):
             optimizer.step()
 
             if self.verbose:
-                # TODO: support more metrics
-                auc = roc_auc_score(labels, score.detach().cpu().numpy())
-                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
-                      .format(epoch, loss.item(), auc))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(epoch, loss.item()), end='')
+                if labels is not None:
+                    # TODO: support more metrics
+                    auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
         self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
@@ -238,7 +241,7 @@ class AdONE(BaseDetector):
         """
         edge_index = G.edge_index
 
-        adj = to_dense_adj(edge_index).to(self.device)[0]
+        adj = to_dense_adj(edge_index)[0].to(self.device)
 
         # adjacency matrix preprocessing without step average elaborate
         # in section 4.1 consisting with official implementation
@@ -254,9 +257,12 @@ class AdONE(BaseDetector):
 
         edge_index = edge_index.to(self.device)
         x = G.x.to(self.device)
-        y = G.y
 
-        # return data objects needed for the network
+        if hasattr(G, 'y'):
+            y = G.y
+        else:
+            y = None
+
         return x, s, edge_index, y
 
     def loss_func(self, x, x_, s, s_, h_a, h_s, dna, dns, dis_a, dis_s):

@@ -106,7 +106,7 @@ class MLPAE(BaseDetector):
                          out_channels=x.shape[1],
                          num_layers=self.num_layers,
                          dropout=self.dropout,
-                         act=self.act)
+                         act=self.act).to(self.device)
 
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
@@ -121,13 +121,16 @@ class MLPAE(BaseDetector):
             loss.backward()
             optimizer.step()
 
-            score = torch.mean(F.mse_loss(x_, x, reduction='none')
-                               , dim=1).detach().cpu().numpy()
+            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+
             if self.verbose:
-                # TODO: support more metrics
-                auc = roc_auc_score(labels, score)
-                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
-                      .format(epoch, loss.item(), auc))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(epoch, loss.item()), end='')
+                if labels is not None:
+                    # TODO: support more metrics
+                    auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
         self.decision_scores_ = score
         self._process_decision_scores()
@@ -181,5 +184,10 @@ class MLPAE(BaseDetector):
             Labels of nodes.
         """
         x = G.x.to(self.device)
-        y = G.y
+
+        if hasattr(G, 'y'):
+            y = G.y
+        else:
+            y = None
+
         return x, y
