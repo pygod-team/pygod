@@ -138,10 +138,13 @@ class DOMINANT(BaseDetector):
             optimizer.step()
 
             if self.verbose:
-                # TODO: support more metrics
-                auc = roc_auc_score(labels, score.detach().cpu().numpy())
-                print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
-                      .format(epoch, loss.item(), auc))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(epoch, loss.item()), end='')
+                if labels is not None:
+                    # TODO: support more metrics
+                    auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
         self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
@@ -201,23 +204,17 @@ class DOMINANT(BaseDetector):
             Labels of nodes.
         """
         edge_index = G.edge_index
-        
-        # TODO: potential memory efficient improvement
-        #  via sparse matrix operation
 
-        dense_adj = to_dense_adj(edge_index).to(self.device)
-
-        # adjacency matrix normalization
-        rowsum = dense_adj.sum(1)
-        d_inv_sqrt = torch.pow(rowsum, -0.5).flatten()
-        d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0.
-        d_mat_inv_sqrt = torch.diag(d_inv_sqrt)
-        adj = (dense_adj * d_mat_inv_sqrt).T * d_mat_inv_sqrt
+        adj = to_dense_adj(edge_index)[0].to(self.device)
 
         edge_index = edge_index.to(self.device)
         adj = adj.to(self.device)
         x = G.x.to(self.device)
-        y = G.y
+
+        if hasattr(G, 'y'):
+            y = G.y
+        else:
+            y = None
 
         # return data objects needed for the network
         return x, adj, edge_index, y
