@@ -11,7 +11,7 @@ import torch
 import torch_geometric.transforms as T
 from torch_geometric.datasets import Planetoid
 
-from pygod.models import Dominant
+from pygod.models.dominant import DOMINANT
 from pygod.utils import gen_attribute_outliers, gen_structure_outliers
 from pygod.evaluator.metric import roc_auc_score
 
@@ -40,7 +40,7 @@ class TestDominant(unittest.TestCase):
 
         self.data = data
 
-        self.model = Dominant()
+        self.model = DOMINANT()
         self.model.fit(self.data)
 
     def test_parameters(self):
