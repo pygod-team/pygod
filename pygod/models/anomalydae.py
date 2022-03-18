@@ -16,7 +16,7 @@ from sklearn.metrics import roc_auc_score
 from torch_geometric.datasets import AttributedGraphDataset
 from sklearn.utils.validation import check_is_fitted
 
-from base import BaseDetector
+from . import BaseDetector
 
 class StructureAE(nn.Module):
     """
