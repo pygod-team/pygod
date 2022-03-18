@@ -2,7 +2,6 @@ Python Graph Outlier Detection (PyGOD)
 ======================================
 
 
------
 
 
 .. image:: pygod_logo.png
@@ -19,17 +18,17 @@ PyGOD is a comprehensive **Python library** for **detecting outlying objects**
 in **graphs**. This exciting yet challenging field has many key applications
 in financial fraud detection and fake news detection.
 
-PyGOD includes more than **10** detection algorithms, from classical ??? (SIGMOD 2000) to
-the latest ??? (AAAI 2022). To support easy usage, PyGOD is developed on top
-of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ and `PyTorch <https://pytorch.org/>`_.
-See examples below for detecting anomalies with GNN in 5 lines!
+PyGOD includes more than **10** latest graph-based detection algorithms,
+such as Dominant (SDM'19) and coLA (TNNLS'21).
+For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+and `PyTorch <https://pytorch.org/>`_. See examples below for detecting anomalies with GNN in 5 lines!
 
 
 PyGOD is featured for:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage of more than 10 algorithms**\ , including both **classical graph algorithms** and **latest graph neural networks (GNNs)**.
-* **Full support of various levels of detection**, such as node-, edge-, and graph-level tasks (wip).
+* **Comprehensive coverage of more than 10 algorithms**\ , including the latest graph neural networks (GNNs).
+* **Full support of various levels of detection**, such as node-, edge-, and graph-level tasks (WIP).
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using GNN with 5 Lines of Code**\ :
@@ -40,6 +39,7 @@ PyGOD is featured for:
 
     # train a dominant detector
     from pygod.models import DOMINANT
+
     model = DOMINANT()  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
@@ -51,7 +51,7 @@ PyGOD is featured for:
 
 **Citing PyGOD**\ :
 
-`PyGOD paper <http://tbd>`_ is accessible on arxiv and under review in xxxx.
+`PyGOD paper <http://tbd>`_ is available on arxiv and under review in xxxx.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
@@ -93,7 +93,26 @@ Alternatively, you could clone and run setup.py file:
    cd pygod
    pip install .
 
-**<tba>Need some basic instructions here<tba>**
+**Required Dependencies**\ :
+
+
+* Python 3.6 +
+* numpy>=1.13
+* scipy>=0.19.1
+* scikit_learn>=0.20.0
+* to be finished
+
+
+**Note and PyG and PyTorch Installation**\ :
+PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+and `PyTorch <https://pytorch.org/>`_. To streamline the installation,
+PyGOD does **NOT** install these libraries for you. Please install them
+from the above links for running PyGOD:
+
+* torch>=?
+* pytorch_geometric>=?
+
+
 
 
 ----
@@ -198,11 +217,17 @@ See `contribution guide <https://github.com/pygod-team/pygod/blob/master/contrib
 PyGOD Team
 ^^^^^^^^^^
 
-PyGOD is collaboratively developed by researchers from UIC, IIT, BUAA, ASU, and CMU.
+PyGOD is a great team effort by researchers from UIC, IIT, BUAA, ASU, and CMU.
+Our core team members include:
 
-Our core team members include (alphabetical order):
-
-`Tom Davidson (Yale) <http://tbd>`_, `Tom Davidson (Yale) <http://tbd>`_, `Tom Davidson (Yale) <http://tbd>`_,
+`Zekuan Liu (UIC) <https://kayzliu.com/>`_,
+`Tom Davidson (UIC) <http://ytongdou.com/>`_,
+`Yue Zhao (CMU) <https://www.andrew.cmu.edu/user/yuezhao2/>`_,
+`Xueying Ding (CMU) <https://scholar.google.com/citations?user=U9CMsh0AAAAJ&hl=en>`_,
+`Xiyang Hu (CMU) <https://www.andrew.cmu.edu/user/xiyanghu/>`_,
+`Canyu Chen (IIT) <https://github.com/pygod-team/pygod>`_,
+`Ruitong Zhang (BUAA) <https://github.com/pygod-team/pygod>`_,
+`Kaize Ding (ASU) <https://www.public.asu.edu/~kding9/>`_
 
 Reach out us by submitting an issue report or email us at **<tba>add an email<tba>**
 
@@ -220,6 +245,8 @@ Reference
 .. [#Fan2020AnomalyDAE] Fan, H., Zhang, F. and Li, Z., 2020, May. AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks. In ICASSP 2020-2020 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) (pp. 5685-5689). IEEE.
 
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems.
+
+.. [#Perini2020Quantifying] Perini, L., Vercruyssen, V., Davis, J. Quantifying the confidence of anomaly detectors in their example-wise predictions. In *Joint European Conference on Machine Learning and Knowledge Discovery in Databases (ECML-PKDD)*, 2020.
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications, 33(18), pp.12073-12085.
 
