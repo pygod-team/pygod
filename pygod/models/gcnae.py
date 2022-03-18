@@ -135,7 +135,7 @@ class GCNAE(BaseDetector):
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
-        self.decision_scores_ = score
+        self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
         return self
 
