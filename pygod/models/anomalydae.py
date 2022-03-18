@@ -29,6 +29,8 @@ class StructureAE(nn.Module):
     neighbors. Finally, the decoder reconstructs the final embedding
     to the original.
 
+    See :cite:`fan2020anomalydae` for details.
+
     Parameters
     ----------
     in_dim: int

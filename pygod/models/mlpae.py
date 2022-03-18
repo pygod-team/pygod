@@ -17,6 +17,8 @@ class MLPAE(BaseDetector):
     """
     Vanila Multilayer Perceptron Autoencoder
 
+    See :cite:`yuan2021higher` for details.
+
     Parameters
     ----------
     hid_dim :  int, optional

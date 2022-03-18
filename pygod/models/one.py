@@ -49,6 +49,8 @@ class ONE(BaseDetector):
     ONE (Outlier Aware Network Embedding for Attributed Networks)
     Reference: <https://arxiv.org/pdf/1811.07609.pdf>
 
+    See: cite 'bandyopadhyay2019outlier' for details.
+
     Parameters
     ----------
     K :  int, optional

@@ -32,6 +32,8 @@ from scipy.sparse import csc_matrix
 
 class Fraudre(BaseDetector):
     """FRAUDRE: Fraud Detection Dual-Resistant toGraph Inconsistency and Imbalance
+
+    See :cite:`zhang2021fraudre` for details.
     """
 
     def __init__(self, contamination=0.1):

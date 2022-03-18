@@ -52,7 +52,7 @@ class OCGNN(BaseDetector):
     in the similar fashion to the support vector machine, but in the embedding space after 
     feeding towards several layers of GCN.
 
-    See: cite 'wang2020ocgnn' for details.
+    See: cite 'wang2021one' for details.
 
     Parameters
     ----------

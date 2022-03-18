@@ -140,6 +140,10 @@ class Model(nn.Module):
 
 
 class CoLA(BaseDetector):
+    """
+
+    See :cite:`liu2021anomaly` for details.
+    """
     def __init__(self,
                  feat_size,
                  n_size,
