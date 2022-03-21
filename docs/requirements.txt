@@ -1,0 +1,2 @@
+furo
+torch_geometric>=2.0.3
