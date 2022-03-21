@@ -7,10 +7,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.utils import to_dense_adj
-from torch_geometric.nn import MLP, MessagePassing
+from torch_geometric.nn import MessagePassing
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from .basic_model import MLP
 from ..evaluator.metric import roc_auc_score
 
 
@@ -57,12 +58,6 @@ class DONE(BaseDetector):
     a5 : float, optional
         Loss balance weight for combination.
         Default: ``0.2``.
-    step : int, optional
-        Page rank steps in preprocessing.
-        Default: ``3``.
-    c : float, optional
-        Page rank weight in preprocessing.
-        Default: ``0.3``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
@@ -96,8 +91,6 @@ class DONE(BaseDetector):
                  a3=0.2,
                  a4=0.2,
                  a5=0.2,
-                 step=3,
-                 c=0.3,
                  contamination=0.1,
                  lr=5e-3,
                  epoch=100,
@@ -116,8 +109,6 @@ class DONE(BaseDetector):
         self.a3 = a3
         self.a4 = a4
         self.a5 = a5
-        self.step = step
-        self.c = c
 
         # training param
         self.lr = lr

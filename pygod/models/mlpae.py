@@ -6,11 +6,11 @@
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import MLP
-from sklearn.metrics import roc_auc_score
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from .basic_model import MLP
+from ..evaluator.metric import roc_auc_score
 
 
 class MLPAE(BaseDetector):

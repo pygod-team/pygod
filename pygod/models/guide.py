@@ -11,11 +11,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.utils import softmax
 from torch_geometric.utils import add_self_loops
-from torch_geometric.nn import GCN, MessagePassing
+from torch_geometric.nn import MessagePassing
 from networkx.generators.atlas import graph_atlas_g
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from .basic_model import GCN
 from ..evaluator.metric import roc_auc_score
 
 

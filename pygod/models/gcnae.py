@@ -6,11 +6,11 @@
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import GCN
-from sklearn.metrics import roc_auc_score
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from .basic_model import GCN
+from ..evaluator.metric import roc_auc_score
 
 
 class GCNAE(BaseDetector):
