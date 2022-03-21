@@ -18,26 +18,14 @@ from pygod.evaluator.metric import roc_auc_score
 
 class testGCNAE(unittest.TestCase):
     def setUp(self):
-        # use some small datasets for the test
-        # all use cora if possible
+        # use the pre-defined fake graph with injected outliers
+        # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.5
+        self.roc_floor = 0.68
 
-        dataset = 'Cora'
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        dataset)
-        self.path = path
-
-        # this gives us a PyG data object
-        data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
-
-        data, ys = gen_structure_outliers(data, m=10, n=10)
-        data, yf = gen_attribute_outliers(data, n=100, k=30)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-        self.data = data
+        test_graph = torch.load('./test_graph.pt')
+        self.data = test_graph
 
         self.model = GCNAE()
         self.model.fit(self.data)

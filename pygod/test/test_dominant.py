@@ -4,41 +4,21 @@ import unittest
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
-import os.path as osp
-from shutil import rmtree
-
 import torch
-import torch_geometric.transforms as T
-from torch_geometric.datasets import Planetoid
-
 from pygod.models import DOMINANT
-from pygod.utils import gen_attribute_outliers, gen_structure_outliers
 from pygod.evaluator.metric import roc_auc_score
 
 
 class TestDominant(unittest.TestCase):
     def setUp(self):
-        # use some small datasets for the test
-        # all use cora if possible
+        # use the pre-defined fake graph with injected outliers
+        # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.5
+        self.roc_floor = 0.68
 
-        dataset = 'Cora'
-
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        dataset)
-        self.path = path
-
-        # this gives us a PyG data object
-        data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
-
-        data, ys = gen_structure_outliers(data, m=10, n=10)
-        data, yf = gen_attribute_outliers(data, n=100, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-        self.data = data
+        test_graph = torch.load('./test_graph.pt')
+        self.data = test_graph
 
         self.model = DOMINANT()
         self.model.fit(self.data)
@@ -116,8 +96,9 @@ class TestDominant(unittest.TestCase):
         # clone_clf = clone(self.model)
 
     def tearDown(self):
+        pass
         # remove the data folder
-        rmtree(self.path)
+        # rmtree(self.path)
 
 
 if __name__ == '__main__':
