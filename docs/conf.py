@@ -49,9 +49,12 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
- #   'sphinxcontrib.bibtex',
+    'sphinxcontrib.bibtex',
     'sphinx.ext.napoleon'
 ]
+
+
+bibtex_bibfiles = ['zreferences.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

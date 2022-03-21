@@ -1,7 +1,12 @@
-pygod.models
-=======================
+All Models
+==========
 
-.. automodule:: pygod.models
-   :members:
-   :undoc-members:
-   :show-inheritance:
+
+pygod.models.dominant module
+----------------------------
+
+.. automodule:: pygod.models.dominant
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
