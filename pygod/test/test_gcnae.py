@@ -4,15 +4,8 @@ import unittest
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
-import os.path as osp
-from shutil import rmtree
-
 import torch
-import torch_geometric.transforms as T
-from torch_geometric.datasets import Planetoid
-
 from pygod.models import GCNAE
-from pygod.utils import gen_attribute_outliers, gen_structure_outliers
 from pygod.evaluator.metric import roc_auc_score
 
 
@@ -103,8 +96,9 @@ class testGCNAE(unittest.TestCase):
         # clone_clf = clone(self.model)
 
     def tearDown(self):
+        pass
         # remove the data folder
-        rmtree(self.path)
+        # rmtree(self.path)
 
 
 if __name__ == '__main__':
