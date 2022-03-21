@@ -45,7 +45,7 @@ def calculate_G(G, alpha, outl1, H, A, gamma, outl3, U, W):
 #todo: due to the original paper has very complex loss, this algorithm is not
 # in PyTorch yet. Need NetworkX for it.
 class ONE(BaseDetector):
-    """Let us decide the documentation later
+    """
     ONE (Outlier Aware Network Embedding for Attributed Networks)
     Reference: <https://arxiv.org/pdf/1811.07609.pdf>
 
@@ -57,6 +57,9 @@ class ONE(BaseDetector):
         Every vertex is a K dimensional vector, K < min(N, D).  Default: ``36``.
     iter : int, optional
         Number of outer Iterations for optimization.  Default: ``5``.
+    verbose : bool
+        Verbosity mode. Turn on to print out log information.
+        Default: ``False``.
 
     Examples
     --------
@@ -69,23 +72,44 @@ class ONE(BaseDetector):
     def __init__(self,
                  K=36,
                  iter=5,
-                 contamination=0.1):
+                 contamination=0.1,
+                 verbose=False):
         super(ONE, self).__init__(contamination=contamination)
 
         self.K = K
         self.iter = iter
 
+        # other param
+        self.verbose = verbose
+
     def fit(self, Graph):
+        """
+        Description
+        -----------
+        Fit detector with input data.
+
+        Parameters
+        ----------
+        Graph : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         A, C, true_labels = self.process_graph(Graph)
 
         assert (A.shape[0] == C.shape[0] & A.shape[0] == len(true_labels))
 
         K = self.K
 
-        print("Number of Dimensions : ", K)
+        if self.verbose:
+            print("Number of Dimensions : ", K)
         self.W = np.eye(K)
 
-        print('Dimension of C: {}, {}'.format(C.shape[0], C.shape[1]))
+        if self.verbose:
+            print('Dimension of C: {}, {}'.format(C.shape[0], C.shape[1]))
         gc.collect()
         opti_values = []
         runtime = []
@@ -139,10 +163,9 @@ class ONE(BaseDetector):
         self.gamma = min(2 * self.beta, temp3)
 
         for opti_iter in range(count_outer):
-
-            print('Loop {} started: \n'.format(opti_iter))
-
-            print("The function values which we are interested are : ")
+            if self.verbose:
+                print('Loop {} started: \n'.format(opti_iter))
+                print("The function values which we are interested are : ")
 
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
@@ -172,7 +195,8 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for G')
+            if self.verbose:
+                print('Done for G')
 
             # The update rule for H[k,j]
             for k in range(self.H.shape[0]):
@@ -193,7 +217,8 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for H')
+            if self.verbose:
+                print('Done for H')
 
             # The up[update rule for U[i,k]
             for i in range(self.U.shape[0]):
@@ -225,7 +250,8 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for U')
+            if self.verbose:
+                print('Done for U')
 
             # The update rule for V[k,d]
             for k in range(self.V.shape[0]):
@@ -247,7 +273,8 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for V')
+            if self.verbose:
+                print('Done for V')
 
             # The Update rule for W[p,q]
 
@@ -268,7 +295,8 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for W')
+            if self.verbose:
+                print('Done for W')
 
             # The update rule for outl
 
@@ -277,9 +305,9 @@ class ONE(BaseDetector):
             self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
-            print('Done for outlier score')
-
-            print('Loop {} ended: \n'.format(opti_iter))
+            if self.verbose:
+                print('Done for outlier score')
+                print('Loop {} ended: \n'.format(opti_iter))
 
 
         # Use outl2 as the outlier score.
@@ -290,18 +318,21 @@ class ONE(BaseDetector):
         return self
 
     def decision_function(self, Graph):
-        """Predict raw anomaly score of X using the fitted detector.
-        The anomaly score of an input sample is computed based on different
-        detector algorithms. For consistency, outliers are assigned with
-        larger anomaly scores.
+        """
+        Description
+        -----------
+        Predict raw anomaly score using the fitted detector. Outliers
+        are assigned with larger anomaly scores.
+
         Parameters
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input graph.
+            The input data.
+
         Returns
         -------
-        anomaly_scores : numpy array of shape (n_samples,)
-            The anomaly score of the input samples.
+        outl2 : numpy.ndarray
+            The anomaly score of shape :math:`N`.
         """
         check_is_fitted(self, ['W', 'G', 'H', 'U', 'V'])
 
@@ -312,9 +343,11 @@ class ONE(BaseDetector):
         return outl2
 
     def process_graph(self, Graph):
-        """Process the raw PyG data object into a tuple of sub data objects
-        needed for the underlying model. For instance, if the training of the
-        model need the node feature and edge index, return (G.x, G.edge_index).
+        """
+        Description
+        -----------
+        Process the raw PyG data object into a tuple of sub data
+        objects needed for the model.
 
         Parameters
         ----------
@@ -369,12 +402,12 @@ class ONE(BaseDetector):
         temp3 = np.multiply(np.log(np.reciprocal(outl3)),
                             np.sum(temp3, axis=0).T)
         temp3 = np.sum(temp3)
-
-        print('\t Component values: {},{} and {}'.format(temp1, temp2, temp3))
+        if self.verbose:
+            print('\t Component values: {},{} and {}'.format(temp1, temp2, temp3))
 
         func_value = alpha * temp1 + beta * temp2 + gamma * temp3
-
-        print('\t Total Function value {}'.format(func_value))
+        if self.verbose:
+            print('\t Total Function value {}'.format(func_value))
 
     def cal_outlierScore(self,
                          A,
