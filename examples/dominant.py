@@ -26,7 +26,7 @@ data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
 
 data, ys = gen_structure_outliers(data, m=10, n=10)
 data, yf = gen_attribute_outliers(data, n=100, k=50)
-data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf)).int()
+data.y = torch.logical_or(ys, yf).int()
 
 # model initialization
 model = DOMINANT()

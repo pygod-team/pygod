@@ -59,7 +59,7 @@ def gen_structure_outliers(data, m, n):
 
         node_set = node_set.difference(set(sampled_idx))
 
-    y_outlier = np.zeros(data.x.shape[0], dtype=np.long)
+    y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)
     y_outlier[sample_indices] = 1
 
     data.edge_index = torch.cat([data.edge_index, torch.cat(new_edges).T],
@@ -111,7 +111,7 @@ def gen_attribute_outliers(data, n, k):
 
         data.x[u] = data.x[max_dist_node]
 
-    y_outlier = np.zeros(data.x.shape[0], dtype=np.long)
+    y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)
     y_outlier[target_nodes] = 1
 
     return data, y_outlier

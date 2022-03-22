@@ -5,7 +5,6 @@ Metrics used to evaluate the anomaly detection performance
 # Author: Yingtong Dou <ytongdou@gmail.com>
 # License: BSD 2 clause
 
-import numpy as np
 from sklearn.metrics import roc_auc_score
 
 
