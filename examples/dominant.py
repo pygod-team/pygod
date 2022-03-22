@@ -25,8 +25,8 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
 data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
 
 data, ys = gen_structure_outliers(data, m=10, n=10)
-data, yf = gen_attribute_outliers(data, n=100, k=50)
-data.y = torch.logical_or(ys, yf).int()
+data, ya = gen_attribute_outliers(data, n=100, k=50)
+data.y = torch.logical_or(ys, ya).int()
 
 # model initialization
 model = DOMINANT()
