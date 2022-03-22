@@ -7,9 +7,7 @@ the input dataset for benchmarking
 # License: BSD 2 clause
 
 import numpy as np
-
 import torch
-import torch_geometric
 
 # set the random seed
 np.random.seed(999)
