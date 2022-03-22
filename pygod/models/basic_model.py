@@ -51,9 +51,6 @@ class MLP(torch.nn.Module):
             of batch normalization. (default: :obj:`True`)
         act_first (bool, optional): If set to :obj:`True`, activation is
             applied before normalization. (default: :obj:`False`)
-        act_kwargs (Dict[str, Any], optional): Arguments passed to the
-            respective activation function defined by :obj:`act`.
-            (default: :obj:`None`)
         batch_norm_kwargs (Dict[str, Any], optional): Arguments passed to
             :class:`torch.nn.BatchNorm1d` in case :obj:`batch_norm == True`.
             (default: :obj:`None`)
@@ -71,17 +68,14 @@ class MLP(torch.nn.Module):
         out_channels: Optional[int] = None,
         num_layers: Optional[int] = None,
         dropout: float = 0.,
-        act: str = "relu",
+        act: Callable = F.relu,
         batch_norm: bool = True,
         act_first: bool = False,
-        act_kwargs: Optional[Dict[str, Any]] = None,
         batch_norm_kwargs: Optional[Dict[str, Any]] = None,
         bias: bool = True,
         relu_first: bool = False,
     ):
         super().__init__()
-
-        from class_resolver.contrib.torch import activation_resolver
 
         act_first = act_first or relu_first  # Backward compatibility.
         batch_norm_kwargs = batch_norm_kwargs or {}
@@ -99,7 +93,7 @@ class MLP(torch.nn.Module):
         self.channel_list = channel_list
 
         self.dropout = dropout
-        self.act = activation_resolver.make(act, act_kwargs)
+        self.act = act
         self.act_first = act_first
 
         self.lins = torch.nn.ModuleList()
@@ -170,7 +164,7 @@ class GCN(torch.nn.Module):
             final linear transformation to convert hidden node embeddings to
             output size :obj:`out_channels`. (default: :obj:`None`)
         dropout (float, optional): Dropout probability. (default: :obj:`0.`)
-        act (str or Callable, optional): The non-linear activation function to
+        act (Callable, optional): The non-linear activation function to
             use. (default: :obj:`"relu"`)
         norm (torch.nn.Module, optional): The normalization operator to use.
             (default: :obj:`None`)
@@ -179,9 +173,6 @@ class GCN(torch.nn.Module):
             (default: :obj:`"last"`)
         act_first (bool, optional): If set to :obj:`True`, activation is
             applied before normalization. (default: :obj:`False`)
-        act_kwargs (Dict[str, Any], optional): Arguments passed to the
-            respective activation function defined by :obj:`act`.
-            (default: :obj:`None`)
         **kwargs (optional): Additional arguments of
             :class:`torch_geometric.nn.conv.GCNConv`.
     """
@@ -192,23 +183,20 @@ class GCN(torch.nn.Module):
         num_layers: int,
         out_channels: Optional[int] = None,
         dropout: float = 0.0,
-        act: Union[str, Callable, None] = "relu",
+        act: Union[Callable, None] = F.relu,
         norm: Optional[torch.nn.Module] = None,
         jk: Optional[str] = None,
         act_first: bool = False,
-        act_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__()
-
-        from class_resolver.contrib.torch import activation_resolver
 
         self.in_channels = in_channels
         self.hidden_channels = hidden_channels
         self.num_layers = num_layers
 
         self.dropout = dropout
-        self.act = activation_resolver.make(act, act_kwargs)
+        self.act = act
         self.jk_mode = jk
         self.act_first = act_first
 
