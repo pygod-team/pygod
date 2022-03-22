@@ -11,8 +11,8 @@ from torch_geometric.nn import MessagePassing
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
-from .basic_model import MLP
-from ..evaluator.metric import roc_auc_score
+from .basic_nn import MLP
+from ..evaluator.metric import eval_roc_auc
 
 
 class AdONE(BaseDetector):
@@ -167,8 +167,7 @@ class AdONE(BaseDetector):
                 print("Epoch {:04d}: Loss {:.4f}"
                       .format(epoch, loss.item()), end='')
                 if labels is not None:
-                    # TODO: support more metrics
-                    auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                    auc = eval_roc_auc(labels, score.detach().cpu().numpy())
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
