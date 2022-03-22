@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 
 
-def eval_rocauc(labels, pred):
+def eval_roc_auc(labels, pred):
     """
     Description
     -----------
@@ -25,15 +25,16 @@ def eval_rocauc(labels, pred):
 
     Returns
     -------
-    rocauc : float
+    roc_auc : float
         Average ROC-AUC score across different labels.
     """
 
-    # anomaly detection is a binary classification problem
-    return roc_auc_score(y_true=labels, y_score=pred[:, 1])
+    # outlier detection is a binary classification problem
+    roc_auc = roc_auc_score(y_true=labels, y_score=pred)
+    return roc_auc
 
 
-def eval_recall_at_k(labels, pred, k):
+def eval_recall_at_k(labels, pred, k, threshold=0.5):
     """
     Description
     -----------
@@ -48,6 +49,8 @@ def eval_recall_at_k(labels, pred, k):
         Outlier scores in shape of ``(N, )``.
     k : int
         The number of instances to evaluate.
+    threshold : float
+        The binary classification threshold.
 
     Returns
     -------
@@ -57,7 +60,6 @@ def eval_recall_at_k(labels, pred, k):
 
     scores = [(s, l) for s, l in zip(pred, labels)]
     scores.sort(reverse=True, key=lambda x: x[0])
-    threshold = 0.5
 
     # Number of true outliers
     n_true = sum(l for (_, l) in scores)
@@ -70,7 +72,7 @@ def eval_recall_at_k(labels, pred, k):
     return recall_at_k
 
 
-def eval_precision_at_k(labels, pred, k):
+def eval_precision_at_k(labels, pred, k, threshold=0.5):
     """
     Description
     -----------
@@ -85,6 +87,8 @@ def eval_precision_at_k(labels, pred, k):
         Outlier scores in shape of ``(N, )``.
     k : int
         The number of instances to evaluate.
+    threshold : float
+        The binary classification threshold.
 
     Returns
     -------
@@ -94,7 +98,6 @@ def eval_precision_at_k(labels, pred, k):
 
     scores = [(s, l) for s, l in zip(pred, labels)]
     scores.sort(reverse=True, key=lambda x: x[0])
-    threshold = 0.5
 
     # Number of predicted outliers in top k
     n_pred_k = sum((s >= threshold) for (s, _) in scores[:k])

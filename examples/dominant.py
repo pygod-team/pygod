@@ -13,8 +13,8 @@ from torch_geometric.datasets import Planetoid
 
 from pygod.models import DOMINANT
 from pygod.utils import gen_attribute_outliers, gen_structure_outliers
-from pygod.evaluator.metric import roc_auc_score
-
+from pygod.evaluator.metric import eval_roc_auc, eval_recall_at_k, \
+    eval_precision_at_k
 
 dataset = 'Cora'
 
@@ -26,7 +26,7 @@ data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
 
 data, ys = gen_structure_outliers(data, m=10, n=10)
 data, yf = gen_attribute_outliers(data, n=100, k=50)
-data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
+data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf)).int()
 
 # model initialization
 model = DOMINANT()
@@ -56,6 +56,14 @@ print('Labels', labels)
 print('Confidence', confidence)
 
 print('evaluating outlier detection performance')
-auc_score = roc_auc_score(data.y, outlier_scores)
-print('AUC Score', auc_score)
+auc_score = eval_roc_auc(data.y.numpy(), outlier_scores)
+k = 200
+recall_at_k = eval_recall_at_k(data.y.numpy(), outlier_scores, k=k,
+                               threshold=model.threshold_)
+precision_at_k = eval_precision_at_k(data.y.numpy(), outlier_scores, k=k,
+                                     threshold=model.threshold_)
+
+print('AUC Score:', auc_score)
+print(f'Recall@{k}:', recall_at_k)
+print(f'Precision@{k}:', precision_at_k)
 print()
