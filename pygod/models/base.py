@@ -77,7 +77,7 @@ class BaseDetector(object):
         pass
 
     def decision_function(self, G):
-        """Predict raw anomaly scores of X using the fitted detector.
+        """Predict raw anomaly scores of PyG Graph G using the fitted detector.
         The anomaly score of an input sample is computed based on the fitted
         detector. For consistency, outliers are assigned with
         higher anomaly scores.
