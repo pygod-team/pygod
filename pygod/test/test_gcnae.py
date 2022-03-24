@@ -15,7 +15,7 @@ class testGCNAE(unittest.TestCase):
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.68
+        self.roc_floor = 0.65
 
         test_graph = torch.load('./test_graph.pt')
         self.data = test_graph
