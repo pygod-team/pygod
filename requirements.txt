@@ -1,6 +1,4 @@
-torch_geometric>=2.0.3
 argparse>=1.4.0
-torch>=1.10.2
 numpy>=1.19.4
 scikit-learn>=0.22.1
 networkx>=2.6.3
