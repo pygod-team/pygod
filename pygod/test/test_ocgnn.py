@@ -9,7 +9,7 @@ from torch_geometric.seed import seed_everything
 from pygod.models import OCGNN
 from pygod.evaluator.metric import roc_auc_score
 
-seed_everything(42)
+seed_everything(1)
 
 class TestAnomalyDAE(unittest.TestCase):
     def setUp(self):
