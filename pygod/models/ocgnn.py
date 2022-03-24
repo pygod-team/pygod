@@ -36,11 +36,13 @@ class GCN_base(nn.Module):
 
     def forward(self, x, edge_index):
         for i, layer in enumerate(self.layers[0:-1]):
-            x = self.dropout(x)
+            if i != 0:
+                x = self.dropout(x)
             x = layer(x, edge_index)
             x = self.act(x)
         x = self.dropout(x)
         x = self.layers[-1](x, edge_index)
+        return x
 
 
 class OCGNN(BaseDetector):
@@ -58,9 +60,9 @@ class OCGNN(BaseDetector):
     n_hidden :  int, optional
         Hidden dimension of model. Defaults: `32``.
     n_layers : int, optional
-        Dimensions of underlying GCN. Defaults: ``2``.
+        Dimensions of underlying GCN. Defaults: ``3``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.``.
+        Dropout rate. Defaults: ``0.3``.
     weight_decay : float, optional
         Weight decay (L2 penalty). Defaults: ``0.``.
     act : callable activation function or None, optional
@@ -70,7 +72,7 @@ class OCGNN(BaseDetector):
         A small valid number for determining the center and make
         sure it does not collapse to 0. Defaults: ``0.001``.
     nu: float, optional
-        Regularization parameter. Defaults: ``1`` 
+        Regularization parameter. Defaults: ``0.01`` 
     lr : float, optional
         Learning rate. Defaults: ``0.004``.
     epoch : int, optional
@@ -91,15 +93,15 @@ class OCGNN(BaseDetector):
 
     def __init__(self,
                  n_hidden=32,
-                 n_layers=2,
-                 dropout=0,
-                 lr=0.001,
-                 weight_decay=5e-4,
+                 n_layers=3,
+                 dropout=0.3,
+                 lr=0.004,
+                 weight_decay=0,
                  eps=0.001,
-                 nu=1,
+                 nu=0.01,
                  gpu=0,
                  epoch=100,
-                 verbose=True,
+                 verbose=False,
                  act=F.relu):
         super(OCGNN, self).__init__()
         self.dropout = dropout
@@ -188,7 +190,6 @@ class OCGNN(BaseDetector):
         scores: torch Tensor, anomaly scores
         """
         dist = torch.sum((outputs - self.data_center) ** 2, dim=1)
-        print(outputs)
         scores = dist - self.radius ** 2
         return dist, scores
 
@@ -233,7 +234,7 @@ class OCGNN(BaseDetector):
         x, edge_index, labels = self.process_graph(G)
         self.in_feats = x.shape[1]
 
-        print(self.in_feats, self.n_hidden, self.n_layers, self.dropout)
+        #print(self.in_feats, self.n_hidden, self.n_layers, self.dropout)
 
         # initialize the model and optimizer
         self.model = GCN_base(self.in_feats,
@@ -257,20 +258,19 @@ class OCGNN(BaseDetector):
             self.model.zero_grad()
             outputs = self.model(x, edge_index)
             loss, dist, score = self.loss_function(outputs)
-            if epoch == 0:
-                self.data_center = self.init_center(x, edge_index)
-                self.radius = self.get_radius(dist)
-            else:
-                loss.backward()
-                self.optimizer.step()
+            #if epoch == 0:
+            #    self.data_center = self.init_center(x, edge_index)
+            #    self.radius = self.get_radius(dist)
+            #else:
+            loss.backward()
+            self.optimizer.step()
             if self.verbose:
                 print('RRR', self.radius.data)
+                
             print("Epoch {:05d},loss {:.4f}".format(epoch, loss.item()))
 
             if self.verbose:
                 # TODO: support more metrics
-                print(score.detach().cpu().numpy())
-                print(labels)
                 auc = roc_auc_score(labels, score.detach().cpu().numpy())
 
                 print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
@@ -340,9 +340,3 @@ class OCGNN(BaseDetector):
         loss, dist, score = self.loss_function(outputs)
 
         return score.detach().cpu().numpy()
-
-    def predict(self, G):
-        check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
-        pred_score = self.decision_function(G)
-        prediction = (pred_score > self.threshold_).astype('int').ravel()
-        return prediction

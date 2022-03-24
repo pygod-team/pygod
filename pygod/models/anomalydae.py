@@ -351,41 +351,17 @@ class AnomalyDAE(BaseDetector):
         check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
-        attrs, adj, edge_index, _ = self.process_graph(G)
+        attrs, adj, edge_index, _= self.process_graph(G)
     
         # enable the evaluation mode
         self.model.eval()
 
         # construct the vector for holding the reconstruction error
-        A_hat, X_hat = self.model(attrs, adj)
-        outlier_scores, _, _  = self.model.loss_func(adj, A_hat, 
-                                                attrs, X_hat, self.alpha, 
-                                                self.theta, self.eta)
+        A_hat, X_hat = self.model(attrs, edge_index)
+        outlier_scores, _, _  = self.loss_func(adj, A_hat, attrs, X_hat)
         return outlier_scores.detach().cpu().numpy()
 
-    
-    def predict(self, G):
-        """
-        Description
-        -----------
-        Predict raw anomaly score of X using the fitted detector.
-        The scores above the threshold are classified as anomalies.
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        predicion : numpy.ndarray
-            The predcited anomaly.
-        """
-        check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
-        pred_score = self.decision_function(G)
-        prediction = (pred_score > self.threshold_).astype('int').ravel()
-        return prediction
-    
-    
+       
     
     def process_graph(self, G):
         """
