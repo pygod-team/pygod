@@ -8,22 +8,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.utils.validation import check_is_fitted
 
-import os.path as osp
-from torch_geometric.datasets import Planetoid, AttributedGraphDataset
-import torch_geometric.transforms as T
-
-from ..utils.outlier_generator import gen_attribute_outliers, gen_structure_outliers
-from .base import BaseDetector
+from . import BaseDetector
 from ..evaluator.metric import roc_auc_score
 
 
 class GAAN(BaseDetector):
     """
     GAAN (Generative Adversarial Attributed Network Anomaly Detection)
-    GAAN is a generative adversarial attribute network anomaly detection framework,
-    including a generator module, an encoder module, a discriminator module,
-    and uses anomaly evaluation measures that consider sample reconstruction error
-    and real sample recognition confidence to make predictions.
+    GAAN is a generative adversarial attribute network anomaly detection
+    framework, including a generator module, an encoder module, a discriminator
+    module, and uses anomaly evaluation measures that consider sample
+    reconstruction error and real sample recognition confidence to make
+    predictions.
 
     See :cite:`chen2020generative` for details.
 
@@ -157,10 +153,11 @@ class GAAN(BaseDetector):
         self.discriminator = Discriminator().to(self.device)
 
         # initialize the optimizer
-        optimizer_GE = torch.optim.Adam(params=list(self.generator.parameters()) +
-                                        list(self.encoder.parameters()),
-                                        lr=self.lr,
-                                        weight_decay=self.weight_decay)
+        optimizer_GE = torch.optim.Adam(
+            params=list(self.generator.parameters()) +
+                   list(self.encoder.parameters()),
+            lr=self.lr,
+            weight_decay=self.weight_decay)
 
         optimizer_D = torch.optim.Adam(params=self.discriminator.parameters(),
                                        weight_decay=self.weight_decay)
@@ -171,7 +168,8 @@ class GAAN(BaseDetector):
         for epoch in range(self.epoch):
 
             # Generate noise for constructing fake attribute
-            gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(self.device)
+            gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
+                self.device)
 
             self.generator.train()
             self.encoder.train()
@@ -181,10 +179,12 @@ class GAAN(BaseDetector):
             optimizer_GE.zero_grad()
 
             # train the model
-            X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise, edge_index)
+            X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise,
+                                                          edge_index)
 
             # get loss
-            loss_D, loss_GE = self.loss_function(X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion)
+            loss_D, loss_GE = self.loss_function(X, X_, Y_true_pre, Y_fake_pre,
+                                                 edge_index, criterion)
 
             loss_D.backward(retain_graph=True)
             loss_GE.backward()
@@ -194,12 +194,15 @@ class GAAN(BaseDetector):
 
             # print out log information
             if self.verbose:
-                score = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion)
+                score = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
+                                            edge_index, criterion)
                 auc = roc_auc_score(labels, score.detach().cpu().numpy())
-                print("Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f} | AUC {:.4f}"
-                      .format(epoch, loss_GE.item(), loss_D.item(), auc))
+                print(
+                    "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f} | AUC {:.4f}"
+                        .format(epoch, loss_GE.item(), loss_D.item(), auc))
 
-        score = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion)
+        score = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index,
+                                    criterion)
         self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
 
@@ -233,11 +236,14 @@ class GAAN(BaseDetector):
         self.discriminator.eval()
 
         # construct the vector for holding the reconstruction error
-        gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(self.device)
-        X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise, edge_index)
+        gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
+            self.device)
+        X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise,
+                                                      edge_index)
 
         criterion = torch.nn.BCELoss()
-        outlier_scores = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion)
+        outlier_scores = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
+                                             edge_index, criterion)
 
         return outlier_scores.detach().cpu().numpy()
 
@@ -280,7 +286,8 @@ class GAAN(BaseDetector):
 
         return X_, Y_true_pre, Y_fake_pre
 
-    def loss_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion):
+    def loss_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index,
+                      criterion):
         """
         Description
         -----------
@@ -316,14 +323,16 @@ class GAAN(BaseDetector):
         # structure reconstruction loss
         Y_true = torch.ones((edge_index.shape[1]), 1).to(self.device)
         Y_fake = torch.zeros((edge_index.shape[1]), 1).to(self.device)
-        structure_errors = criterion(Y_true_pre, Y_true) + criterion(Y_fake_pre, Y_fake)
+        structure_errors = criterion(Y_true_pre, Y_true) + criterion(
+            Y_fake_pre, Y_fake)
 
         loss_D = structure_errors
         loss_GE = torch.mean(attribute_errors)
 
         return loss_D, loss_GE
 
-    def score_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index, criterion):
+    def score_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index,
+                       criterion):
         """
         Description
         -----------
@@ -362,12 +371,16 @@ class GAAN(BaseDetector):
             Y_true = torch.ones((edge_index_i.shape[0]), 1).to(self.device)
             Y_fake = torch.zeros((edge_index_i.shape[0]), 1).to(self.device)
 
-            Y_true_pre_i = torch.reshape(Y_true_pre, [Y_true_pre.shape[0]])[edge_index_i]
-            Y_fake_pre_i = torch.reshape(Y_fake_pre, [Y_fake_pre.shape[0]])[edge_index_i]
+            Y_true_pre_i = torch.reshape(Y_true_pre, [Y_true_pre.shape[0]])[
+                edge_index_i]
+            Y_fake_pre_i = torch.reshape(Y_fake_pre, [Y_fake_pre.shape[0]])[
+                edge_index_i]
 
-            structure_errors[i] = criterion(Y_true_pre_i, Y_true) + criterion(Y_fake_pre_i, Y_fake)
+            structure_errors[i] = criterion(Y_true_pre_i, Y_true) + criterion(
+                Y_fake_pre_i, Y_fake)
 
-        score = self.alpha * attribute_errors + (1 - self.alpha) * structure_errors
+        score = self.alpha * attribute_errors + (
+                1 - self.alpha) * structure_errors
 
         return score
 
@@ -398,7 +411,6 @@ class GAAN(BaseDetector):
         Y = G.y.to(self.device)
 
         return X, edge_index, Y
-
 
 
 class Generator(nn.Module):
@@ -472,84 +484,8 @@ class Discriminator(nn.Module):
     def forward(self, Z, edge_index):
         # dot product of the embedding output
         dot_product = Z.mm(Z.t())
-        edge_prob = torch.reshape(dot_product[edge_index[0], edge_index[1]], [edge_index.shape[1], 1])
+        edge_prob = torch.reshape(dot_product[edge_index[0], edge_index[1]],
+                                  [edge_index.shape[1], 1])
         Y = self.act(self.fc1(edge_prob))
 
         return Y
-
-
-
-if __name__ == "__main__":
-    # 'Flickr', 'BlogCatalog', 'Cora'
-    data = 'Flickr'
-
-    if data == 'Flickr':
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        'Flickr')
-
-        # this gives us a PyG data object
-        data = AttributedGraphDataset(path, 'Flickr')[0]
-        data.x = data.x.to_dense()
-
-        data, ys = gen_structure_outliers(data, m=15, n=15)
-        data, yf = gen_attribute_outliers(data, n=450, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-    if data == 'BlogCatalog':
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        'BlogCatalog')
-
-        # this gives us a PyG data object
-        data = AttributedGraphDataset(path, 'BlogCatalog', transform=T.NormalizeFeatures())[0]
-
-        data, ys = gen_structure_outliers(data, m=15, n=10)
-        data, yf = gen_attribute_outliers(data, n=300, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-    if data == 'Cora':
-        # data loading
-        dataset = 'Cora'
-
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
-
-        # this gives us a PyG data object
-        data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
-
-        data, ys = gen_structure_outliers(data, m=10, n=10)
-        data, yf = gen_attribute_outliers(data, n=100, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
-
-    # model initialization
-    model = GAAN()
-
-    print('training...')
-    model.fit(data)
-
-    print('predicting for probability')
-    prob = model.predict_proba(data)
-    print('Probability', prob)
-    print()
-
-    print('predicting for raw scores')
-    outlier_scores = model.decision_function(data)
-    print('Raw scores', outlier_scores)
-    print()
-
-    print('predicting for labels')
-    labels = model.predict(data)
-    print('Labels', labels)
-    print()
-
-    print('predicting for labels with confidence')
-    labels, confidence = model.predict(data, return_confidence=True)
-    print('Labels', labels)
-    print('Confidence', confidence)
-
-    print('evaluating outlier detection performance')
-    auc_score = roc_auc_score(data.y, outlier_scores)
-    print('AUC Score', auc_score)
-    print()
-

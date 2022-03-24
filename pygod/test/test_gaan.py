@@ -4,104 +4,102 @@ import unittest
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
-import os.path as osp
-from shutil import rmtree
-
 import torch
-import torch_geometric.transforms as T
-from torch_geometric.datasets import Planetoid
-
 from pygod.models import GAAN
-from pygod.utils import gen_attribute_outliers, gen_structure_outliers
 from pygod.evaluator.metric import roc_auc_score
-from torch_geometric.datasets import AttributedGraphDataset
-from torch_sparse import SparseTensor
-
-import torch
-import argparse
-import os.path as osp
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_sparse import SparseTensor
-from torch_geometric.nn import GATConv
-from sklearn.metrics import roc_auc_score
-from torch_geometric.datasets import AttributedGraphDataset
-from sklearn.utils.validation import check_is_fitted
-
-from torch_geometric.datasets import AttributedGraphDataset, HGBDataset
-from torch_geometric.utils import to_scipy_sparse_matrix
 
 
-if __name__ == "__main__":
-    # 'Flickr', 'BlogCatalog', 'Cora'
-    data = 'Flickr'
+class testGAAN(unittest.TestCase):
+    def setUp(self):
+        # use the pre-defined fake graph with injected outliers
+        # for testing purpose
 
-    if data == 'Flickr':
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        'Flickr')
+        # the roc should be higher than this; it is model dependent
+        self.roc_floor = 0.65
 
-        # this gives us a PyG data object
-        data = AttributedGraphDataset(path, 'Flickr')[0]
-        data.x = data.x.to_dense()
+        test_graph = torch.load('./test_graph.pt')
+        self.data = test_graph
 
-        data, ys = gen_structure_outliers(data, m=15, n=15)
-        data, yf = gen_attribute_outliers(data, n=450, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
+        self.model = GAAN()
+        self.model.fit(self.data)
 
-    if data == 'BlogCatalog':
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
-                        'BlogCatalog')
+    def test_parameters(self):
+        assert (hasattr(self.model, 'decision_scores_') and
+                self.model.decision_scores_ is not None)
+        assert (hasattr(self.model, 'labels_') and
+                self.model.labels_ is not None)
+        assert (hasattr(self.model, 'threshold_') and
+                self.model.threshold_ is not None)
+        assert (hasattr(self.model, '_mu') and
+                self.model._mu is not None)
+        assert (hasattr(self.model, '_sigma') and
+                self.model._sigma is not None)
+        assert (hasattr(self.model, 'generator') and
+                self.model.generator is not None)
 
-        # this gives us a PyG data object
-        data = AttributedGraphDataset(path, 'BlogCatalog', transform=T.NormalizeFeatures())[0]
+    def test_train_scores(self):
+        assert_equal(len(self.model.decision_scores_), len(self.data.y))
 
-        data, ys = gen_structure_outliers(data, m=15, n=10)
-        data, yf = gen_attribute_outliers(data, n=300, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
+    def test_prediction_scores(self):
+        pred_scores = self.model.decision_function(self.data)
 
-    if data == 'Cora':
-        # data loading
-        dataset = 'Cora'
+        # check score shapes
+        assert_equal(pred_scores.shape[0], self.data.y.shape[0])
 
-        # data loading
-        path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', dataset)
+        # check performance
+        assert (roc_auc_score(self.data.y, pred_scores) >= self.roc_floor)
 
-        # this gives us a PyG data object
-        data = Planetoid(path, dataset, transform=T.NormalizeFeatures())[0]
+    def test_prediction_labels(self):
+        pred_labels = self.model.predict(self.data)
+        assert_equal(pred_labels.shape[0], self.data.y.shape[0])
 
-        data, ys = gen_structure_outliers(data, m=10, n=10)
-        data, yf = gen_attribute_outliers(data, n=100, k=50)
-        data.y = torch.logical_or(torch.tensor(ys), torch.tensor(yf))
+    def test_prediction_proba(self):
+        pred_proba = self.model.predict_proba(self.data)
+        assert (pred_proba.min() >= 0)
+        assert (pred_proba.max() <= 1)
 
-    # model initialization
-    model = GAAN()
+    def test_prediction_proba_linear(self):
+        pred_proba = self.model.predict_proba(self.data, method='linear')
+        assert (pred_proba.min() >= 0)
+        assert (pred_proba.max() <= 1)
 
-    print('training...')
-    model.fit(data)
+    def test_prediction_proba_unify(self):
+        pred_proba = self.model.predict_proba(self.data, method='unify')
+        assert (pred_proba.min() >= 0)
+        assert (pred_proba.max() <= 1)
 
-    print('predicting for probability')
-    prob = model.predict_proba(data)
-    print('Probability', prob)
-    print()
+    def test_prediction_proba_parameter(self):
+        with assert_raises(ValueError):
+            self.model.predict_proba(self.data, method='something')
 
-    print('predicting for raw scores')
-    outlier_scores = model.decision_function(data)
-    print('Raw scores', outlier_scores)
-    print()
+    def test_prediction_labels_confidence(self):
+        pred_labels, confidence = self.model.predict(self.data,
+                                                     return_confidence=True)
+        assert_equal(pred_labels.shape[0], self.data.y.shape[0])
+        assert_equal(confidence.shape[0], self.data.y.shape[0])
+        assert (confidence.min() >= 0)
+        assert (confidence.max() <= 1)
 
-    print('predicting for labels')
-    labels = model.predict(data)
-    print('Labels', labels)
-    print()
+    def test_prediction_proba_linear_confidence(self):
+        pred_proba, confidence = self.model.predict_proba(self.data,
+                                                          method='linear',
+                                                          return_confidence=True)
+        assert (pred_proba.min() >= 0)
+        assert (pred_proba.max() <= 1)
 
-    print('predicting for labels with confidence')
-    labels, confidence = model.predict(data, return_confidence=True)
-    print('Labels', labels)
-    print('Confidence', confidence)
+        assert_equal(confidence.shape[0], self.data.y.shape[0])
+        assert (confidence.min() >= 0)
+        assert (confidence.max() <= 1)
 
-    print('evaluating outlier detection performance')
-    auc_score = roc_auc_score(data.y, outlier_scores)
-    print('AUC Score', auc_score)
-    print()
+    def test_model_clone(self):
+        pass
+        # clone_clf = clone(self.model)
+
+    def tearDown(self):
+        pass
+        # remove the data folder
+        # rmtree(self.path)
+
+
+if __name__ == '__main__':
+    unittest.main()
