@@ -6,23 +6,25 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.models import GCNAE
+
+from pygod.models import AnomalyDAE
 from pygod.evaluator.metric import roc_auc_score
+
 
 seed_everything(42)
 
-class testGCNAE(unittest.TestCase):
+class TestAnomalyDAE(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.62
+        self.roc_floor = 0.68
 
         test_graph = torch.load('./test_graph.pt')
         self.data = test_graph
 
-        self.model = GCNAE()
+        self.model = AnomalyDAE()
         self.model.fit(self.data)
 
     def test_parameters(self):

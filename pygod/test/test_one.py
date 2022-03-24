@@ -5,9 +5,11 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 import torch
+from torch_geometric.seed import seed_everything
 from pygod.models import ONE
 from pygod.evaluator.metric import roc_auc_score
 
+seed_everything(42)
 
 class testGCNAE(unittest.TestCase):
     def setUp(self):
