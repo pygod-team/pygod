@@ -51,7 +51,7 @@ class OCGNN(BaseDetector):
     machine, but in the embedding space after feeding towards several layers
      of GCN.
 
-    See: cite 'wang2021one' for details.
+    See :cite:`wang2021one` for details.
 
     Parameters
     ----------

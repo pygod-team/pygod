@@ -49,7 +49,8 @@ class ONE(BaseDetector):
     ONE (Outlier Aware Network Embedding for Attributed Networks)
     Reference: <https://arxiv.org/pdf/1811.07609.pdf>
 
-    See: cite 'bandyopadhyay2019outlier' for details.
+
+    See :cite:`bandyopadhyay2019outlier` for details.
 
     Parameters
     ----------
@@ -359,6 +360,7 @@ class ONE(BaseDetector):
         processed_data : tuple of data object
             The necessary information from the raw PyG Data object.
         """
+
         # todo: need some assert or try/catch to make sure certain attributes
         # are presented.
 

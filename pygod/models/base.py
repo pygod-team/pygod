@@ -143,6 +143,7 @@ class BaseDetector(object):
     def predict_proba(self, G, method='linear', return_confidence=False):
         """Predict the probability of a sample being outlier. Two approaches
         are possible:
+
         1. simply use Min-max conversion to linearly transform the outlier
            scores into the range of [0,1]. The model must be
            fitted first.
@@ -333,10 +334,12 @@ class BaseDetector(object):
         deep : bool, optional (default=True)
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
         Returns
         -------
         params : mapping of string to any
             Parameter names mapped to their values.
+
         """
 
         out = dict()
