@@ -223,9 +223,9 @@ Our core team members include:
 `Yue Zhao (CMU) <https://www.andrew.cmu.edu/user/yuezhao2/>`_,
 `Xueying Ding (CMU) <https://scholar.google.com/citations?user=U9CMsh0AAAAJ&hl=en>`_,
 `Xiyang Hu (CMU) <https://www.andrew.cmu.edu/user/xiyanghu/>`_,
-`Canyu Chen (IIT) <https://github.com/pygod-team/pygod>`_,
 `Ruitong Zhang (BUAA) <https://github.com/pygod-team/pygod>`_,
-`Kaize Ding (ASU) <https://www.public.asu.edu/~kding9/>`_
+`Kaize Ding (ASU) <https://www.public.asu.edu/~kding9/>`_,
+`Canyu Chen (IIT) <https://github.com/pygod-team/pygod>`_,
 
 Reach out us by submitting an issue report or email us at **<tba>add an email<tba>**
 
