@@ -3,7 +3,7 @@ Python Graph Outlier Detection (PyGOD)
 
 
 .. image:: docs/pygod_logo.png
-   :width: 600
+   :width: 1050
    :alt: PyGOD Logo
    :align: center
 
