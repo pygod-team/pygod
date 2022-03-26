@@ -19,13 +19,13 @@
 
 PyGOD is a comprehensive **Python library** for **detecting outlying objects**
 in **graphs**. This exciting yet challenging field has many key applications
-in financial fraud detection and fake news detection.
+in fraud detection :cite:`liu2020alleviating`  and fake news detection :cite:`dou2021user`.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as Dominant (SDM'19) and coLA (TNNLS'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
-and `PyTorch <https://pytorch.org/>`_. See examples below for detecting anomalies with GNN in 5 lines!
-
+and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
+See examples below for detecting anomalies with GNN in 5 lines!
 
 PyGOD is featured for:
 

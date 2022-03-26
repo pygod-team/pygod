@@ -7,19 +7,45 @@ Python Graph Outlier Detection (PyGOD)
    :alt: PyGOD Logo
    :align: center
 
-**<tba>Add badges here<tba>**
+**<tba>These badges will work once it is public<tba>**
+
+.. image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
+   :target: https://pypi.org/project/pygod/
+   :alt: PyPI version
+
+.. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
+   :target: https://pygod.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation status
+
+.. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/stargazers
+   :alt: GitHub stars
+
+
+.. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
+   :target: https://github.com/pygod-team/pygod/network
+   :alt: GitHub forks
+
+.. image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
+   :alt: testing
+
+.. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
+   :alt: License
 
 
 -----
 
 PyGOD is a comprehensive **Python library** for **detecting outlying objects**
 in **graphs**. This exciting yet challenging field has many key applications
-in financial fraud detection and fake news detection.
+in fraud detection [#Liu2020Alleviating]_  and fake news detection [#Dou2021User]_.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as Dominant (SDM'19) and coLA (TNNLS'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
-and `PyTorch <https://pytorch.org/>`_. See examples below for detecting anomalies with GNN in 5 lines!
+and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
+See examples below for detecting anomalies with GNN in 5 lines!
 
 
 PyGOD is featured for:
@@ -240,7 +266,11 @@ Reference
 
 .. [#Ding2019Deep] Ding, K., Li, J., Bhanushali, R. and Liu, H., 2019, May. Deep anomaly detection on attributed networks. In Proceedings of the SIAM International Conference on Data Mining (SDM).
 
+.. [#Dou2021User] Dou, Y., Shu, K., Xia, C., Yu, P.S. and Sun, L., 2021, July. User preference-aware fake news detection. In Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval (pp. 2051-2055).
+
 .. [#Fan2020AnomalyDAE] Fan, H., Zhang, F. and Li, Z., 2020, May. AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks. In Proceedings of the IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP).
+
+.. [#Liu2020Alleviating] Liu, Z., Dou, Y., Yu, P.S., Deng, Y. and Peng, H., 2020, July. Alleviating the inconsistency problem of applying graph neural network to fraud detection. In Proceedings of the 43rd international ACM SIGIR conference on research and development in information retrieval (pp. 1569-1572).
 
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
 
