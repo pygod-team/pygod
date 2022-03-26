@@ -48,15 +48,14 @@ and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <http
 See examples below for detecting anomalies with GNN in 5 lines!
 
 
-PyGOD is featured for:
+**PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage of more than 10 algorithms**\ , including the latest graph neural networks (GNNs).
-* **Full support of various levels of detection**, such as node-, edge-, and graph-level tasks (WIP).
+* **Comprehensive coverage** of more than 10 latest graph neural networks (GNNs).
+* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using GNN with 5 Lines of Code**\ :
-
 
 .. code-block:: python
 
@@ -97,17 +96,14 @@ or::
 Installation
 ^^^^^^^^^^^^
 
-It is recommended to use **pip** or **conda** for installation. Please make sure
-**the latest version** is installed, as PyGOD is updated frequently:
+It is recommended to use **pip** or **conda** (wip) for installation.
+Please make sure **the latest version** is installed, as PyGOD is updated frequently:
 
 .. code-block:: bash
 
    pip install pygod            # normal install
    pip install --upgrade pygod  # or update if needed
 
-.. code-block:: bash
-
-   conda install -c conda-forge pygod
 
 Alternatively, you could clone and run setup.py file:
 
@@ -121,10 +117,13 @@ Alternatively, you could clone and run setup.py file:
 
 
 * Python 3.6 +
-* numpy>=1.13
-* scipy>=0.19.1
-* scikit_learn>=0.20.0
-* to be finished
+* argparse>=1.4.0
+* numpy>=1.19.4
+* scikit-learn>=0.22.1
+* networkx>=2.6.3
+* scipy>=1.5.2
+* pandas>=1.1.3
+* setuptools>=50.3.1.post20201107
 
 
 **Note and PyG and PyTorch Installation**\ :
@@ -135,8 +134,6 @@ from the above links for running PyGOD:
 
 * torch>=?
 * pytorch_geometric>=?
-
-
 
 
 ----

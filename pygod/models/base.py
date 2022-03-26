@@ -9,19 +9,13 @@ from collections import defaultdict
 
 from inspect import signature
 
-import six
 import numpy as np
 from numpy import percentile
 from scipy.special import erf
 from scipy.stats import binom
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import roc_auc_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import check_classification_targets
-
-import torch
-import argparse
-import os.path as osp
 
 
 class BaseDetector(object):
@@ -436,7 +430,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across

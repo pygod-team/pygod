@@ -11,7 +11,7 @@ from pygod.evaluator.metric import roc_auc_score
 
 seed_everything(42)
 
-class testGCNAE(unittest.TestCase):
+class testONE(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose

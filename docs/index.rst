@@ -27,11 +27,11 @@ For consistently and accessibility, PyGOD is developed on top of `PyTorch Geomet
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with GNN in 5 lines!
 
-PyGOD is featured for:
+**PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage of more than 10 algorithms**\ , including the latest graph neural networks (GNNs).
-* **Full support of various levels of detection**, such as node-, edge-, and graph-level tasks (WIP).
+* **Comprehensive coverage** of more than 10 latest graph neural networks (GNNs).
+* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using GNN with 5 Lines of Code**\ :
