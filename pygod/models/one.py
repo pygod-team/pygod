@@ -14,21 +14,22 @@ from sklearn.utils.validation import check_is_fitted
 from torch_geometric.utils import to_scipy_sparse_matrix, to_networkx
 
 from . import BaseDetector
+from ..evaluator.metric import eval_roc_auc
 
 gc.enable()
 
 
 # todo: to optimize later
 # @njit
-def calculate_G(G, alpha, outl1, H, A, gamma, outl3, U, W):
-    # The update rule for G[i,k]
-    for i in range(G.shape[0]):
-        for k in range(G.shape[1]):
+def calculate_G(G_mat, alpha, outl1, H, A, gamma, outl3, U, W):
+    # The update rule for G_mat[i,k]
+    for i in range(G_mat.shape[0]):
+        for k in range(G_mat.shape[1]):
             Gik_numer = alpha * np.log(
                 np.reciprocal(outl1[i])) * np.dot(H[k, :], (
                     A[i, :] - (
-                    np.matmul(G[i], H) - np.multiply(
-                G[i, k], H[k, :])))) \
+                    np.matmul(G_mat[i], H) - np.multiply(
+                G_mat[i, k], H[k, :])))) \
                         + gamma * np.log(
                 np.reciprocal(outl3[i])) * np.dot(U[i],
                                                   W[k, :])
@@ -38,8 +39,8 @@ def calculate_G(G, alpha, outl1, H, A, gamma, outl3, U, W):
                                                   H[k, :]) + \
                         gamma * np.log(np.reciprocal(outl3[i]))
 
-            G[i, k] = Gik_numer / Gik_denom
-            return G
+            G_mat[i, k] = Gik_numer / Gik_denom
+            return G_mat
 
 
 #todo: due to the original paper has very complex loss, this algorithm is not
@@ -83,7 +84,7 @@ class ONE(BaseDetector):
         # other param
         self.verbose = verbose
 
-    def fit(self, Graph):
+    def fit(self, G):
         """
         Description
         -----------
@@ -91,7 +92,7 @@ class ONE(BaseDetector):
 
         Parameters
         ----------
-        Graph : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
 
         Returns
@@ -99,7 +100,7 @@ class ONE(BaseDetector):
         self : object
             Fitted estimator.
         """
-        A, C, true_labels = self.process_graph(Graph)
+        A, C, true_labels, labels = self.process_graph(G)
 
         assert (A.shape[0] == C.shape[0] & A.shape[0] == len(true_labels))
 
@@ -119,7 +120,7 @@ class ONE(BaseDetector):
         start_time = time.time()
 
         model = NMF(n_components=K, init='random', random_state=0)
-        self.G = model.fit_transform(A)
+        self.G_mat = model.fit_transform(A)
         self.H = model.components_
 
         model = NMF(n_components=K, init='random', random_state=0)
@@ -128,8 +129,8 @@ class ONE(BaseDetector):
 
         outl1 = outl2 = outl3 = np.ones((A.shape[0]))
 
-        Graph = to_networkx(Graph)
-        bet = nx.betweenness_centrality(Graph)
+        G = to_networkx(G)
+        bet = nx.betweenness_centrality(G)
         for i in range(len(outl1)):
             outl1[i] = float(1) / A.shape[0] + bet[i]
             outl2[i] = float(1) / A.shape[0]
@@ -141,7 +142,7 @@ class ONE(BaseDetector):
 
         count_outer = self.iter
 
-        temp1 = A - np.matmul(self.G, self.H)
+        temp1 = A - np.matmul(self.G_mat, self.H)
         temp1 = np.multiply(temp1, temp1)
         temp1 = np.multiply(np.log(np.reciprocal(outl1)),
                             np.sum(temp1, axis=1))
@@ -153,7 +154,7 @@ class ONE(BaseDetector):
                             np.sum(temp2, axis=1))
         temp2 = np.sum(temp2)
 
-        temp3 = self.G.T - np.matmul(self.W, self.U.T)
+        temp3 = self.G_mat.T - np.matmul(self.W, self.U.T)
         temp3 = np.multiply(temp3, temp3)
         temp3 = np.multiply(np.log(np.reciprocal(outl3)),
                             np.sum(temp3, axis=0).T)
@@ -168,18 +169,18 @@ class ONE(BaseDetector):
                 print('Loop {} started: \n'.format(opti_iter))
                 print("The function values which we are interested are : ")
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
 
-            # The update rule for G[i,k]
-            for i in range(self.G.shape[0]):
-                for k in range(self.G.shape[1]):
+            # The update rule for G_mat[i,k]
+            for i in range(self.G_mat.shape[0]):
+                for k in range(self.G_mat.shape[1]):
                     Gik_numer = self.alpha * np.log(
                         np.reciprocal(outl1[i])) * np.dot(self.H[k, :], (
                             A[i, :] - (
-                            np.matmul(self.G[i], self.H) - np.multiply(
-                        self.G[i, k], self.H[k, :])))) \
+                            np.matmul(self.G_mat[i], self.H) - np.multiply(
+                        self.G_mat[i, k], self.H[k, :])))) \
                                 + self.gamma * np.log(
                         np.reciprocal(outl3[i])) * np.dot(self.U[i],
                                                           self.W[k, :])
@@ -189,33 +190,33 @@ class ONE(BaseDetector):
                                                           self.H[k, :]) + \
                                 self.gamma * np.log(np.reciprocal(outl3[i]))
 
-                    self.G[i, k] = Gik_numer / Gik_denom
+                    self.G_mat[i, k] = Gik_numer / Gik_denom
 
-            # self.G = calculate_G(self.G, self.alpha, outl1, self.H, A, self.gamma, outl3, self.U, self.W)
+            # self.G_mat = calculate_G(self.G_mat, self.alpha, outl1, self.H, A, self.gamma, outl3, self.U, self.W)
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
-                print('Done for G')
+                print('Done for G_mat')
 
             # The update rule for H[k,j]
             for k in range(self.H.shape[0]):
                 for j in range(self.H.shape[1]):
                     Hkj_numer = self.alpha * np.dot(
                         np.multiply(np.log(np.reciprocal(outl1)),
-                                    self.G[:, k]), \
-                        (A[:, j] - (np.matmul(self.G,
+                                    self.G_mat[:, k]), \
+                        (A[:, j] - (np.matmul(self.G_mat,
                                               self.H[:, j]) - np.multiply(
-                            self.G[:, k],
+                            self.G_mat[:, k],
                             self.H[k, j]))))
                     Hkj_denom = self.alpha * (
                         np.dot(np.log(np.reciprocal(outl1)),
-                               np.multiply(self.G[:, k], self.G[:, k])))
+                               np.multiply(self.G_mat[:, k], self.G_mat[:, k])))
 
                     self.H[k, j] = Hkj_numer / Hkj_denom
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -235,8 +236,8 @@ class ONE(BaseDetector):
 
                     Uik_numer_2 = self.gamma * np.log(
                         np.reciprocal(outl3[i])) * np.dot( \
-                        (self.G[i, :] - (np.matmul(self.U[i, :],
-                                                   self.W) - np.multiply(
+                        (self.G_mat[i, :] - (np.matmul(self.U[i, :],
+                                                       self.W) - np.multiply(
                             self.U[i, k], self.W[:, k]))), self.W[:, k])
 
                     Uik_denom = self.beta * np.log(
@@ -248,7 +249,7 @@ class ONE(BaseDetector):
 
                     self.U[i, k] = (Uik_numer_1 + Uik_numer_2) / Uik_denom
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -271,7 +272,7 @@ class ONE(BaseDetector):
 
                     self.V[k][d] = Vkd_numer / Vkd_denom
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -282,9 +283,9 @@ class ONE(BaseDetector):
             logoi = np.log(np.reciprocal(outl3))
             sqrt_logoi = np.sqrt(logoi)
             sqrt_logoi = np.tile(sqrt_logoi, (K, 1))
-            assert (sqrt_logoi.shape == self.G.T.shape)
+            assert (sqrt_logoi.shape == self.G_mat.T.shape)
 
-            term1 = np.multiply(sqrt_logoi, self.G.T)
+            term1 = np.multiply(sqrt_logoi, self.G_mat.T)
             term2 = np.multiply(sqrt_logoi, self.U.T)
 
             svd_matrix = np.matmul(term1, term2.T)
@@ -293,7 +294,7 @@ class ONE(BaseDetector):
 
             self.W = np.matmul(svd_u, svd_vt)
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -303,13 +304,18 @@ class ONE(BaseDetector):
 
             outl1, outl2, outl3 = self.cal_outlierScore(A, C)
 
-            self.calc_lossValues(A, C, self.G, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
                 print('Done for outlier score')
                 print('Loop {} ended: \n'.format(opti_iter))
 
+        if self.verbose:
+            if labels is not None:
+                auc = eval_roc_auc(labels, outl2)
+                print(" | AUC {:.4f}".format(auc), end='')
+            print()
 
         # Use outl2 as the outlier score.
         # In the paper: "We have observed experimentally thatO2is more important to determine outliers."
@@ -318,7 +324,7 @@ class ONE(BaseDetector):
 
         return self
 
-    def decision_function(self, Graph):
+    def decision_function(self, G):
         """
         Description
         -----------
@@ -335,15 +341,15 @@ class ONE(BaseDetector):
         outl2 : numpy.ndarray
             The anomaly score of shape :math:`N`.
         """
-        check_is_fitted(self, ['W', 'G', 'H', 'U', 'V'])
+        check_is_fitted(self, ['W', 'G_mat', 'H', 'U', 'V'])
 
-        A, C, true_labels = self.process_graph(Graph)
+        A, C, true_labels, y = self.process_graph(G)
 
         _, outl2, _ = self.cal_outlierScore(A, C)
 
         return outl2
 
-    def process_graph(self, Graph):
+    def process_graph(self, G):
         """
         Description
         -----------
@@ -364,19 +370,25 @@ class ONE(BaseDetector):
         # todo: need some assert or try/catch to make sure certain attributes
         # are presented.
 
-        A = to_scipy_sparse_matrix(Graph['edge_index']).toarray().astype(
+        A = to_scipy_sparse_matrix(G['edge_index']).toarray().astype(
             'float64')
 
-        C = Graph['x'].numpy().astype('float64')
+        C = G['x'].numpy().astype('float64')
 
-        true_labels = Graph['y'].tolist()
+        true_labels = G['y'].tolist()
 
-        return A, C, true_labels
+        if hasattr(G, 'y'):
+            y = G.y
+        else:
+            y = None
+
+        # return data objects needed for the network
+        return A, C, true_labels, y
 
     def calc_lossValues(self,
                         A,
                         C,
-                        G,
+                        G_mat,
                         H,
                         U,
                         V,
@@ -387,7 +399,20 @@ class ONE(BaseDetector):
                         alpha,
                         beta,
                         gamma):
-        temp1 = A - np.matmul(G, H)
+        """
+        Description
+        -----------
+        Calculate the loss. This function is called inside the fit() function.
+
+        Parameters
+        ----------
+        Multiple variables inside the fit() function.
+
+        Returns
+        -------
+        None
+        """
+        temp1 = A - np.matmul(G_mat, H)
         temp1 = np.multiply(temp1, temp1)
         temp1 = np.multiply(np.log(np.reciprocal(outl1)),
                             np.sum(temp1, axis=1))
@@ -399,7 +424,7 @@ class ONE(BaseDetector):
                             np.sum(temp2, axis=1))
         temp2 = np.sum(temp2)
 
-        temp3 = G.T - np.matmul(W, U.T)
+        temp3 = G_mat.T - np.matmul(W, U.T)
         temp3 = np.multiply(temp3, temp3)
         temp3 = np.multiply(np.log(np.reciprocal(outl3)),
                             np.sum(temp3, axis=0).T)
@@ -414,7 +439,24 @@ class ONE(BaseDetector):
     def cal_outlierScore(self,
                          A,
                          C):
-        GH = np.matmul(self.G, self.H)
+        """
+        Description
+        -----------
+        Calculate the outlier scores.
+
+        Parameters
+        ----------
+        A : np.array instance
+            The adjacency matrix.
+        C : np.array instance
+            The node attribute matrix.
+
+        Returns
+        -------
+        outlier_scores : tuple of np.array
+            Three sets of outlier scores from three different layers.
+        """
+        GH = np.matmul(self.G_mat, self.H)
         UV = np.matmul(self.U, self.V)
         WUTrans = np.matmul(self.W, self.U.T)
 
@@ -434,11 +476,11 @@ class ONE(BaseDetector):
         outl2 = outl2_numer / outl2_denom
 
         outl3_numer = self.gamma * (
-            np.multiply((self.G.T - WUTrans), (self.G.T - WUTrans))).sum(
+            np.multiply((self.G_mat.T - WUTrans), (self.G_mat.T - WUTrans))).sum(
             axis=0).T
 
         outl3_denom = self.gamma * pow(
-            np.linalg.norm((self.G.T - WUTrans), 'fro'), 2)
+            np.linalg.norm((self.G_mat.T - WUTrans), 'fro'), 2)
 
         outl3_numer = outl3_numer * self.mu
         outl3 = outl3_numer / outl3_denom

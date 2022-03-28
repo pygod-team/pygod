@@ -22,32 +22,32 @@ path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data',
                 dataset)
 
 # this gives us a PyG data object
-Graph = AttributedGraphDataset(path, 'CiteSeer')[0]
+G = AttributedGraphDataset(path, 'CiteSeer')[0]
 
 # model initialization
 model = ONE()
 
 print('training...')
-model.fit(Graph)
+model.fit(G)
 print()
 
 print('predicting for probability')
-prob = model.predict_proba(Graph)
+prob = model.predict_proba(G)
 print('Probability', prob)
 print()
 
 print('predicting for raw scores')
-outlier_scores = model.decision_function(Graph)
+outlier_scores = model.decision_function(G)
 print('Raw scores', outlier_scores)
 print()
 
 print('predicting for labels')
-labels = model.predict(Graph)
+labels = model.predict(G)
 print('Labels', labels)
 print()
 
 print('predicting for labels with confidence')
-labels, confidence = model.predict(Graph, return_confidence=True)
+labels, confidence = model.predict(G, return_confidence=True)
 print('Labels', labels)
 print('Confidence', confidence)
 print()
