@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
-from ..evaluator.metric import roc_auc_score
+from ..utils.metric import eval_roc_auc
 
 
 class GAAN(BaseDetector):
@@ -196,7 +196,7 @@ class GAAN(BaseDetector):
             if self.verbose:
                 score = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
                                             edge_index, criterion)
-                auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                auc = eval_roc_auc(labels, score.detach().cpu().numpy())
                 print(
                     "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f} | AUC {:.4f}"
                         .format(epoch, loss_GE.item(), loss_D.item(), auc))

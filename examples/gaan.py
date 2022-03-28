@@ -12,7 +12,7 @@ from torch_geometric.datasets import Planetoid
 
 from pygod.models import GAAN
 from pygod.utils import gen_attribute_outliers, gen_structure_outliers
-from pygod.evaluator.metric import eval_roc_auc, eval_recall_at_k, \
+from pygod.utils.metric import eval_roc_auc, eval_recall_at_k, \
     eval_precision_at_k
 
 dataset = 'Cora'

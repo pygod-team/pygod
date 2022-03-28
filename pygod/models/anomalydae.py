@@ -4,19 +4,16 @@
 # License: BSD 2 clause
 
 
-
 import torch
-import argparse
-import os.path as osp
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_sparse import SparseTensor
 from torch_geometric.nn import GATConv
-from sklearn.metrics import roc_auc_score
-from torch_geometric.datasets import AttributedGraphDataset
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from ..utils.metric import eval_roc_auc
+
 
 class StructureAE(nn.Module):
     """
@@ -50,29 +47,30 @@ class StructureAE(nn.Module):
     embed_x : torch.Tensor
               Embedd nodes after the attention layer
     """
+
     def __init__(self,
                  in_dim,
                  embed_dim,
                  out_dim,
-                 dropout,):    
+                 dropout, ):
         super(StructureAE, self).__init__()
         self.dense = nn.Linear(in_dim, embed_dim)
         self.attention_layer = GATConv(embed_dim, out_dim)
         self.dropout = dropout
 
     def forward(self,
-                x, 
+                x,
                 edge_index):
-        #encoder
+        # encoder
         x = F.relu(self.dense(x))
         x = F.dropout(x, self.dropout)
-        #print(x.shape, adj.shape)
+        # print(x.shape, adj.shape)
         embed_x = self.attention_layer(x, edge_index)
-        #decoder
+        # decoder
         x = torch.sigmoid(embed_x @ embed_x.T)
         return x, embed_x
 
-    
+
 class AttributeAE(nn.Module):
     """
     Description
@@ -100,8 +98,9 @@ class AttributeAE(nn.Module):
     x : torch.Tensor
         Reconstructed attribute (feature) of nodes.
     """
+
     def __init__(self,
-                 in_dim, 
+                 in_dim,
                  embed_dim,
                  out_dim,
                  dropout):
@@ -109,21 +108,21 @@ class AttributeAE(nn.Module):
         self.dense1 = nn.Linear(in_dim, embed_dim)
         self.dense2 = nn.Linear(embed_dim, out_dim)
         self.dropout = dropout
-    
-    def forward(self, 
+
+    def forward(self,
                 x,
                 struct_embed):
-        #encoder
+        # encoder
         x = F.relu(self.dense1(x.T))
         x = F.dropout(x, self.dropout)
         x = self.dense2(x)
         x = F.dropout(x, self.dropout)
-        #decoder
-        x =  struct_embed @x.T
-        return x 
+        # decoder
+        x = struct_embed @ x.T
+        return x
 
-    
-class AnomalyDAE_Base(nn.Module):  
+
+class AnomalyDAE_Base(nn.Module):
     """
     Description
     -----------
@@ -161,15 +160,14 @@ class AnomalyDAE_Base(nn.Module):
         self.structure_AE = StructureAE(in_node_dim, embed_dim,
                                         out_dim, dropout)
         self.attribute_AE = AttributeAE(in_num_dim, embed_dim,
-                                        out_dim, dropout)  
+                                        out_dim, dropout)
 
-    def forward(self, 
-                x, 
+    def forward(self,
+                x,
                 edge_index):
         A_hat, embed_x = self.structure_AE(x, edge_index)
         X_hat = self.attribute_AE(x, embed_x)
         return A_hat, X_hat
-
 
 
 class AnomalyDAE(BaseDetector):
@@ -229,23 +227,23 @@ class AnomalyDAE(BaseDetector):
     >>> model.fit(data)
     >>> prediction = model.predict(data)
     """
-        
+
     def __init__(self,
-                 embed_dim = 8,
-                 out_dim = 4,
+                 embed_dim=8,
+                 out_dim=4,
                  dropout=0.2,
                  weight_decay=1e-5,
-                 act = F.relu,
+                 act=F.relu,
                  alpha=0.5,
-                 theta = 1.01,
-                 eta = 1.01,
+                 theta=1.01,
+                 eta=1.01,
                  contamination=0.1,
-                 lr = 0.004,
-                 epoch = 100,
-                 gpu = 0,
-                 verbose = False):
+                 lr=0.004,
+                 epoch=100,
+                 gpu=0,
+                 verbose=False):
         super(AnomalyDAE, self).__init__(contamination=contamination)
-       
+
         # model param
         self.embed_dim = embed_dim
         self.out_dim = out_dim
@@ -255,7 +253,7 @@ class AnomalyDAE(BaseDetector):
         self.alpha = alpha
         self.theta = theta
         self.eta = eta
-        
+
         # training param
         self.lr = lr
         self.epoch = epoch
@@ -268,9 +266,7 @@ class AnomalyDAE(BaseDetector):
         self.verbose = verbose
         self.model = None
 
-
-        
-    def fit(self,G):
+    def fit(self, G):
         """
         Description
         -----------
@@ -287,12 +283,12 @@ class AnomalyDAE(BaseDetector):
             Fitted estimator.
         """
         attrs, adj, edge_index, labels = self.process_graph(G)
-        self.model = AnomalyDAE_Base(in_node_dim = attrs.shape[1],
-                                  in_num_dim = attrs.shape[0],
-                                  embed_dim = self.embed_dim,
-                                  out_dim = self.out_dim,                    
-                                  dropout=self.dropout,
-                                  act=self.act).to(self.device)   
+        self.model = AnomalyDAE_Base(in_node_dim=attrs.shape[1],
+                                     in_num_dim=attrs.shape[0],
+                                     embed_dim=self.embed_dim,
+                                     out_dim=self.out_dim,
+                                     dropout=self.dropout,
+                                     act=self.act).to(self.device)
 
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
@@ -302,31 +298,30 @@ class AnomalyDAE(BaseDetector):
             self.model.train()
             optimizer.zero_grad()
             A_hat, X_hat = self.model(attrs, edge_index)
-            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat, 
-                                                attrs, X_hat)
+            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat,
+                                                          attrs, X_hat)
             l = torch.mean(loss)
             l.backward()
             optimizer.step()
-            
+
             print("Epoch:", '%04d' % (epoch), "train_loss=",
-                      "{:.5f}".format(l.item()), "train/struct_loss=",
-                      "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
-                      "{:.5f}".format(feat_loss.item()))
+                  "{:.5f}".format(l.item()), "train/struct_loss=",
+                  "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
+                  "{:.5f}".format(feat_loss.item()))
 
             self.model.eval()
             A_hat, X_hat = self.model(attrs, edge_index)
-            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat, 
-                                                attrs, X_hat)
+            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat,
+                                                          attrs, X_hat)
             score = loss.detach().cpu().numpy()
             if self.verbose:
                 print("Epoch:", '%04d' % (epoch), 'Auc',
-                  roc_auc_score(label, score))
+                      eval_roc_auc(labels, score))
 
         self.decision_scores_ = score
         self._process_decision_scores()
         return self
 
-    
     def decision_function(self, G):
         """
         Description
@@ -346,23 +341,20 @@ class AnomalyDAE(BaseDetector):
         anomaly_scores : numpy.ndarray
             The anomaly score of shape :math:`N`.
         """
-            
-            
+
         check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
-        attrs, adj, edge_index, _= self.process_graph(G)
-    
+        attrs, adj, edge_index, _ = self.process_graph(G)
+
         # enable the evaluation mode
         self.model.eval()
 
         # construct the vector for holding the reconstruction error
         A_hat, X_hat = self.model(attrs, edge_index)
-        outlier_scores, _, _  = self.loss_func(adj, A_hat, attrs, X_hat)
+        outlier_scores, _, _ = self.loss_func(adj, A_hat, attrs, X_hat)
         return outlier_scores.detach().cpu().numpy()
 
-       
-    
     def process_graph(self, G):
         """
         Description
@@ -387,7 +379,7 @@ class AnomalyDAE(BaseDetector):
             Labels of nodes.
         """
         edge_index = G.edge_index
-       
+
         #  via sparse matrix operation
         dense_adj \
             = SparseTensor(row=edge_index[0], col=edge_index[1]).to_dense()
@@ -409,33 +401,33 @@ class AnomalyDAE(BaseDetector):
 
     def loss_func(self,
                   adj,
-                  A_hat, 
-                  attrs, 
+                  A_hat,
+                  attrs,
                   X_hat):
         # generate hyperparameter - structure penalty
-        reversed_adj  = torch.ones(adj.shape).to(self.device) - adj
-        thetas = torch.where(reversed_adj > 0, reversed_adj, 
+        reversed_adj = torch.ones(adj.shape).to(self.device) - adj
+        thetas = torch.where(reversed_adj > 0, reversed_adj,
                              torch.full(adj.shape, self.theta).to(self.device))
-    
+
         # generate hyperparameter - node penalty
         reversed_attr = torch.ones(attrs.shape).to(self.device) - attrs
-        etas = torch.where(reversed_attr == 1, reversed_attr, 
+        etas = torch.where(reversed_attr == 1, reversed_attr,
                            torch.full(attrs.shape, self.eta).to(self.device))
-    
+
         # Attribute reconstruction loss
         diff_attribute = torch.pow(X_hat -
-                                   attrs, 2)  * etas
-        attribute_reconstruction_errors =\
-                        torch.sqrt(torch.sum(diff_attribute, 1))
+                                   attrs, 2) * etas
+        attribute_reconstruction_errors = \
+            torch.sqrt(torch.sum(diff_attribute, 1))
         attribute_cost = torch.mean(attribute_reconstruction_errors)
 
         # structure reconstruction loss
         diff_structure = torch.pow(A_hat - adj, 2) * thetas
-        structure_reconstruction_errors =\
-                        torch.sqrt(torch.sum(diff_structure, 1))
+        structure_reconstruction_errors = \
+            torch.sqrt(torch.sum(diff_structure, 1))
         structure_cost = torch.mean(structure_reconstruction_errors)
 
         cost = self.alpha * attribute_reconstruction_errors + (
-            1 - self.alpha) * structure_reconstruction_errors
-    
+                1 - self.alpha) * structure_reconstruction_errors
+
         return cost, structure_cost, attribute_cost

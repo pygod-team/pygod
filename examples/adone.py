@@ -13,7 +13,7 @@ from torch_geometric.datasets import Planetoid
 
 from pygod.models import AdONE
 from pygod.utils import gen_attribute_outliers, gen_structure_outliers
-from pygod.evaluator.metric import roc_auc_score
+from pygod.utils.metric import eval_roc_auc
 
 
 dataset = 'Cora'
@@ -56,6 +56,6 @@ print('Labels', labels)
 print('Confidence', confidence)
 
 print('evaluating outlier detection performance')
-auc_score = roc_auc_score(data.y, outlier_scores)
+auc_score = eval_roc_auc(data.y, outlier_scores)
 print('AUC Score', auc_score)
 print()

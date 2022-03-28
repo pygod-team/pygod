@@ -12,7 +12,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
-from ..evaluator.metric import eval_roc_auc
+from ..utils.metric import eval_roc_auc
 
 
 class AdONE(BaseDetector):

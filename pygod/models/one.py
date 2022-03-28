@@ -14,7 +14,7 @@ from sklearn.utils.validation import check_is_fitted
 from torch_geometric.utils import to_scipy_sparse_matrix, to_networkx
 
 from . import BaseDetector
-from ..evaluator.metric import eval_roc_auc
+from ..utils.metric import eval_roc_auc
 
 gc.enable()
 

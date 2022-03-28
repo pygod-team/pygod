@@ -8,12 +8,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch_geometric.nn import GCNConv
-from sklearn.metrics import roc_auc_score
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from ..utils.metric import eval_roc_auc
 
 
 class GCN_base(nn.Module):
@@ -271,7 +270,7 @@ class OCGNN(BaseDetector):
 
             if self.verbose:
                 # TODO: support more metrics
-                auc = roc_auc_score(labels, score.detach().cpu().numpy())
+                auc = eval_roc_auc(labels, score.detach().cpu().numpy())
 
                 print("Epoch {:04d}: Loss {:.4f} | AUC {:.4f}"
                       .format(epoch, loss.item(), auc))

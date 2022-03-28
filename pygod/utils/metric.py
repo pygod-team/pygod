@@ -66,7 +66,7 @@ def eval_recall_at_k(labels, pred, k, threshold=0.5):
     # Number of true positive instances in top k
     n_true_and_pred_k = sum((l and (s >= threshold)) for (s, l) in scores[:k])
 
-    recall_at_k = n_true_and_pred_k / n_true if n_true != 0 else 0
+    recall_at_k = n_true_and_pred_k / n_true if n_true != 0 else 0.0
 
     return recall_at_k
 
@@ -104,6 +104,6 @@ def eval_precision_at_k(labels, pred, k, threshold=0.5):
     # Number of true positive instances in top k
     n_true_and_pred_k = sum((l and (s >= threshold)) for (s, l) in scores[:k])
 
-    precision_at_k = n_true_and_pred_k / n_pred_k if n_pred_k != 0 else 0
+    precision_at_k = n_true_and_pred_k / n_pred_k if n_pred_k != 0 else 0.0
 
     return precision_at_k

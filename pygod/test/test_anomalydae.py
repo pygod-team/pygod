@@ -8,7 +8,7 @@ import torch
 from torch_geometric.seed import seed_everything
 
 from pygod.models import AnomalyDAE
-from pygod.evaluator.metric import roc_auc_score
+from pygod.utils.metric import eval_roc_auc
 
 
 seed_everything(42)
@@ -51,7 +51,7 @@ class TestAnomalyDAE(unittest.TestCase):
         assert_equal(pred_scores.shape[0], self.data.y.shape[0])
 
         # check performance
-        assert (roc_auc_score(self.data.y, pred_scores) >= self.roc_floor)
+        assert (eval_roc_auc(self.data.y, pred_scores) >= self.roc_floor)
 
     def test_prediction_labels(self):
         pred_labels = self.model.predict(self.data)
