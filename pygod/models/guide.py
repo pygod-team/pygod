@@ -5,7 +5,6 @@
 # License: BSD 2 clause
 
 import torch
-import pandas as pd
 import networkx as nx
 import torch.nn as nn
 import torch.nn.functional as F
@@ -289,31 +288,30 @@ class GUIDE(BaseDetector):
 
         motifs = [[n] + [features[n][i] for i in range(
             unique_motif_count)] for n in g.nodes()]
-        motifs = pd.DataFrame(motifs)
-        motifs.columns = ["id"] + [str(i) for i in range(unique_motif_count)]
-        motifs = motifs.sort_values(by=['id'])
+        motifs = torch.Tensor(motifs)
+        motifs = motifs[torch.sort(motifs[:, 0]).indices, 1:]
 
         if self.selected_motif:
             # use motif selected in the original paper only
             s = torch.zeros((G.x.shape[0], 6))
             # m31
-            s[:, 0] = torch.tensor(motifs['3'].values)
+            s[:, 0] = motifs[:, 3]
             # m32
-            s[:, 1] = torch.tensor((motifs['1'] + motifs['2']
-                                    + 3 * motifs['3']).values)
+            s[:, 1] = motifs[:, 1] + motifs[:, 2] + motifs[:, 3] * 3
             # m41
-            s[:, 2] = torch.tensor(motifs['14'].values)
+            s[:, 2] = motifs[:, 14]
             # m42
-            s[:, 3] = torch.tensor((motifs['12'] + motifs['13']
-                                    + 2 * motifs['14']).values)
+            s[:, 3] = motifs[:, 12] + motifs[:, 13] + motifs[:, 14] * 2
             # m43
-            s[:, 4] = torch.tensor((motifs['11'] + motifs['12']
-                                    + motifs['13'] + motifs['14']).values)
+            s[:, 4] = motifs[:, 11] + motifs[:, 12] + \
+                      motifs[:, 13] + motifs[:, 14]
             # node degree
-            s[:, 5] = torch.tensor(motifs['0'].values)
+            s[:, 5] = motifs[:, 0]
         else:
             # use graphlet degree
-            s = torch.tensor(motifs.iloc[:, 1:].values)
+            s = motifs
+
+        print(s[:5,:])
 
         edge_index = edge_index.to(self.device)
         s = s.to(self.device)
