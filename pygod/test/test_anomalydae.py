@@ -13,6 +13,7 @@ from pygod.utils.metric import eval_roc_auc
 
 seed_everything(42)
 
+
 class TestAnomalyDAE(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers

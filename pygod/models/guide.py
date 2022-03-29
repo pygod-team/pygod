@@ -270,7 +270,7 @@ class GUIDE(BaseDetector):
                     set([graph.degree(node) for node in graph.nodes()]))
                 for degree in degrees:
                     categories[size][index][degree] = main_index
-                    main_index = main_index + 1
+                    main_index += 1
         unique_motif_count = main_index
 
         # setup feature
@@ -335,8 +335,8 @@ class GUIDE(BaseDetector):
         diff_structure = torch.pow(s - s_, 2)
         structure_errors = torch.sqrt(torch.sum(diff_structure, 1))
 
-        score = self.alpha * attribute_errors \
-                + (1 - self.alpha) * structure_errors
+        score = self.alpha * attribute_errors + (1 - self.alpha) * \
+                structure_errors
         return score
 
 

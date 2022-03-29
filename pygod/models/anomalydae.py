@@ -304,7 +304,7 @@ class AnomalyDAE(BaseDetector):
             l.backward()
             optimizer.step()
 
-            print("Epoch:", '%04d' % (epoch), "train_loss=",
+            print("Epoch:", '%04d' % epoch, "train_loss=",
                   "{:.5f}".format(l.item()), "train/struct_loss=",
                   "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
                   "{:.5f}".format(feat_loss.item()))

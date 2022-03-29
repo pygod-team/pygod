@@ -43,7 +43,7 @@ def calculate_G(G_mat, alpha, outl1, H, A, gamma, outl3, U, W):
             return G_mat
 
 
-#todo: due to the original paper has very complex loss, this algorithm is not
+# todo: due to the original paper has very complex loss, this algorithm is not
 # in PyTorch yet. Need NetworkX for it.
 class ONE(BaseDetector):
     """
@@ -59,6 +59,10 @@ class ONE(BaseDetector):
         Every vertex is a K dimensional vector, K < min(N, D).  Default: ``36``.
     iter : int, optional
         Number of outer Iterations for optimization.  Default: ``5``.
+    contamination : float, optional
+        Valid in (0., 0.5). The proportion of outliers in the data set.
+        Used when fitting to define the threshold on the decision
+        function. Default: ``0.1``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
@@ -169,7 +173,8 @@ class ONE(BaseDetector):
                 print('Loop {} started: \n'.format(opti_iter))
                 print("The function values which we are interested are : ")
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
 
@@ -194,7 +199,8 @@ class ONE(BaseDetector):
 
             # self.G_mat = calculate_G(self.G_mat, self.alpha, outl1, self.H, A, self.gamma, outl3, self.U, self.W)
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -212,11 +218,13 @@ class ONE(BaseDetector):
                             self.H[k, j]))))
                     Hkj_denom = self.alpha * (
                         np.dot(np.log(np.reciprocal(outl1)),
-                               np.multiply(self.G_mat[:, k], self.G_mat[:, k])))
+                               np.multiply(self.G_mat[:, k],
+                                           self.G_mat[:, k])))
 
                     self.H[k, j] = Hkj_numer / Hkj_denom
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -249,7 +257,8 @@ class ONE(BaseDetector):
 
                     self.U[i, k] = (Uik_numer_1 + Uik_numer_2) / Uik_denom
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -272,7 +281,8 @@ class ONE(BaseDetector):
 
                     self.V[k][d] = Vkd_numer / Vkd_denom
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -294,7 +304,8 @@ class ONE(BaseDetector):
 
             self.W = np.matmul(svd_u, svd_vt)
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -304,7 +315,8 @@ class ONE(BaseDetector):
 
             outl1, outl2, outl3 = self.cal_outlierScore(A, C)
 
-            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V, self.W,
+            self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
+                                 self.W,
                                  outl1, outl2, outl3, self.alpha, self.beta,
                                  self.gamma)
             if self.verbose:
@@ -430,7 +442,8 @@ class ONE(BaseDetector):
                             np.sum(temp3, axis=0).T)
         temp3 = np.sum(temp3)
         if self.verbose:
-            print('\t Component values: {},{} and {}'.format(temp1, temp2, temp3))
+            print('\t Component values: {},{} and {}'.format(temp1, temp2,
+                                                             temp3))
 
         func_value = alpha * temp1 + beta * temp2 + gamma * temp3
         if self.verbose:
@@ -465,24 +478,25 @@ class ONE(BaseDetector):
 
         outl1_denom = self.alpha * pow(np.linalg.norm((A - GH), 'fro'), 2)
 
-        outl1_numer = outl1_numer * self.mu
+        outl1_numer *= self.mu
         outl1 = outl1_numer / outl1_denom
 
         outl2_numer = self.beta * (np.multiply((C - UV), (C - UV))).sum(axis=1)
 
         outl2_denom = self.beta * pow(np.linalg.norm((C - UV), 'fro'), 2)
 
-        outl2_numer = outl2_numer * self.mu
+        outl2_numer *= self.mu
         outl2 = outl2_numer / outl2_denom
 
         outl3_numer = self.gamma * (
-            np.multiply((self.G_mat.T - WUTrans), (self.G_mat.T - WUTrans))).sum(
+            np.multiply((self.G_mat.T - WUTrans),
+                        (self.G_mat.T - WUTrans))).sum(
             axis=0).T
 
         outl3_denom = self.gamma * pow(
             np.linalg.norm((self.G_mat.T - WUTrans), 'fro'), 2)
 
-        outl3_numer = outl3_numer * self.mu
+        outl3_numer *= self.mu
         outl3 = outl3_numer / outl3_denom
 
         return outl1, outl2, outl3

@@ -60,6 +60,10 @@ class OCGNN(BaseDetector):
         Hidden dimension of model. Defaults: `32``.
     n_layers : int, optional
         Dimensions of underlying GCN. Defaults: ``3``.
+    contamination : float, optional
+        Valid in (0., 0.5). The proportion of outliers in the data set.
+        Used when fitting to define the threshold on the decision
+        function. Default: ``0.1``.
     dropout : float, optional
         Dropout rate. Defaults: ``0.3``.
     weight_decay : float, optional
@@ -93,6 +97,7 @@ class OCGNN(BaseDetector):
     def __init__(self,
                  n_hidden=32,
                  n_layers=3,
+                 contamination=0.1,
                  dropout=0.3,
                  lr=0.004,
                  weight_decay=0,
@@ -102,7 +107,7 @@ class OCGNN(BaseDetector):
                  epoch=100,
                  verbose=False,
                  act=F.relu):
-        super(OCGNN, self).__init__()
+        super(OCGNN, self).__init__(contamination=contamination)
         self.dropout = dropout
         self.n_hidden = n_hidden
         self.n_layers = n_layers
@@ -138,7 +143,7 @@ class OCGNN(BaseDetector):
 
         Returns
         ----------
-        c: torh Tensor object, the new centroid 
+        c: torch Tensor object, the new centroid
            """
         n_samples = 0
         self.model.eval()
@@ -149,7 +154,8 @@ class OCGNN(BaseDetector):
             c = torch.sum(outputs, dim=0).to(self.device)
         # print(outputs)
         c /= n_samples
-        # If c_i is too close to 0, set to +-eps. Reason: a zero unit can be trivially matched with zero weights.
+        # If c_i is too close to 0, set to +-eps. Reason: a zero unit can be
+        # trivially matched with zero weights.
         c[(abs(c) < self.eps) & (c < 0)] = -self.eps
         c[(abs(c) < self.eps) & (c > 0)] = self.eps
         return c
@@ -177,7 +183,7 @@ class OCGNN(BaseDetector):
         """
         Description
         ----------
-        Calculate the nomaly score given by Euclidean distance to the center.
+        Calculate the anomaly score given by Euclidean distance to the center.
         
         Parameters
         ----------

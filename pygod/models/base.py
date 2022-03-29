@@ -158,7 +158,7 @@ class BaseDetector(object):
         Returns
         -------
         outlier_probability : numpy array of shape (n_samples, n_classes)
-            For each observation, tells whether or not
+            For each observation, tells whether
             it should be considered as an outlier according to the
             fitted model. Return the outlier probability, ranging
             in [0,1]. Note it depends on the number of classes, which is by
@@ -290,7 +290,8 @@ class BaseDetector(object):
     def _get_param_names(cls):
         # noinspection PyPep8
         """Get parameter names for the estimator
-        See http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html
+        See https://scikit-learn.org/stable/modules/generated/sklearn.base
+        .BaseEstimator.html
         and sklearn/base.py for more information.
         """
 
@@ -321,13 +322,14 @@ class BaseDetector(object):
     # noinspection PyPep8
     def get_params(self, deep=True):
         """Get parameters for this estimator.
-        See http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html
+        See https://scikit-learn.org/stable/modules/generated/sklearn.base
+        .BaseEstimator.html
         and sklearn/base.py for more information.
         Parameters
         ----------
         deep : bool, optional (default=True)
             If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
+            contained sub-objects that are estimators.
 
         Returns
         -------
@@ -340,7 +342,7 @@ class BaseDetector(object):
         for key in self._get_param_names():
             # We need deprecation warnings to always be on in order to
             # catch deprecated param values.
-            # This is set in utils/__init__.py but it gets overwritten
+            # This is set in utils/__init__.py, but it gets overwritten
             # when running under python3 somehow.
             warnings.simplefilter("always", DeprecationWarning)
             try:
@@ -366,7 +368,8 @@ class BaseDetector(object):
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
-        See http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html
+        See https://scikit-learn.org/stable/modules/generated/sklearn.base
+        .BaseEstimator.html
         and sklearn/base.py for more information.
         Returns
         -------
@@ -400,7 +403,8 @@ class BaseDetector(object):
     def __repr__(self):
         # noinspection PyPep8
         """
-        See http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html
+        See https://scikit-learn.org/stable/modules/generated/sklearn.base
+        .BaseEstimator.html
         and sklearn/base.py for more information.
         """
 
@@ -412,7 +416,8 @@ class BaseDetector(object):
 def _pprint(params, offset=0, printer=repr):
     # noinspection PyPep8
     """Pretty print the dictionary 'params'
-    See http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html
+    See https://scikit-learn.org/stable/modules/generated/sklearn.base
+    .BaseEstimator.html
     and sklearn/base.py for more information.
     :param params: The dictionary to pretty print
     :type params: dict

@@ -65,10 +65,10 @@ class GAAN(BaseDetector):
 
     Examples
     --------
-    # from pygod.models import GAAN
-    # model = Dominant()
-    # model.fit(data)
-    # prediction = model.predict(data)
+    >>> from pygod.models import GAAN
+    >>> model = GAAN()
+    >>> model.fit(data)
+    >>> prediction = model.predict(data)
     """
 
     def __init__(self,
@@ -86,7 +86,7 @@ class GAAN(BaseDetector):
                  lr=5e-3,
                  epoch=100,
                  gpu=-1,
-                 verbose=True):
+                 verbose=False):
         super(GAAN, self).__init__(contamination=contamination)
 
         # model param
@@ -154,8 +154,8 @@ class GAAN(BaseDetector):
 
         # initialize the optimizer
         optimizer_GE = torch.optim.Adam(
-            params=list(self.generator.parameters()) +
-                   list(self.encoder.parameters()),
+            params=list(self.generator.parameters()) + list(
+                self.encoder.parameters()),
             lr=self.lr,
             weight_decay=self.weight_decay)
 
@@ -301,7 +301,7 @@ class GAAN(BaseDetector):
             Fake attribute (feature) of nodes.
         Y_true_pre : torch.Tensor
             Labels predicted from the ture attribute.
-        Y_fake_pre_ : torch.Tensor
+        Y_fake_pre : torch.Tensor
             Labels predicted from the fake attribute.
         edge_index : torch.Tensor
             Edge list of the graph.
@@ -347,7 +347,7 @@ class GAAN(BaseDetector):
             Fake attribute (feature) of nodes.
         Y_true_pre : torch.Tensor
             Labels predicted from the ture attribute.
-        Y_fake_pre_ : torch.Tensor
+        Y_fake_pre : torch.Tensor
             Labels predicted from the fake attribute.
         edge_index : torch.Tensor
             Edge list of the graph.
