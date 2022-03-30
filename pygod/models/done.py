@@ -324,7 +324,7 @@ class DONE_Base(nn.Module):
                                   dropout=dropout,
                                   act=act)
 
-        self.neigh_diff = Neigh_Diff()
+        self.neigh_diff = NeighDiff()
 
     def forward(self, x, s, edge_index):
         h_a = self.attr_encoder(x)
@@ -337,7 +337,7 @@ class DONE_Base(nn.Module):
         return x_, s_, h_a, h_s, dna, dns
 
 
-class Neigh_Diff(MessagePassing):
+class NeighDiff(MessagePassing):
     def __init__(self):
         super().__init__(aggr='mean')
 

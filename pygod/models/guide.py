@@ -297,21 +297,18 @@ class GUIDE(BaseDetector):
             # m31
             s[:, 0] = motifs[:, 3]
             # m32
-            s[:, 1] = motifs[:, 1] + motifs[:, 2] + motifs[:, 3] * 3
+            s[:, 1] = motifs[:, 1] + motifs[:, 2]
             # m41
             s[:, 2] = motifs[:, 14]
             # m42
-            s[:, 3] = motifs[:, 12] + motifs[:, 13] + motifs[:, 14] * 2
+            s[:, 3] = motifs[:, 12] + motifs[:, 13]
             # m43
-            s[:, 4] = motifs[:, 11] + motifs[:, 12] + \
-                      motifs[:, 13] + motifs[:, 14]
+            s[:, 4] = motifs[:, 11]
             # node degree
             s[:, 5] = motifs[:, 0]
         else:
             # use graphlet degree
             s = motifs
-
-        print(s[:5,:])
 
         edge_index = edge_index.to(self.device)
         s = s.to(self.device)
