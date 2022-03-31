@@ -164,6 +164,7 @@ class GAAN(BaseDetector):
 
         # initialize the  criterion
         criterion = torch.nn.BCELoss()
+        X_, Y_true_pre, Y_fake_pre = None, None, None
 
         for epoch in range(self.epoch):
 
