@@ -210,11 +210,9 @@ More detailed instructions for running examples can be found in `examples direct
 
 #. Initialize a dominant detector, fit the model, and make the prediction.
 
-   .. code-block:: python
+
 
 #. Evaluate the prediction by ROC and Precision @ Rank n (p@n).
-
-   .. code-block:: python
 
 
 ----
