@@ -7,6 +7,7 @@ scipy>=1.5.2
 torch
 torchvision
 torchaudio
+torch_sparse
 torch_geometric>=2.0.3
 setuptools>=50.3.1.post20201107
 scikit-learn>=0.22.1
