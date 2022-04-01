@@ -1,0 +1,16 @@
+name: pygod
+
+channels:
+    - conda-forge
+    - defaults
+
+dependencies:
+    - python==3.8
+    - torch
+    - torchvision
+    - torchaudio
+    - numpy
+    - torch_geometric
+    - cythongsl
+    - libsequence
+    - fwdpp
