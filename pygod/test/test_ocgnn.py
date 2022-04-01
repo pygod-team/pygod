@@ -9,15 +9,16 @@ from torch_geometric.seed import seed_everything
 from pygod.models import OCGNN
 from pygod.utils.metric import eval_roc_auc
 
-seed_everything(1)
+seed_everything(42)
 
-class TestAnomalyDAE(unittest.TestCase):
+
+class TestOCGNN(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.45
+        self.roc_floor = 0.60
 
         test_graph = torch.load('./test_graph.pt')
         self.data = test_graph

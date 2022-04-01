@@ -11,13 +11,14 @@ from pygod.utils.metric import eval_roc_auc
 
 seed_everything(42)
 
-class testGAAN(unittest.TestCase):
+
+class TestGAAN(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.6
+        self.roc_floor = 0.60
 
         test_graph = torch.load('./test_graph.pt')
         self.data = test_graph

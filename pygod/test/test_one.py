@@ -11,7 +11,8 @@ from pygod.utils.metric import eval_roc_auc
 
 seed_everything(42)
 
-class testONE(unittest.TestCase):
+
+class TestONE(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
