@@ -124,10 +124,16 @@ class ONE(BaseDetector):
         start_time = time.time()
 
         model = NMF(n_components=K, init='random', random_state=0)
+        # ensure A is non-negative
+        if A.min() < 0:
+            A = A + A.min() * -1
         self.G_mat = model.fit_transform(A)
         self.H = model.components_
 
         model = NMF(n_components=K, init='random', random_state=0)
+        # ensure C is non-negative
+        if C.min() < 0:
+            C = C + C.min() * -1
         self.U = model.fit_transform(C)
         self.V = model.components_
 
