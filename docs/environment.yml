@@ -1,8 +1,0 @@
-name: pygod
-dependencies:
-  - python==3.8
-  - torch
-  - torchvision
-  - torchaudio
-  - numpy
-  - torch_geometric
