@@ -33,10 +33,10 @@ Alternatively, you could clone and run setup.py file:
 
 
 **Note and PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
-and `PyTorch <https://pytorch.org/>`_. To streamline the installation,
-PyGOD does **NOT** install these libraries for you. Please install them
+PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
+To streamline the installation, PyGOD does **NOT** install these libraries for you. Please install them
 from the above links for running PyGOD:
 
-* torch>=?
-* pytorch_geometric>=?
+* torch>=1.10
+* pytorch_geometric>=2.0.3
+* networkx>=2.6.3

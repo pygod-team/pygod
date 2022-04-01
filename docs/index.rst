@@ -27,6 +27,9 @@ For consistently and accessibility, PyGOD is developed on top of `PyTorch Geomet
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with GNN in 5 lines!
 
+**PyGOD** is under actively developed and will be updated frequently!
+Please **star**, **watch**, and **fork**.
+
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
@@ -52,9 +55,10 @@ See examples below for detecting anomalies with GNN in 5 lines!
     # predict on the new data
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
-**Citing PyGOD**\ :
 
-`PyGOD paper <http://tbd>`_ is available on arxiv and under review in xxxx.
+**Citing PyGOD (to be updated soon)**\ :
+
+`PyGOD paper <http://tbd>`_ is available on arxiv and under review.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
@@ -95,6 +99,18 @@ GNN                  GUIDE               Higher-order Structure Based Anomaly De
 GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
 GNN                  ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
 ===================  ==================  ======================================================================================================  =====  ==============================================
+
+
+**(ii) Utility functions** :
+
+===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
+Type                 Name                    Function                                                                                                                                               Documentation
+===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
+Metric               eval_roc_auc            ROC-AUC score for binary classification.                                                                                                               `eval_roc_auc <https://github.com/pygod-team/pygod>`_
+Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://github.com/pygod-team/pygod>`_
+Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://github.com/pygod-team/pygod>`_
+Data                 gen_combined_outliers   Generating combined outliers                                                                                                                           `gen_combined_outliers <https://github.com/pygod-team/pygod>`_
+===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 
 
 ----
