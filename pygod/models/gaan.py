@@ -56,7 +56,7 @@ class GAAN(BaseDetector):
     lr : float, optional
         Learning rate. Defaults: ``0.005``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Defaults: ``10``.
     gpu : int
         GPU Index, -1 for using CPU. Defaults: ``-1``.
     verbose : bool
@@ -67,7 +67,7 @@ class GAAN(BaseDetector):
     --------
     >>> from pygod.models import GAAN
     >>> model = GAAN()
-    >>> model.fit(data)
+    >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
 
@@ -84,7 +84,7 @@ class GAAN(BaseDetector):
                  alpha=0.2,
                  contamination=0.1,
                  lr=5e-3,
-                 epoch=100,
+                 epoch=10,
                  gpu=-1,
                  verbose=False):
         super(GAAN, self).__init__(contamination=contamination)
@@ -117,7 +117,7 @@ class GAAN(BaseDetector):
         self.encoder = None
         self.discriminator = None
 
-    def fit(self, G):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -127,13 +127,17 @@ class GAAN(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
+        y_true : numpy.array, optional (default=None)
+            The optional outlier ground truth labels used to monitor the
+            training progress. They are not used to optimize the
+            unsupervised model.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        X, edge_index, labels = self.process_graph(G)
+        X, edge_index = self.process_graph(G)
 
         # initialize the model
         self.generator = Generator(in_dim=self.noise_dim,
@@ -197,10 +201,12 @@ class GAAN(BaseDetector):
             if self.verbose:
                 score = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
                                             edge_index, criterion)
-                auc = eval_roc_auc(labels, score.detach().cpu().numpy())
                 print(
-                    "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f} | AUC {:.4f}"
-                        .format(epoch, loss_GE.item(), loss_D.item(), auc))
+                    "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f}"
+                        .format(epoch, loss_GE.item(), loss_D.item()), end='')
+                if y_true is not None:
+                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc))
 
         score = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index,
                                     criterion)
@@ -229,7 +235,7 @@ class GAAN(BaseDetector):
         check_is_fitted(self, ['generator', 'encoder', 'discriminator'])
 
         # get needed data object from the input data
-        X, edge_index, _ = self.process_graph(G)
+        X, edge_index = self.process_graph(G)
 
         # enable the evaluation mode
         self.generator.eval()
@@ -403,15 +409,12 @@ class GAAN(BaseDetector):
             Attribute (feature) of nodes.
         edge_index : torch.Tensor
             Edge list of the graph.
-        Y : torch.Tensor
-            Labels of nodes.
         """
         # data objects needed for the network
         edge_index = G.edge_index.to(self.device)
         X = G.x.to(self.device)
-        Y = G.y.to(self.device)
 
-        return X, edge_index, Y
+        return X, edge_index
 
 
 class Generator(nn.Module):

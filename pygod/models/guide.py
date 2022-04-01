@@ -60,7 +60,7 @@ class GUIDE(BaseDetector):
     lr : float, optional
         Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Default: ``100``.
+        Maximum number of training epoch. Default: ``10``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
     graphlet_size : int
@@ -77,7 +77,7 @@ class GUIDE(BaseDetector):
     --------
     >>> from pygod.models import GUIDE
     >>> model = GUIDE()
-    >>> model.fit(data)
+    >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
 
@@ -90,7 +90,7 @@ class GUIDE(BaseDetector):
                  alpha=0.1,
                  contamination=0.1,
                  lr=0.001,
-                 epoch=200,
+                 epoch=10,
                  gpu=0,
                  graphlet_size=4,
                  selected_motif=False,
@@ -122,7 +122,7 @@ class GUIDE(BaseDetector):
         self.verbose = verbose
         self.model = None
 
-    def fit(self, G):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -132,6 +132,10 @@ class GUIDE(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
+        y_true : numpy.array, optional (default=None)
+            The optional outlier ground truth labels used to monitor the
+            training progress. They are not used to optimize the
+            unsupervised model.
 
         Returns
         -------
@@ -139,7 +143,7 @@ class GUIDE(BaseDetector):
             Fitted estimator.
         """
 
-        x, s, edge_index, labels = self.process_graph(G)
+        x, s, edge_index = self.process_graph(G)
 
         self.model = GUIDE_Base(x_dim=x.shape[1],
                                 s_dim=s.shape[1],
@@ -152,6 +156,7 @@ class GUIDE(BaseDetector):
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
+        score = None
         for epoch in range(self.epoch):
             self.model.train()
             x_, s_ = self.model(x, s, edge_index)
@@ -165,8 +170,8 @@ class GUIDE(BaseDetector):
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
                       .format(epoch, loss.item()), end='')
-                if labels is not None:
-                    auc = eval_roc_auc(labels, score.detach().cpu().numpy())
+                if y_true is not None:
+                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
@@ -194,7 +199,7 @@ class GUIDE(BaseDetector):
         check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
-        x, s, edge_index, _ = self.process_graph(G)
+        x, s, edge_index = self.process_graph(G)
 
         # enable the evaluation mode
         self.model.eval()
@@ -225,8 +230,6 @@ class GUIDE(BaseDetector):
             Structure matrix (node motif degree/graphlet degree)
         edge_index : torch.Tensor
             Edge list of the graph.
-        y : torch.Tensor
-            Labels of nodes.
         """
         edge_index = G.edge_index
         g = nx.from_edgelist(edge_index.T.tolist())
@@ -314,12 +317,7 @@ class GUIDE(BaseDetector):
         s = s.to(self.device)
         x = G.x.to(self.device)
 
-        if hasattr(G, 'y'):
-            y = G.y
-        else:
-            y = None
-
-        return x, s, edge_index, y
+        return x, s, edge_index
 
     def loss_func(self, x, x_, s, s_):
         # attribute reconstruction loss

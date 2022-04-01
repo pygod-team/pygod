@@ -205,11 +205,11 @@ class AnomalyDAE(BaseDetector):
         Defaults: ``0.5``.
     theta: float, optional
          greater than 1, impose penalty to the reconstruction error of
-         the non zero elements in the adjacency matrix
+         the non-zero elements in the adjacency matrix
          Defaults: ``1.01``
     eta: float, optional
          greater than 1, imporse penalty to the reconstruction error of 
-         the non zero elements in the node attributes
+         the non-zero elements in the node attributes
          Defaults: ``1.01``
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
@@ -218,7 +218,7 @@ class AnomalyDAE(BaseDetector):
     lr : float, optional
         Learning rate. Defaults: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Defaults: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Defaults: ``0``.
     verbose : bool
@@ -229,7 +229,7 @@ class AnomalyDAE(BaseDetector):
     --------
     >>> from pygod.models import AnomalyDAE
     >>> model = AnomalyDAE()
-    >>> model.fit(data)
+    >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
 
@@ -244,7 +244,7 @@ class AnomalyDAE(BaseDetector):
                  eta=1.01,
                  contamination=0.1,
                  lr=0.004,
-                 epoch=100,
+                 epoch=5,
                  gpu=0,
                  verbose=False):
         super(AnomalyDAE, self).__init__(contamination=contamination)
@@ -271,7 +271,7 @@ class AnomalyDAE(BaseDetector):
         self.verbose = verbose
         self.model = None
 
-    def fit(self, G):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -281,13 +281,17 @@ class AnomalyDAE(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
+        y_true : numpy.array, optional (default=None)
+            The optional outlier ground truth labels used to monitor the
+            training progress. They are not used to optimize the
+            unsupervised model.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        attrs, adj, edge_index, labels = self.process_graph(G)
+        attrs, adj, edge_index = self.process_graph(G)
         self.model = AnomalyDAE_Base(in_node_dim=attrs.shape[1],
                                      in_num_dim=attrs.shape[0],
                                      embed_dim=self.embed_dim,
@@ -321,7 +325,7 @@ class AnomalyDAE(BaseDetector):
                                                           attrs, X_hat)
             score = loss.detach().cpu().numpy()
             if self.verbose:
-                print('Auc', eval_roc_auc(labels, score))
+                print('AUC', eval_roc_auc(y_true, score))
 
         self.decision_scores_ = score
         self._process_decision_scores()
@@ -350,7 +354,7 @@ class AnomalyDAE(BaseDetector):
         check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
-        attrs, adj, edge_index, _ = self.process_graph(G)
+        attrs, adj, edge_index = self.process_graph(G)
 
         # enable the evaluation mode
         self.model.eval()
@@ -380,8 +384,6 @@ class AnomalyDAE(BaseDetector):
             Adjacency matrix of the graph.
         edge_index : torch.Tensor
             Edge list of the graph.
-        y : torch.Tensor
-            Labels of nodes.
         """
         edge_index = G.edge_index
 
@@ -399,10 +401,9 @@ class AnomalyDAE(BaseDetector):
         edge_index = edge_index.to(self.device)
         adj = adj.to(self.device)
         x = G.x.to(self.device)
-        y = G.y
 
         # return data objects needed for the network
-        return x, adj, edge_index, y
+        return x, adj, edge_index
 
     def loss_func(self,
                   adj,

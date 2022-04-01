@@ -54,6 +54,7 @@ class BaseDetector(object):
                              "got: %f" % contamination)
 
         self.contamination = contamination
+        self.decision_scores_ = None
 
     def fit(self, G):
         """Fit detector. y is ignored in unsupervised methods.

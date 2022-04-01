@@ -76,7 +76,7 @@ class OCGNN(BaseDetector):
     lr : float, optional
         Learning rate. Defaults: ``0.005``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``100``.
+        Maximum number of training epoch. Defaults: ``5``.
     warmup_epoch : int, optional
         Number of epochs to update radius and center in the beginning 
         of training. Defaults: ``2``.
@@ -90,7 +90,7 @@ class OCGNN(BaseDetector):
     --------
     >>> from pygod.models import AnomalyDAE
     >>> model = OCGNN()
-    >>> model.fit(data)
+    >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
 
@@ -104,8 +104,8 @@ class OCGNN(BaseDetector):
                  eps=0.001,
                  nu=0.5,
                  gpu=0,
-                 epoch=100,
-                 warmup_epoch = 2,
+                 epoch=5,
+                 warmup_epoch=2,
                  verbose=False,
                  act=F.relu):
         super(OCGNN, self).__init__(contamination=contamination)
@@ -140,12 +140,15 @@ class OCGNN(BaseDetector):
   
         Parameters
         ----------
-        x: torch Tensor object: node features
-        edge_index: torch Tensor object: edge indices for the graph data
+        x : torch.Tensor
+            Node features.
+        edge_index : torch.Tensor
+            Edge indices for the graph data
 
         Returns
         ----------
-        c: torch Tensor object, the new centroid
+        c : torch.Tensor
+            The new centroid.
            """
         n_samples = 0
         self.model.eval()
@@ -170,18 +173,17 @@ class OCGNN(BaseDetector):
         
         Parameters
         ----------
-        dist: torch Tensor. distance of the data points,
-              calculated by the loss function
+        dist : torch.Tensor
+            Distance of the data points, calculated by the loss function.
        
         Returns
         ----------
-        r: numpy array: new radius
+        r : numpy.array
+            New radius.
         """
         radius = np.quantile(np.sqrt(dist.clone().data.cpu().numpy()),
                              1 - self.nu)
         return radius
-    
-
 
     def anomaly_scores(self, outputs):
         """
@@ -191,18 +193,21 @@ class OCGNN(BaseDetector):
         
         Parameters
         ----------
-        outputs: torch Tensor. The output in the reduced space by GCN.
+        outputs : torch.Tensor
+            The output in the reduced space by GCN.
 
         Returns
         ----------
-        dist: torch Tensor, average distance
-        scores: torch Tensor, anomaly scores
+        dist : torch.Tensor
+            Average distance.
+        scores : torch.Tensor
+            Anomaly scores.
         """
         dist = torch.sum((outputs - self.data_center) ** 2, dim=1)
         scores = dist - self.radius ** 2
         return dist, scores
 
-    def loss_function(self, outputs, update = False):
+    def loss_function(self, outputs, update=False):
         """
         Description
         ----------
@@ -210,14 +215,19 @@ class OCGNN(BaseDetector):
         
         Parameters
         ----------
-        outputs: torch Tensor. The output in the reduced space by GCN.
-        update: bool, default= False. If needs to update the radius, update = True
+        outputs : torch.Tensor
+            The output in the reduced space by GCN.
+        update : bool, optional (default=False)
+            If you need to update the radius, set update=True.
 
         Returns
         ----------
-        dist: torch Tensor, average distance
-        scores: torch Tensor, anomaly scores
-        loss: torch Tensor, a combined loss of radius and average scores
+        dist : torch.Tensor
+            Average distance.
+        scores : torch.Tensor
+            Anomaly scores.
+        loss : torch.Tensor
+            A combined loss of radius and average scores.
         """
 
         dist, scores = self.anomaly_scores(outputs)
@@ -226,9 +236,8 @@ class OCGNN(BaseDetector):
         if update:
             self.radius = torch.tensor(self.get_radius(dist), device = self.device)
         return loss, dist, scores
-    
 
-    def fit(self, G):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -238,16 +247,18 @@ class OCGNN(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
+        y_true : numpy.array, optional (default=None)
+            The optional outlier ground truth labels used to monitor the
+            training progress. They are not used to optimize the
+            unsupervised model.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        x, adj, edge_index, labels = self.process_graph(G)
+        x, adj, edge_index = self.process_graph(G)
         self.in_feats = x.shape[1]
-
-        #print(self.in_feats, self.n_hidden, self.n_layers, self.dropout)
 
         # initialize the model and optimizer
         self.model = GCN_base(self.in_feats,
@@ -267,6 +278,7 @@ class OCGNN(BaseDetector):
         # training the model
         self.model.train()
 
+        score = None
         for cur_epoch in range(self.epoch):
             self.model.zero_grad()
             outputs = self.model(x, edge_index)
@@ -274,15 +286,17 @@ class OCGNN(BaseDetector):
             if self.warmup_epoch is not None and cur_epoch < self.warmup_epoch:
                 self.data_center = self.init_center(x, edge_index)
                 self.radius = torch.tensor(self.get_radius(dist),
-                                           device = self.device)
+                                           device=self.device)
             loss.backward()
             self.optimizer.step()
 
             if self.verbose:
-                auc = eval_roc_auc(labels, score.detach().cpu().numpy())
-
-                print("Epoch {:04d}: Loss {:.7f} | AUC {:.4f}"
-                      .format(cur_epoch, loss.item(), auc))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(cur_epoch, loss.item()), end='')
+                if y_true is not None:
+                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
         self.decision_scores_ = score.detach().cpu().numpy()
         self._process_decision_scores()
@@ -308,8 +322,6 @@ class OCGNN(BaseDetector):
             Adjacency matrix of the graph.
         edge_index : torch.Tensor
             Edge list of the graph.
-        y : torch.Tensor
-            Labels of nodes.
         """
         edge_index = G.edge_index
 
@@ -327,29 +339,28 @@ class OCGNN(BaseDetector):
         edge_index = edge_index.to(self.device)
         adj = adj.to(self.device)
         x = G.x.to(self.device)
-        y = G.y
 
         # return data objects needed for the network
-        return x, adj, edge_index, y
+        return x, adj, edge_index
 
-    
     def decision_function(self, G):
         """Predict raw anomaly score of X using the fitted detector.
         The anomaly score of an input sample is computed based on distance 
         to the centroid and measurement within the radius
         Parameters
         ----------
-        G : torch geometric graph objects
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
         
         Returns
         -------
-        anomaly_scores : numpy array of shape (n_samples,)
-            The anomaly score of the input samples.
+        anomaly_scores : numpy.array
+            The anomaly score of the input samples of shape (n_samples,).
         """
         check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
-        x, adj, edge_index, _ = self.process_graph(G)
+        x, adj, edge_index = self.process_graph(G)
 
         # enable the evaluation mode
         self.model.eval()

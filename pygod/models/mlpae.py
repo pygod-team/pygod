@@ -39,7 +39,7 @@ class MLPAE(BaseDetector):
     lr : float, optional
         Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Default: ``100``.
+        Maximum number of training epoch. Default: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
     verbose : bool
@@ -50,7 +50,7 @@ class MLPAE(BaseDetector):
     --------
     >>> from pygod.models import MLPAE
     >>> model = MLPAE()
-    >>> model.fit(data)
+    >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
     def __init__(self,
@@ -61,7 +61,7 @@ class MLPAE(BaseDetector):
                  act=F.relu,
                  contamination=0.1,
                  lr=5e-3,
-                 epoch=100,
+                 epoch=5,
                  gpu=0,
                  verbose=False):
         super(MLPAE, self).__init__(contamination=contamination)
@@ -85,7 +85,7 @@ class MLPAE(BaseDetector):
         self.verbose = verbose
         self.model = None
 
-    def fit(self, G):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -95,13 +95,17 @@ class MLPAE(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
+        y_true : numpy.array, optional (default=None)
+            The optional outlier ground truth labels used to monitor the
+            training progress. They are not used to optimize the
+            unsupervised model.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        x, labels = self.process_graph(G)
+        x = self.process_graph(G)
 
         self.model = MLP(in_channels=x.shape[1],
                          hidden_channels=self.hid_dim,
@@ -114,6 +118,7 @@ class MLPAE(BaseDetector):
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
+        score = None
         for epoch in range(self.epoch):
             self.model.train()
             x_ = self.model(x)
@@ -128,8 +133,8 @@ class MLPAE(BaseDetector):
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
                       .format(epoch, loss.item()), end='')
-                if labels is not None:
-                    auc = eval_roc_auc(labels, score.detach().cpu().numpy())
+                if y_true is not None:
+                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
@@ -157,7 +162,7 @@ class MLPAE(BaseDetector):
         check_is_fitted(self, ['model'])
         self.model.eval()
 
-        x, _ = self.process_graph(G)
+        x = self.process_graph(G)
         x = x.to(self.device)
 
         x_ = self.model(x)
@@ -181,14 +186,7 @@ class MLPAE(BaseDetector):
         -------
         x : torch.Tensor
             Attribute (feature) of nodes.
-        y : torch.Tensor
-            Labels of nodes.
         """
         x = G.x.to(self.device)
 
-        if hasattr(G, 'y'):
-            y = G.y
-        else:
-            y = None
-
-        return x, y
+        return x
