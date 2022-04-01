@@ -7,7 +7,7 @@ scipy>=1.5.2
 torch==1.10.0
 torchvision
 torchaudio
-torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-1.10.0+cpu.html
+torch-sparse -f https://data.pyg.org/whl/torch-1.10.0+cpu.html
 torch_geometric>=2.0.3
 setuptools>=50.3.1.post20201107
 scikit-learn>=0.22.1
