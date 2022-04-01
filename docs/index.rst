@@ -10,9 +10,31 @@
 
 ----
 
-.. image:: https://badgen.net/badge/icon/github?icon=github&label
-   :target: https://github.com/pygod-team/pygod
-   :alt: GitHub
+
+.. image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
+   :target: https://pypi.org/project/pygod/
+   :alt: PyPI version
+
+.. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
+   :target: https://py-god.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation status
+
+.. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/stargazers
+   :alt: GitHub stars
+
+
+.. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
+   :target: https://github.com/pygod-team/pygod/network
+   :alt: GitHub forks
+
+.. image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
+   :alt: testing
+
+.. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
+   :alt: License
 
 
 ----

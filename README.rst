@@ -2,19 +2,17 @@ Python Graph Outlier Detection (PyGOD)
 ======================================
 
 
-.. image:: docs/pygod_logo.png
+.. image:: https://github.com/pygod-team/pygod/blob/main/docs/pygod_logo.png
    :width: 1050
    :alt: PyGOD Logo
    :align: center
-
-**<tba>These badges will work once it is public<tba>**
 
 .. image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
    :target: https://pypi.org/project/pygod/
    :alt: PyPI version
 
 .. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
-   :target: https://pygod.readthedocs.io/en/latest/?badge=latest
+   :target: https://py-god.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation status
 
 .. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
