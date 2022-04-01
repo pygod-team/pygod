@@ -29,7 +29,7 @@ setup(name='pygod',
       long_description=readme(),
       long_description_content_type='text/x-rst',
       author='PyGOD Team',
-      author_email='dev@pygod.org',
+      author_email='pygodteam@gmail.com',
       url='https://github.com/pygod-team/pygod/',
       download_url='https://github.com/pygod-team/pygod/archive/master.zip',
       keywords=['outlier detection', 'anomaly detection', 'graph mining',
@@ -39,7 +39,6 @@ setup(name='pygod',
       install_requires=requirements,
       setup_requires=['setuptools>=38.6.0'],
       license='BSD-2',
-
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Education',
@@ -56,10 +55,4 @@ setup(name='pygod',
           'Programming Language :: Python :: 3.9',
           'License :: OSI Approved :: BSD License'
       ],
-      # not sure about this, decide later
-      entry_points={
-          'console_scripts': [
-              "pygod = pygod.cli.cli:main"
-          ]
-      },
-      )
+)
