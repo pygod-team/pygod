@@ -178,8 +178,7 @@ GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomal
 GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
 GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
 GNN                  coLA                Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning                       2021   [#Liu2021Anomaly]_
-GNN                  FRAUDRE (TO MOVE)   Fraud Detection Dual-Resistant to Graph Inconsistency and Imbalance                                     2021   [#Zhang2021FRAUDRE]_
-GNN                  GCNAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
+GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   [#Yuan2021Higher]_
 GNN                  MLPAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
 GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
 GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_

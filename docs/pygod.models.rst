@@ -6,7 +6,7 @@ pygod.models.adone module
 
 .. automodule:: pygod.models.adone
     :members: AdONE
-    :exclude-members: AdONE_Base, Neigh_Diff
+    :exclude-members: AdONE_Base, NeighDiff
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -38,7 +38,7 @@ pygod.models.done module
 
 .. automodule:: pygod.models.done
     :members: DONE
-    :exclude-members: DONE_Base, Neigh_Diff
+    :exclude-members: DONE_Base, NeighDiff
     :undoc-members:
     :show-inheritance:
     :inherited-members:

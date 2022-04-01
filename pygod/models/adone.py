@@ -328,7 +328,7 @@ class AdONE_Base(nn.Module):
                                   dropout=dropout,
                                   act=act)
 
-        self.neigh_diff = Neigh_Diff()
+        self.neigh_diff = NeighDiff()
 
         self.discriminator = MLP(in_channels=hid_dim,
                                  hidden_channels=int(hid_dim / 2),
@@ -350,7 +350,7 @@ class AdONE_Base(nn.Module):
         return x_, s_, h_a, h_s, dna, dns, dis_a, dis_s
 
 
-class Neigh_Diff(MessagePassing):
+class NeighDiff(MessagePassing):
     def __init__(self):
         super().__init__(aggr='mean')
 

@@ -39,7 +39,8 @@ class StructureAE(nn.Module):
         the output dim after the graph attention layer
     dropout: float
         dropout probability for the linear layer
-      
+    act: F, optional
+         Choice of activation function        
     Returns
     -------
     x : torch.Tensor
@@ -52,17 +53,19 @@ class StructureAE(nn.Module):
                  in_dim,
                  embed_dim,
                  out_dim,
-                 dropout, ):
+                 dropout,
+                 act):
         super(StructureAE, self).__init__()
         self.dense = nn.Linear(in_dim, embed_dim)
         self.attention_layer = GATConv(embed_dim, out_dim)
         self.dropout = dropout
+        self.act = act
 
     def forward(self,
                 x,
                 edge_index):
         # encoder
-        x = F.relu(self.dense(x))
+        x = self.act(self.dense(x))
         x = F.dropout(x, self.dropout)
         # print(x.shape, adj.shape)
         embed_x = self.attention_layer(x, edge_index)
@@ -92,7 +95,8 @@ class AttributeAE(nn.Module):
         the output dim after two linear layers
     dropout: float
         dropout probability for the linear layer
-      
+    act: F, optional
+         Choice of activation function   
     Returns
     -------
     x : torch.Tensor
@@ -103,17 +107,19 @@ class AttributeAE(nn.Module):
                  in_dim,
                  embed_dim,
                  out_dim,
-                 dropout):
+                 dropout,
+                 act):
         super(AttributeAE, self).__init__()
         self.dense1 = nn.Linear(in_dim, embed_dim)
         self.dense2 = nn.Linear(embed_dim, out_dim)
         self.dropout = dropout
+        self.act = act
 
     def forward(self,
                 x,
                 struct_embed):
         # encoder
-        x = F.relu(self.dense1(x.T))
+        x = self.act(self.dense1(x.T))
         x = F.dropout(x, self.dropout)
         x = self.dense2(x)
         x = F.dropout(x, self.dropout)
@@ -127,10 +133,7 @@ class AnomalyDAE_Base(nn.Module):
     Description
     -----------
     AdnomalyDAE_Base is an anomaly detector consisting of a structure autoencoder,
-    and an attribute reconstruction autoencoder. The reconstruction mean sqare 
-    error of thedecoders are defined as structure anamoly score and attribute 
-    anomaly score, respectively, with two additional penalties on the 
-    reconstructed adj matrix and node attributes.
+    and an attribute reconstruction autoencoder. 
 
     Parameters
     ----------
@@ -158,9 +161,9 @@ class AnomalyDAE_Base(nn.Module):
                  act):
         super(AnomalyDAE_Base, self).__init__()
         self.structure_AE = StructureAE(in_node_dim, embed_dim,
-                                        out_dim, dropout)
+                                        out_dim, dropout, act)
         self.attribute_AE = AttributeAE(in_num_dim, embed_dim,
-                                        out_dim, dropout)
+                                        out_dim, dropout, act)
 
     def forward(self,
                 x,
@@ -176,8 +179,10 @@ class AnomalyDAE(BaseDetector):
     AnomalyDAE is an anomaly detector that. consists of a structure autoencoder 
     and an attribute autoencoder to learn both node embedding and attribute 
     embedding jointly in latent space. The structural autoencoer uses Graph Attention
-    layers. The reconstruction mean square error of the decoders are defined as 
-    structure anomaly score and attribute anomaly score, respectively.
+    layers. The reconstruction mean square error of the decoders are defined 
+    as structure anamoly score and attribute anomaly score, respectively, 
+    with two additional penalties on the reconstructed adj matrix and 
+    node attributes (force entries to be nonzero).
 
     See: cite 'fan2020anomalydae' for details.
 
@@ -189,9 +194,9 @@ class AnomalyDAE(BaseDetector):
         Dimension of the reduced representation after passing through the 
         structure autoencoder and attribute autoencoder. Defaults: ``4``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.``.
+        Dropout rate. Defaults: ``0.2``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Defaults: ``0.``.
+        Weight decay (L2 penalty). Defaults: ``1e-5``.
     act : callable activation function or None, optional
         Activation function if not None.
         Defaults: ``torch.nn.functional.relu``.
@@ -300,14 +305,15 @@ class AnomalyDAE(BaseDetector):
             A_hat, X_hat = self.model(attrs, edge_index)
             loss, struct_loss, feat_loss = self.loss_func(adj, A_hat,
                                                           attrs, X_hat)
-            l = torch.mean(loss)
-            l.backward()
+            loss_mean = torch.mean(loss)
+            loss_mean.backward()
             optimizer.step()
 
-            print("Epoch:", '%04d' % epoch, "train_loss=",
-                  "{:.5f}".format(l.item()), "train/struct_loss=",
-                  "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
-                  "{:.5f}".format(feat_loss.item()))
+            if self.verbose:
+                print("Epoch:", '%04d' % epoch, "train_loss=",
+                      "{:.5f}".format(loss_mean.item()), "train/struct_loss=",
+                      "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
+                      "{:.5f}".format(feat_loss.item()))
 
             self.model.eval()
             A_hat, X_hat = self.model(attrs, edge_index)
@@ -315,8 +321,7 @@ class AnomalyDAE(BaseDetector):
                                                           attrs, X_hat)
             score = loss.detach().cpu().numpy()
             if self.verbose:
-                print("Epoch:", '%04d' % (epoch), 'Auc',
-                      eval_roc_auc(labels, score))
+                print('Auc', eval_roc_auc(labels, score))
 
         self.decision_scores_ = score
         self._process_decision_scores()
