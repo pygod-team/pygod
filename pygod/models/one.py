@@ -203,7 +203,8 @@ class ONE(BaseDetector):
 
                     self.G_mat[i, k] = Gik_numer / Gik_denom
 
-            # self.G_mat = calculate_G(self.G_mat, self.alpha, outl1, self.H, A, self.gamma, outl3, self.U, self.W)
+            # self.G_mat = calculate_G(self.G_mat, self.alpha, outl1,
+            #                          self.H, A, self.gamma, outl3, self.U, self.W)
 
             self.calc_lossValues(A, C, self.G_mat, self.H, self.U, self.V,
                                  self.W,
@@ -336,7 +337,8 @@ class ONE(BaseDetector):
             print()
 
         # Use outl2 as the outlier score.
-        # In the paper: "We have observed experimentally thatO2is more important to determine outliers."
+        # In the paper:
+        # "O2 is more important to determine outliers."
         self.decision_scores_ = outl2
         self._process_decision_scores()
 
@@ -362,6 +364,7 @@ class ONE(BaseDetector):
         check_is_fitted(self, ['W', 'G_mat', 'H', 'U', 'V'])
 
         A, C, true_labels, y = self.process_graph(G)
+        C = C-C.min()+1  # NMF requires the matrix to be non-negative.
 
         _, outl2, _ = self.cal_outlierScore(A, C)
 
