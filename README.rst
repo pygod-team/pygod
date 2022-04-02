@@ -159,7 +159,7 @@ Key Attributes of a fitted model:
 Implemented Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^
 
-PyOD toolkit consists of three major functional groups:
+PyGOD toolkit consists of three major functional groups:
 
 **(i) Node-level detection** :
 
@@ -175,7 +175,7 @@ NN                   MLPAE               Neural Networks and Deep Learning      
 GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
 GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
 MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
-GNN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
+GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
 ===================  ==================  ======================================================================================================  =====  ========================================
 
 **(ii) Utility functions** :
