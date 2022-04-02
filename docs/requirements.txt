@@ -12,3 +12,4 @@ setuptools>=50.3.1.post20201107
 scikit-learn>=0.22.1
 sphinxcontrib-bibtex
 matplotlib>=3.5.1
+sphinx_gallery>=0.10.1
