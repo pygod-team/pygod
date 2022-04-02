@@ -1,7 +1,3 @@
-Python Graph Outlier Detection (PyGOD)
-======================================
-
-
 .. image:: https://github.com/pygod-team/pygod/blob/main/docs/pygod_logo.png
    :width: 1050
    :alt: PyGOD Logo
