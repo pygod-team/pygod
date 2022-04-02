@@ -105,7 +105,6 @@ Please make sure **the latest version** is installed, as PyGOD is updated freque
    pip install pygod            # normal install
    pip install --upgrade pygod  # or update if needed
 
-
 Alternatively, you could clone and run setup.py file:
 
 .. code-block:: bash
