@@ -138,7 +138,7 @@ from the above links for running PyGOD:
 API Cheatsheet & Reference
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Full API Reference: (https://pygod.readthedocs.io/en/latest/pygod.html). API cheatsheet for all detectors:
+Full API Reference: (https://pygod.org). API cheatsheet for all detectors:
 
 
 * **fit(X)**\ : Fit detector.
@@ -166,16 +166,16 @@ PyOD toolkit consists of three major functional groups:
 ===================  ==================  ======================================================================================================  =====  ========================================
 Type                 Abbr                Algorithm                                                                                               Year   Ref
 ===================  ==================  ======================================================================================================  =====  ========================================
-GNN                  Dominant            Deep anomaly detection on attributed networks                                                           2019   [#Ding2019Deep]_
+GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   [#Ding2019Deep]_
 GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   [#Fan2020AnomalyDAE]_
 GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
 GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
-GNN                  coLA                Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning                       2021   [#Liu2021Anomaly]_
-GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   [#Yuan2021Higher]_
-GNN                  MLPAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
+GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   [#Kipf2016Variational]_
+NN                   MLPAE               Neural Networks and Deep Learning                                                                       2021   [#Aggarwal2018Neural]_
 GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
 GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
-GNN                  ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
+MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
+GNN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
 ===================  ==================  ======================================================================================================  =====  ========================================
 
 **(ii) Utility functions** :
@@ -235,7 +235,7 @@ Our core team members include:
 `Kaize Ding (ASU) <https://www.public.asu.edu/~kding9/>`_,
 `Canyu Chen (IIT) <https://github.com/pygod-team/pygod>`_,
 
-Reach out us by submitting an issue report or email us at **<tba>add an email<tba>**
+Reach out us by submitting an issue report or email us at pygodteam@gmail.com.
 
 ----
 
@@ -254,8 +254,6 @@ Reference
 
 .. [#Liu2020Alleviating] Liu, Z., Dou, Y., Yu, P.S., Deng, Y. and Peng, H., 2020, July. Alleviating the inconsistency problem of applying graph neural network to fraud detection. In Proceedings of the 43rd international ACM SIGIR conference on research and development in information retrieval (pp. 1569-1572).
 
-.. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
-
 .. [#Perini2020Quantifying] Perini, L., Vercruyssen, V., Davis, J. Quantifying the confidence of anomaly detectors in their example-wise predictions. In *Joint European Conference on Machine Learning and Knowledge Discovery in Databases (ECML-PKDD)*, 2020.
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
@@ -263,3 +261,9 @@ Reference
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
 
 .. [#Zhang2021FRAUDRE] Zhang, G., Wu, J., Yang, J., Beheshti, A., Xue, S., Zhou, C. and Sheng, Q.Z., 2021, December. FRAUDRE: Fraud Detection Dual-Resistant to Graph Inconsistency and Imbalance. In 2021 IEEE International Conference on Data Mining (ICDM).
+
+.. [#Kipf2016Variational] Kipf, T.N. and Welling, M., 2016. Variational graph auto-encoders. arXiv preprint arXiv:1611.07308.
+
+.. [#Aggarwal2018Neural] Aggarwal, C.C., 2018. Neural networks and deep learning. Springer, 10, pp.978-3.
+
+.. [#Chen2020Generative] Chen, Z., Liu, B., Wang, M., Dai, P., Lv, J. and Bo, L., 2020, October. Generative adversarial attributed network anomaly detection. In Proceedings of the 29th ACM International Conference on Information & Knowledge Management (pp. 1989-1992).
