@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import unittest
 # noinspection PyProtectedMember
 from numpy.testing import assert_equal
@@ -20,7 +21,7 @@ class TestMLPAE(unittest.TestCase):
         # the roc should be higher than this; it is model dependent
         self.roc_floor = 0.60
 
-        test_graph = torch.load('./test_graph.pt')
+        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
         self.data = test_graph
 
         self.model = MLPAE()
