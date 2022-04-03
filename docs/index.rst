@@ -172,7 +172,7 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
    :caption: Getting Started
 
    install
-   auto_examples/index
+   tutorials/index
 
 .. toctree::
    :maxdepth: 2

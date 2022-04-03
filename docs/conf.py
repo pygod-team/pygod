@@ -161,7 +161,7 @@ html_static_path = []
 
 sphinx_gallery_conf = {
     'examples_dirs': 'examples/',
-    'gallery_dirs': 'auto_examples/',
+    'gallery_dirs': 'tutorials/',
     'within_subsection_order': FileNameSortKey,
     'filename_pattern': '.py',
     'download_all_examples': False,

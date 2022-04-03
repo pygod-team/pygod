@@ -2,7 +2,6 @@ from setuptools import find_packages, setup
 
 # read the contents of README file
 from os import path
-from io import open  # for Python 2 and 3 compatibility
 
 # get __version__ from _version.py
 ver_file = path.join('pygod', 'version.py')
@@ -47,12 +46,11 @@ setup(name='pygod',
           'Intended Audience :: Developers',
           'Intended Audience :: Information Technology',
           'License :: OSI Approved :: BSD License',
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
           'License :: OSI Approved :: BSD License'
       ],
 )

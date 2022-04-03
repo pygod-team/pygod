@@ -39,7 +39,7 @@ in **graphs**. This exciting yet challenging field has many applications in dete
 suspicious activities in social networks [#Dou2020Enhancing]_  and security systems [#Cai2021Structural]_.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
-such as Dominant (SDM'19) and GUIDE (BigData'21).
+such as DOMINANT (SDM'19) and GUIDE (BigData'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with GNN in 5 lines!
@@ -193,7 +193,7 @@ Data                 gen_attribute_outliers  Generating attribute outliers      
 Quick Start for Outlier Detection with PyGOD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`"A Blitz Introduction" <https://docs.pygod.org/en/latest/auto_examples/intro.html#sphx-glr-download-auto-examples-intro-py>`_
+`"A Blitz Introduction" <https://docs.pygod.org/en/latest/tutorials/intro.html>`_
 demonstrates the basic API of PyGOD using the dominant detector. **It is noted that the API across all other algorithms are consistent/similar**.
 
 You could download the corresponding `"Python script" <https://docs.pygod.org/en/latest/_downloads/211e65b3148ca931de8653d254f377ab/intro.py>`_
