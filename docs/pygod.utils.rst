@@ -11,6 +11,17 @@ pygod.utils.early\_stopping module
     :show-inheritance:
     :inherited-members:
 
+
+pygod.utils.metric module
+-------------------------
+
+.. automodule:: pygod.utils.metric
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+
 pygod.utils.outlier\_generator module
 -------------------------------------
 
