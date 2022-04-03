@@ -1,2 +1,2 @@
-A Blitz Introduction to PyGOD
-=============================
+A Blitz Introduction
+====================

@@ -42,11 +42,11 @@
 ----
 
 PyGOD is a comprehensive **Python library** for **detecting outlying objects**
-in **graphs**. This exciting yet challenging field has many key applications
-in fraud detection :cite:`liu2020alleviating`  and fake news detection :cite:`dou2021user`.
+in **graphs**.This exciting yet challenging field has many applications in detecting
+suspicious activities in social networks :cite:`dou2020enhancing`  and security systems :cite:`cai2021structural`.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
-such as Dominant (SDM'19) and coLA (TNNLS'21).
+such as Dominant (SDM'19) and GUIDE (BigData'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with GNN in 5 lines!
@@ -130,10 +130,8 @@ GNN                  ONE                 Outlier aware network embedding for att
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 Type                 Name                    Function                                                                                                                                               Documentation
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Metric               eval_roc_auc            ROC-AUC score for binary classification.                                                                                                               `eval_roc_auc <https://github.com/pygod-team/pygod>`_
-Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_combined_outliers   Generating combined outliers                                                                                                                           `gen_combined_outliers <https://github.com/pygod-team/pygod>`_
+Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
+Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 
 
@@ -174,7 +172,7 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
    :caption: Getting Started
 
    install
-   auto_examples/index
+   tutorials/index
 
 .. toctree::
    :maxdepth: 2

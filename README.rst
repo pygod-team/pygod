@@ -35,11 +35,11 @@
 -----
 
 PyGOD is a comprehensive **Python library** for **detecting outlying objects**
-in **graphs**. This exciting yet challenging field has many key applications
-in fraud detection [#Liu2020Alleviating]_  and fake news detection [#Dou2021User]_.
+in **graphs**. This exciting yet challenging field has many applications in detecting
+suspicious activities in social networks [#Dou2020Enhancing]_  and security systems [#Cai2021Structural]_.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
-such as Dominant (SDM'19) and coLA (TNNLS'21).
+such as DOMINANT (SDM'19) and GUIDE (BigData'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with GNN in 5 lines!
@@ -137,7 +137,7 @@ Please install them from the above links for running PyGOD:
 API Cheatsheet & Reference
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Full API Reference: (https://pygod.org). API cheatsheet for all detectors:
+Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
 
 * **fit(X)**\ : Fit detector.
@@ -182,7 +182,6 @@ GAN                  GAAN                Generative Adversarial Attributed Netwo
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 Type                 Name                    Function                                                                                                                                               Documentation
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Metric               eval_roc_auc            ROC-AUC score for binary classification.                                                                                                               `eval_roc_auc <https://github.com/pygod-team/pygod>`_
 Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
 Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
@@ -194,7 +193,7 @@ Data                 gen_attribute_outliers  Generating attribute outliers      
 Quick Start for Outlier Detection with PyGOD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`"A Blitz Introduction" <https://docs.pygod.org/en/latest/auto_examples/intro.html#sphx-glr-download-auto-examples-intro-py>`_
+`"A Blitz Introduction" <https://docs.pygod.org/en/latest/tutorials/intro.html>`_
 demonstrates the basic API of PyGOD using the dominant detector. **It is noted that the API across all other algorithms are consistent/similar**.
 
 You could download the corresponding `"Python script" <https://docs.pygod.org/en/latest/_downloads/211e65b3148ca931de8653d254f377ab/intro.py>`_
@@ -240,11 +239,11 @@ Reference
 
 .. [#Ding2019Deep] Ding, K., Li, J., Bhanushali, R. and Liu, H., 2019, May. Deep anomaly detection on attributed networks. In Proceedings of the SIAM International Conference on Data Mining (SDM).
 
-.. [#Dou2021User] Dou, Y., Shu, K., Xia, C., Yu, P.S. and Sun, L., 2021, July. User preference-aware fake news detection. In Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval (pp. 2051-2055).
+.. [#Cai2021Structural] Cai, L., Chen, Z., Luo, C., Gui, J., Ni, J., Li, D. and Chen, H., 2021, October. Structural temporal graph neural networks for anomaly detection in dynamic graphs. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management (pp. 3747-3756).
 
 .. [#Fan2020AnomalyDAE] Fan, H., Zhang, F. and Li, Z., 2020, May. AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks. In Proceedings of the IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP).
 
-.. [#Liu2020Alleviating] Liu, Z., Dou, Y., Yu, P.S., Deng, Y. and Peng, H., 2020, July. Alleviating the inconsistency problem of applying graph neural network to fraud detection. In Proceedings of the 43rd international ACM SIGIR conference on research and development in information retrieval (pp. 1569-1572).
+.. [#Dou2020Enhancing] Dou, Y., Liu, Z., Sun, L., Deng, Y., Peng, H. and Yu, P.S., 2020, October. Enhancing graph neural network-based fraud detectors against camouflaged fraudsters. In Proceedings of the 29th ACM International Conference on Information & Knowledge Management (pp. 315-324).
 
 .. [#Perini2020Quantifying] Perini, L., Vercruyssen, V., Davis, J. Quantifying the confidence of anomaly detectors in their example-wise predictions. In *Joint European Conference on Machine Learning and Knowledge Discovery in Databases (ECML-PKDD)*, 2020.
 
