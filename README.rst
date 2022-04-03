@@ -34,8 +34,8 @@
 
 -----
 
-PyGOD is a comprehensive **Python library** for **detecting outlying objects**
-in **graphs**. This exciting yet challenging field has many applications in detecting
+PyGOD is a **Python Library** for **Graph Outlier Detection** (Anomaly Detection).
+This exciting yet challenging field has many key applications, e.g., detecting
 suspicious activities in social networks [#Dou2020Enhancing]_  and security systems [#Cai2021Structural]_.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
