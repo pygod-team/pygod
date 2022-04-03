@@ -23,7 +23,6 @@
    :target: https://github.com/pygod-team/pygod/stargazers
    :alt: GitHub stars
 
-
 .. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
    :target: https://github.com/pygod-team/pygod/network
    :alt: GitHub forks
@@ -32,10 +31,13 @@
    :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
    :alt: testing
 
+.. image:: https://coveralls.io/repos/github/pygod-team/pygod/badge.svg?branch=main
+   :target: https://coveralls.io/github/pygod-team/pygod?branch=main
+   :alt: Coverage Status
+
 .. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
    :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
    :alt: License
-
 
 ----
 
@@ -78,23 +80,23 @@ Please **star**, **watch**, and **fork**.
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
 
-**Citing PyGOD (to be updated soon)**\ :
 
-`PyGOD paper <http://tbd>`_ is available on arxiv and under review.
+**Citing PyGOD (to be announced soon)**\ :
+
+`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper::
+citations to the following paper (to be announced)::
 
-    @article{tbd,
-      author  = {tbd},
+    @article{tba,
+      author  = {tba},
       title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tbd},
+      journal = {tba},
       year    = {2022},
-      url     = {tbd}
     }
 
 or::
 
-    tbd, tbd and tbd, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tbd.
+    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
 
 
 ----

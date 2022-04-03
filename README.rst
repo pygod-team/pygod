@@ -15,7 +15,6 @@
    :target: https://github.com/pygod-team/pygod/stargazers
    :alt: GitHub stars
 
-
 .. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
    :target: https://github.com/pygod-team/pygod/network
    :alt: GitHub forks
@@ -23,6 +22,10 @@
 .. image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
    :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
    :alt: testing
+
+.. image:: https://coveralls.io/repos/github/pygod-team/pygod/badge.svg?branch=main
+   :target: https://coveralls.io/github/pygod-team/pygod?branch=main
+   :alt: Coverage Status
 
 .. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
    :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
@@ -69,23 +72,22 @@ Please **star**, **watch**, and **fork**.
     # predict on the new data
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
-**Citing PyGOD (to be updated soon)**\ :
+**Citing PyGOD (to be announced soon)**\ :
 
-`PyGOD paper <http://tbd>`_ is available on arxiv and under review.
+`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper::
+citations to the following paper (to be announced)::
 
-    @article{tbd,
-      author  = {tbd},
+    @article{tba,
+      author  = {tba},
       title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tbd},
+      journal = {tba},
       year    = {2022},
-      url     = {tbd}
     }
 
 or::
 
-    tbd, tbd and tbd, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tbd.
+    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
 
 
 ----
@@ -111,26 +113,23 @@ Alternatively, you could clone and run setup.py file:
 
 **Required Dependencies**\ :
 
-
 * Python 3.6 +
 * argparse>=1.4.0
 * numpy>=1.19.4
 * scikit-learn>=0.22.1
-* networkx>=2.6.3
 * scipy>=1.5.2
 * pandas>=1.1.3
 * setuptools>=50.3.1.post20201107
 
 
-**Note and PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_. 
-To streamline the installation, PyGOD does **NOT** install these libraries for you. Please install them
-from the above links for running PyGOD:
+**Note on PyG and PyTorch Installation**\ :
+PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
+To streamline the installation, PyGOD does **NOT** install these libraries for you.
+Please install them from the above links for running PyGOD:
 
 * torch>=1.10
 * pytorch_geometric>=2.0.3
 * networkx>=2.6.3
-
 
 ----
 
@@ -184,9 +183,8 @@ GAN                  GAAN                Generative Adversarial Attributed Netwo
 Type                 Name                    Function                                                                                                                                               Documentation
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 Metric               eval_roc_auc            ROC-AUC score for binary classification.                                                                                                               `eval_roc_auc <https://github.com/pygod-team/pygod>`_
-Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_combined_outliers   Generating combined outliers                                                                                                                           `gen_combined_outliers <https://github.com/pygod-team/pygod>`_
+Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
+Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 
 
@@ -196,17 +194,11 @@ Data                 gen_combined_outliers   Generating combined outliers       
 Quick Start for Outlier Detection with PyGOD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`"examples/dominant_example.py" <https://github.com/pygod-team/pygod/blob/master/examples/dominant_example.py>`_
-demonstrates the basic API of using the dominant detector. **It is noted that the API across all other algorithms are consistent/similar**.
+`"A Blitz Introduction" <https://docs.pygod.org/en/latest/auto_examples/intro.html#sphx-glr-download-auto-examples-intro-py>`_
+demonstrates the basic API of PyGOD using the dominant detector. **It is noted that the API across all other algorithms are consistent/similar**.
 
-More detailed instructions for running examples can be found in `examples directory <https://github.com/pygod-team/pygod/blob/master/examples/>`_.
-
-#. Initialize a dominant detector, fit the model, and make the prediction.
-
-
-
-#. Evaluate the prediction by ROC and Precision @ Rank n (p@n).
-
+You could download the corresponding `"Python script" <https://docs.pygod.org/en/latest/_downloads/211e65b3148ca931de8653d254f377ab/intro.py>`_
+and `"Jupyter Notebook" <https://docs.pygod.org/en/latest/_downloads/49ff62316f2b07a8062410a5eb0d64ae/intro.ipynb>`_.
 
 ----
 
