@@ -32,11 +32,10 @@ jobs:
         
     - name: Install dependencies
       run: |
-        conda install pytorch torchvision torchaudio cpuonly -c pytorch
-        conda install pyg -c pyg
-        conda install -c anaconda networkx
         python -m pip install --upgrade pip
         pip install -r requirements_ci.txt
+        conda install pyg -c pyg
+        conda install -c anaconda networkx
         pip install pytest
         pip install coverage
         pip install coveralls
