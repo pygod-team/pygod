@@ -6,10 +6,12 @@ name: Testing
 on:
   push:
     branches:
-      - master
+      - main
       - dev
   pull_request:
-    branches: [ master ]
+    branches: 
+      - main
+      - dev
 
 jobs:
   build:
