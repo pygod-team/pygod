@@ -6,7 +6,7 @@ In this introductory tutorial, you will learn the basic workflow of
 PyGOD. This tutorial assumes that you have basic familiarity with
 PyTorch and PyTorch Geometric (PyG).
 
-(Time estimate: 3 minutes)
+(Time estimate: 5 minutes)
 """
 #######################################################################
 # Data Loading

@@ -16,7 +16,7 @@
    :alt: PyPI version
 
 .. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
-   :target: https://py-god.readthedocs.io/en/latest/?badge=latest
+   :target: https://docs.pygod.org/en/latest/?badge=latest
    :alt: Documentation status
 
 .. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
@@ -104,23 +104,23 @@ or::
 Implemented Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^
 
-PyOD toolkit consists of three major functional groups:
+PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 
 ===================  ===================  ==================  ======================================================================================================  =====  ==============================================
 Type                 Backbone             Abbr                Algorithm                                                                                               Year   Class
 ===================  ===================  ==================  ======================================================================================================  =====  ==============================================
-Unsupervised         GNN                  Dominant            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
-Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
-Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
-Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
-Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   :class:`pygod.models.gcnae.GCNAE`
-Unsupervised         NN                   MLPAE               Neural Networks and Deep Learning                                                                       2021   :class:`pygod.models.mlpae.MLPAE`
-Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
-Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
-Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
-Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   :class:`pygod.models.gaan.GAAN`
+Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.DOMINANT`
+Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.AnomalyDAE`
+Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.DONE`
+Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.AdONE`
+Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   :class:`pygod.models.GCNAE`
+Unsupervised         NN                   MLPAE               Neural Networks and Deep Learning                                                                       2021   :class:`pygod.models.MLPAE`
+Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.GUIDE`
+Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.OCGNN`
+Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.ONE`
+Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   :class:`pygod.models.GAAN`
 ===================  ===================  ==================  ======================================================================================================  =====  ==============================================
 
 
