@@ -1,13 +1,15 @@
-All Models
+Models
 ==========
 
-.. _api-graph-create-ops:
 pygod.models.adone module
 ----------------------------
-.. autoclass:: pygod.models.AdONE
-    :members:
-    :noindex:
+
+.. automodule:: pygod.models.adone
+    :members: AdONE
+    :exclude-members: AdONE_Base, NeighDiff
+    :undoc-members:
     :show-inheritance:
+    :inherited-members:
 
 pygod.models.anomalydae module
 ------------------------------
