@@ -49,7 +49,7 @@ PyGOD includes more than **10** latest graph-based detection algorithms,
 such as Dominant (SDM'19) and GUIDE (BigData'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
-See examples below for detecting anomalies with GNN in 5 lines!
+See examples below for detecting anomalies with PyGOD in 5 lines!
 
 **PyGOD** is under actively developed and will be updated frequently!
 Please **star**, **watch**, and **fork**.
@@ -57,11 +57,11 @@ Please **star**, **watch**, and **fork**.
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage** of more than 10 latest graph neural networks (GNNs).
+* **Comprehensive coverage** of more than 10 latest graph outlier detectors.
 * **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
-**Outlier Detection Using GNN with 5 Lines of Code**\ :
+**Outlier Detection Using PyGOD with 5 Lines of Code**\ :
 
 
 .. code-block:: python
