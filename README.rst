@@ -163,7 +163,7 @@ PyGOD toolkit consists of three major functional groups:
 **(i) Node-level detection** :
 
 ===================  ===================  ==================  ======================================================================================================  =====  ========================================
-Type               Backbone                 Abbr                Algorithm                                                                                               Year   Ref
+Type                 Backbone             Abbr                Algorithm                                                                                               Year   Ref
 ===================  ===================  ==================  ======================================================================================================  =====  ========================================
 Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   [#Ding2019Deep]_
 Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   [#Fan2020AnomalyDAE]_
@@ -175,19 +175,19 @@ Unsupervised         GNN                  GUIDE               Higher-order Struc
 Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
 Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
 Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
-===================  ==================  ======================================================================================================  =====  ========================================
+===================  ===================  ==================  ======================================================================================================  =====  ========================================
 
 **(ii) Utility functions** :
 
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Type                 Name                    Function                                                                                                                                               Documentation
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Metric               eval_precision_at_k     Calculating Precision@k                                                                                                                         `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
-Metric               eval_recall_at_k        Calculating Recall@k                                                                                                                             `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
-Metric               eval_roc_auc            Calculating ROC-AUC Score                                                                                                                                    `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
-Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
-Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
+===================  ======================  ==================================  ======================================================================================================================================
+Type                 Name                    Function                            Documentation
+===================  ======================  ==================================  ======================================================================================================================================
+Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
+Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
+Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
+Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
+Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
+===================  ======================  ==================================  ======================================================================================================================================
 
 
 ----
