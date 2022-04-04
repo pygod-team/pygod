@@ -108,20 +108,19 @@ PyOD toolkit consists of three major functional groups:
 
 **(i) Node-level detection** :
 
-===================  ==================  ======================================================================================================  =====  ==============================================
-Type                 Abbr                Algorithm                                                                                               Year   Class
-===================  ==================  ======================================================================================================  =====  ==============================================
-GNN                  Dominant            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
-GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
-GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
-GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
-GNN                  coLA                Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning                       2021
-GNN                  FRAUDRE (TO MOVE)   Fraud Detection Dual-Resistant to Graph Inconsistency and Imbalance                                     2021
-GNN                  GCNAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.gcnae.GCNAE`
-GNN                  MLPAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.mlpae.MLPAE`
-GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
-GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
-GNN                  ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
+===================  ===================  ==================  ======================================================================================================  =====  ==============================================
+Type               Backbone                 Abbr                Algorithm                                                                                               Year   Class
+===================  ===================  ==================  ======================================================================================================  =====  ==============================================
+Unsupervised         GNN                  Dominant            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
+Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
+Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
+Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
+Unsupervised         GNN                  GCNAE    Variational Graph Auto-Encoders                                  2021   :class:`pygod.models.gcnae.GCNAE`
+Unsupervised         NN                  MLPAE        Neural Networks and Deep Learning                                   2021   :class:`pygod.models.mlpae.MLPAE`
+Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
+Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
+Unsupervised         MF                  ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
+Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020      :class:`pygod.models.gaan.GAAN`
 ===================  ==================  ======================================================================================================  =====  ==============================================
 
 
@@ -130,6 +129,9 @@ GNN                  ONE                 Outlier aware network embedding for att
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
 Type                 Name                    Function                                                                                                                                               Documentation
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
+Metric               eval_precision_at_k     Calculating Precision@k                                                                                                                         `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
+Metric               eval_recall_at_k        Calculating Recall@k                                                                                                                             `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
+Metric               eval_roc_auc            Calculating ROC-AUC Score                                                                                                                                    `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
 Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
 Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
