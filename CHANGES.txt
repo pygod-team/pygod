@@ -1,1 +1,2 @@
 v<0.1.0>, <04/01/2022> -- Initial release.
+v<0.1.1>, <04/04/2022> -- Improvements on stability.
