@@ -8,7 +8,7 @@
    :alt: PyPI version
 
 .. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
-   :target: https://py-god.readthedocs.io/en/latest/?badge=latest
+   :target: https://docs.pygod.org/en/latest/?badge=latest
    :alt: Documentation status
 
 .. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
@@ -158,7 +158,7 @@ Key Attributes of a fitted model:
 Implemented Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^
 
-PyGOD toolkit consists of three major functional groups:
+PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 

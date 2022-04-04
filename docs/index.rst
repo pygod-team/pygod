@@ -190,12 +190,3 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
    :caption: Additional Information
 
    team
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
