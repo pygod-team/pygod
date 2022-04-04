@@ -111,4 +111,3 @@ pygod.models.one module
 
 .. bibliography::
    :cited:
-   :labelprefix: B
