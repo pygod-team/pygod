@@ -14,8 +14,8 @@ PyTorch and PyTorch Geometric (PyG).
 # PyGOD use `torch_geometric.data.Data` to handle the data. Here, we
 # use Cora, a PyG built-in dataset, as an example. To load your own
 # dataset into PyGOD, you can refer to [creating your own datasets
-# tutorial](https://pytorch-geometric.readthedocs.io/en/latest/notes/
-# create_dataset.html) in PyG.
+# tutorial](https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html)
+# in PyG.
 
 
 import torch_geometric.transforms as T
