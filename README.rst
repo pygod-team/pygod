@@ -1,4 +1,4 @@
-.. image:: https://github.com/pygod-team/pygod/blob/main/docs/pygod_logo.png
+.. image:: https://raw.githubusercontent.com/pygod-team/pygod/main/docs/pygod_logo.png
    :width: 1050
    :alt: PyGOD Logo
    :align: center
