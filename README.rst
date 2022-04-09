@@ -206,7 +206,7 @@ How to Contribute
 
 You are welcome to contribute to this exciting project:
 
-See `contribution guide <https://github.com/pygod-team/pygod/blob/master/contributing.md>`_ for more information.
+See `contribution guide <https://github.com/pygod-team/pygod/blob/master/contributing.RST>`_ for more information.
 
 
 ----
