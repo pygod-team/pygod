@@ -21,21 +21,19 @@ Alternatively, you could clone and run setup.py file:
 
 **Required Dependencies**\ :
 
-
 * Python 3.6 +
 * argparse>=1.4.0
 * numpy>=1.19.4
 * scikit-learn>=0.22.1
-* networkx>=2.6.3
 * scipy>=1.5.2
 * pandas>=1.1.3
 * setuptools>=50.3.1.post20201107
 
 
-**Note and PyG and PyTorch Installation**\ :
+**Note on PyG and PyTorch Installation**\ :
 PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
-To streamline the installation, PyGOD does **NOT** install these libraries for you. Please install them
-from the above links for running PyGOD:
+To streamline the installation, PyGOD does **NOT** install these libraries for you.
+Please install them from the above links for running PyGOD:
 
 * torch>=1.10
 * pytorch_geometric>=2.0.3

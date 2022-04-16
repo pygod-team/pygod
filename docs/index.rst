@@ -10,22 +10,46 @@
 
 ----
 
-.. image:: https://badgen.net/badge/icon/github?icon=github&label
-   :target: https://github.com/pygod-team/pygod
-   :alt: GitHub
 
+.. image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
+   :target: https://pypi.org/project/pygod/
+   :alt: PyPI version
+
+.. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
+   :target: https://docs.pygod.org/en/latest/?badge=latest
+   :alt: Documentation status
+
+.. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/stargazers
+   :alt: GitHub stars
+
+.. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
+   :target: https://github.com/pygod-team/pygod/network
+   :alt: GitHub forks
+
+.. image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
+   :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
+   :alt: testing
+
+.. image:: https://coveralls.io/repos/github/pygod-team/pygod/badge.svg?branch=main
+   :target: https://coveralls.io/github/pygod-team/pygod?branch=main
+   :alt: Coverage Status
+
+.. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
+   :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
+   :alt: License
 
 ----
 
-PyGOD is a comprehensive **Python library** for **detecting outlying objects**
-in **graphs**. This exciting yet challenging field has many key applications
-in fraud detection :cite:`liu2020alleviating`  and fake news detection :cite:`dou2021user`.
+PyGOD is a **Python library** for **graph outlier detection** (anomaly detection).
+This exciting yet challenging field has many key applications, e.g., detecting
+suspicious activities in social networks :cite:`dou2020enhancing`  and security systems :cite:`cai2021structural`.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
-such as Dominant (SDM'19) and coLA (TNNLS'21).
+such as Dominant (SDM'19) and GUIDE (BigData'21).
 For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
-See examples below for detecting anomalies with GNN in 5 lines!
+See examples below for detecting anomalies with PyGOD in 5 lines!
 
 **PyGOD** is under actively developed and will be updated frequently!
 Please **star**, **watch**, and **fork**.
@@ -33,11 +57,11 @@ Please **star**, **watch**, and **fork**.
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage** of more than 10 latest graph neural networks (GNNs).
+* **Comprehensive coverage** of more than 10 latest graph outlier detectors.
 * **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
-**Outlier Detection Using GNN with 5 Lines of Code**\ :
+**Outlier Detection Using PyGOD with 5 Lines of Code**\ :
 
 
 .. code-block:: python
@@ -56,61 +80,62 @@ Please **star**, **watch**, and **fork**.
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
 
-**Citing PyGOD (to be updated soon)**\ :
 
-`PyGOD paper <http://tbd>`_ is available on arxiv and under review.
+**Citing PyGOD (to be announced soon)**\ :
+
+`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper::
+citations to the following paper (to be announced)::
 
-    @article{tbd,
-      author  = {tbd},
+    @article{tba,
+      author  = {tba},
       title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tbd},
+      journal = {tba},
       year    = {2022},
-      url     = {tbd}
     }
 
 or::
 
-    tbd, tbd and tbd, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tbd.
+    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
 
 
 ----
 
-Implemented Algorithms
-^^^^^^^^^^^^^^^^^^^^^^
 
-PyOD toolkit consists of three major functional groups:
+Implemented Algorithms
+======================
+
+PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 
-===================  ==================  ======================================================================================================  =====  ==============================================
-Type                 Abbr                Algorithm                                                                                               Year   Class
-===================  ==================  ======================================================================================================  =====  ==============================================
-GNN                  Dominant            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
-GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
-GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
-GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
-GNN                  coLA                Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning                       2021
-GNN                  FRAUDRE (TO MOVE)   Fraud Detection Dual-Resistant to Graph Inconsistency and Imbalance                                     2021
-GNN                  GCNAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.gcnae.GCNAE`
-GNN                  MLPAE (change ref)  Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.mlpae.MLPAE`
-GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
-GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
-GNN                  ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
-===================  ==================  ======================================================================================================  =====  ==============================================
+===================  ===================  ==================  ======================================================================================================  =====  ==============================================
+Type                 Backbone             Abbr                Algorithm                                                                                               Year   Class
+===================  ===================  ==================  ======================================================================================================  =====  ==============================================
+Unsupervised         NN                   MLPAE               Neural Networks and Deep Learning                                                                       2021   :class:`pygod.models.mlpae.MLPAE`
+Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   :class:`pygod.models.gcnae.GCNAE`
+Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
+Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
+Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
+Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
+Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
+Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   :class:`pygod.models.gaan.GAAN`
+Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
+Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
+===================  ===================  ==================  ======================================================================================================  =====  ==============================================
 
 
 **(ii) Utility functions** :
 
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Type                 Name                    Function                                                                                                                                               Documentation
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
-Metric               eval_roc_auc            ROC-AUC score for binary classification.                                                                                                               `eval_roc_auc <https://github.com/pygod-team/pygod>`_
-Data                 gen_structure_outliers  Generating structural outliers                                                                                                                         `gen_structure_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_attribute_outliers  Generating attribute outliers                                                                                                                          `gen_attribute_outliers <https://github.com/pygod-team/pygod>`_
-Data                 gen_combined_outliers   Generating combined outliers                                                                                                                           `gen_combined_outliers <https://github.com/pygod-team/pygod>`_
-===================  ======================  =====================================================================================================================================================  ======================================================================================================================================
+===================  ======================  ==================================  ======================================================================================================================================
+Type                 Name                    Function                            Documentation
+===================  ======================  ==================================  ======================================================================================================================================
+Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
+Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
+Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
+Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
+Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
+===================  ======================  ==================================  ======================================================================================================================================
 
 
 ----
@@ -150,6 +175,7 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
    :caption: Getting Started
 
    install
+   tutorials/index
 
 .. toctree::
    :maxdepth: 2
@@ -165,12 +191,3 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
    :caption: Additional Information
 
    team
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

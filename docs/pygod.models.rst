@@ -1,4 +1,4 @@
-All Models
+Models
 ==========
 
 pygod.models.adone module
@@ -111,4 +111,3 @@ pygod.models.one module
 
 .. bibliography::
    :cited:
-   :labelprefix: B

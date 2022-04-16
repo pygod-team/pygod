@@ -127,7 +127,7 @@ class Dummy3(BaseDetector):
 
 class TestBASE(unittest.TestCase):
     def setUp(self):
-        test_graph = torch.load('./test_graph.pt')
+        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
         self.data = test_graph
 
     def test_init(self):

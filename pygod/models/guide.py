@@ -352,7 +352,7 @@ class GUIDE_Base(nn.Module):
 
         self.struct_ae = GNA(in_channels=s_dim,
                              hidden_channels=hid_dim,
-                             num_layers=num_layers - 1,
+                             num_layers=num_layers,
                              out_channels=s_dim,
                              dropout=dropout,
                              act=act)

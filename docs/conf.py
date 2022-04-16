@@ -50,7 +50,8 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx_gallery.gen_gallery'
 ]
 
 
@@ -154,7 +155,17 @@ texinfo_documents = [
 ]
 
 # -- Extension configuration -------------------------------------------------
+from sphinx_gallery.sorting import FileNameSortKey
 
+html_static_path = []
+
+sphinx_gallery_conf = {
+    'examples_dirs': 'examples/',
+    'gallery_dirs': 'tutorials/',
+    'within_subsection_order': FileNameSortKey,
+    'filename_pattern': '.py',
+    'download_all_examples': False,
+}
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
