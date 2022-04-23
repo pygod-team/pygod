@@ -7,6 +7,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import warnings
 import torch
 import numpy as np
 import numbers
@@ -44,7 +45,7 @@ def validate_device(gpu_id):
         device_id = 'cuda:{}'.format(gpu_id)
     else:
         if gpu_id != 'cpu':
-            raise ValueError('The cuda is not available while gpu is set to gpu. Please verify.')
+            warnings.warn('The cuda is not available. Set to cpu.')
         device_id = 'cpu'
 
     return device_id
