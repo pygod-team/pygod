@@ -46,7 +46,7 @@ class StructureAE(nn.Module):
     x : torch.Tensor
         Reconstructed attribute (feature) of nodes.
     embed_x : torch.Tensor
-              Embedd nodes after the attention layer
+        Embed nodes after the attention layer
     """
 
     def __init__(self,
@@ -279,12 +279,12 @@ class AnomalyDAE(BaseDetector):
 
         Parameters
         ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : torch_geometric.data.Data
             The input data.
-        y_true : numpy.array, optional (default=None)
-            The optional outlier ground truth labels used to monitor the
-            training progress. They are not used to optimize the
-            unsupervised model.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------

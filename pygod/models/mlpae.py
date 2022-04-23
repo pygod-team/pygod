@@ -5,12 +5,15 @@
 # License: BSD 2 clause
 
 import torch
+import numpy as np
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
 from ..utils.metric import eval_roc_auc
+from ..utils.dataset import PlainDataset
 
 
 class MLPAE(BaseDetector):
@@ -42,6 +45,8 @@ class MLPAE(BaseDetector):
         Maximum number of training epoch. Default: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
@@ -63,6 +68,7 @@ class MLPAE(BaseDetector):
                  lr=5e-3,
                  epoch=5,
                  gpu=0,
+                 batch_size=0,
                  verbose=False):
         super(MLPAE, self).__init__(contamination=contamination)
 
@@ -80,6 +86,7 @@ class MLPAE(BaseDetector):
             self.device = 'cuda:{}'.format(gpu)
         else:
             self.device = 'cpu'
+        self.batch_size = batch_size
 
         # other param
         self.verbose = verbose
@@ -93,23 +100,27 @@ class MLPAE(BaseDetector):
 
         Parameters
         ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : torch_geometric.data.Data
             The input data.
-        y_true : numpy.array, optional (default=None)
-            The optional outlier ground truth labels used to monitor the
-            training progress. They are not used to optimize the
-            unsupervised model.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        x = self.process_graph(G)
+        full_x = self.process_graph(G)
+        dataset = PlainDataset(full_x)
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = DataLoader(dataset, batch_size=self.batch_size)
 
-        self.model = MLP(in_channels=x.shape[1],
+        self.model = MLP(in_channels=G.x.shape[1],
                          hidden_channels=self.hid_dim,
-                         out_channels=x.shape[1],
+                         out_channels=G.x.shape[1],
                          num_layers=self.num_layers,
                          dropout=self.dropout,
                          act=self.act).to(self.device)
@@ -118,27 +129,30 @@ class MLPAE(BaseDetector):
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
-        score = None
+        self.model.train()
+        decision_scores = np.zeros(full_x.shape[0])
         for epoch in range(self.epoch):
-            self.model.train()
-            x_ = self.model(x)
-            loss = F.mse_loss(x_, x)
+            epoch_loss = 0
+            for x, node_idx in loader:
+                x_ = self.model(x)
+                score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+                decision_scores[node_idx] = score.detach().cpu().numpy()
+                loss = torch.mean(score)
+                epoch_loss += loss.item() * x.shape[0]
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, loss.item()), end='')
+                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
                 if y_true is not None:
-                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    auc = eval_roc_auc(y_true, decision_scores)
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
-        self.decision_scores_ = score.detach().cpu().numpy()
+        self.decision_scores_ = decision_scores
         self._process_decision_scores()
         return self
 
@@ -160,14 +174,16 @@ class MLPAE(BaseDetector):
             The anomaly score of shape :math:`N`.
         """
         check_is_fitted(self, ['model'])
+        full_x = self.process_graph(G)
+        dataset = PlainDataset(full_x)
+        loader = DataLoader(dataset, batch_size=self.batch_size)
+
         self.model.eval()
-
-        x = self.process_graph(G)
-        x = x.to(self.device)
-
-        x_ = self.model(x)
-        outlier_scores = torch.mean(F.mse_loss(x_, x, reduction='none')
-                                    , dim=1).detach().cpu().numpy()
+        outlier_scores = np.zeros(full_x.shape[0])
+        for x, node_idx in loader:
+            x_ = self.model(x)
+            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+            outlier_scores[node_idx] = score.detach().cpu().numpy()
         return outlier_scores
 
     def process_graph(self, G):
@@ -188,5 +204,4 @@ class MLPAE(BaseDetector):
             Attribute (feature) of nodes.
         """
         x = G.x.to(self.device)
-
         return x
