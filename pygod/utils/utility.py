@@ -7,11 +7,45 @@
 from __future__ import division
 from __future__ import print_function
 
+import torch
 import numpy as np
 import numbers
 
 MAX_INT = np.iinfo(np.int32).max
 MIN_INT = -1 * MAX_INT
+
+
+def validate_device(gpu_id):
+    """Validate the input device id (GPU id) is valid on the given machine. If no GPU is presented, return 'cpu'.
+
+    Parameters
+    ----------
+    gpu_id : int
+        GPU id to be used. The function will validate the usability of the GPU. If failed, return device as 'cpu'
+
+    Returns
+    -------
+    device_id : str
+        Valid device id, e.g., 'cuda:0' or 'cpu'
+
+    """
+    # if it is cpu
+    if gpu_id == 'cpu':
+        return 'cpu'
+
+    # cast to int for checking
+    gpu_id = int(gpu_id)
+
+    # if gpu is available
+    if torch.cuda.is_available():
+        # check if gpu id is between 0 and the total number of GPUs
+        check_parameter(gpu_id, 0, torch.cuda.device_count(), param_name='gpu id', include_left=True,
+                        include_right=False)
+        device_id = 'cuda:{}'.format(gpu_id)
+    else:
+        device_id = 'cpu'
+
+    return device_id
 
 
 def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',

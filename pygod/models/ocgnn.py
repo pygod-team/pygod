@@ -13,6 +13,7 @@ from sklearn.utils.validation import check_is_fitted
 from torch_sparse import SparseTensor
 
 from . import BaseDetector
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
 
 
@@ -121,11 +122,7 @@ class OCGNN(BaseDetector):
         self.epoch = epoch
         self.warmup_epoch = warmup_epoch
         self.act = act
-
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
 
         # other param
         self.verbose = verbose

@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
 
 
@@ -85,7 +86,7 @@ class GAAN(BaseDetector):
                  contamination=0.1,
                  lr=5e-3,
                  epoch=10,
-                 gpu=-1,
+                 gpu=0,
                  verbose=False):
         super(GAAN, self).__init__(contamination=contamination)
 
@@ -104,10 +105,7 @@ class GAAN(BaseDetector):
         # training param
         self.lr = lr
         self.epoch = epoch
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
 
         # other param
         self.verbose = verbose

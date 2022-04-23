@@ -12,6 +12,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import GCN
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
 
 
@@ -70,6 +71,7 @@ class DOMINANT(BaseDetector):
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
+
     def __init__(self,
                  hid_dim=64,
                  num_layers=4,
@@ -97,10 +99,7 @@ class DOMINANT(BaseDetector):
         # training param
         self.lr = lr
         self.epoch = epoch
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
         self.batch_size = batch_size
         self.num_neigh = num_neigh
 
@@ -160,8 +159,8 @@ class DOMINANT(BaseDetector):
                                        x_[:batch_size],
                                        s[:batch_size],
                                        s_[:batch_size])
-                decision_scores[node_idx[:batch_size]] = score.detach()\
-                                                              .cpu().numpy()
+                decision_scores[node_idx[:batch_size]] = score.detach() \
+                    .cpu().numpy()
                 loss = torch.mean(score)
                 epoch_loss += loss.item() * batch_size
 
@@ -220,8 +219,8 @@ class DOMINANT(BaseDetector):
                                    s[:batch_size],
                                    s_[:batch_size])
 
-            outlier_scores[node_idx[:batch_size]] = score.detach()\
-                                                         .cpu().numpy()
+            outlier_scores[node_idx[:batch_size]] = score.detach() \
+                .cpu().numpy()
         return outlier_scores
 
     def process_graph(self, G):
@@ -272,7 +271,6 @@ class DOMINANT_Base(nn.Module):
                  num_layers,
                  dropout,
                  act):
-
         super(DOMINANT_Base, self).__init__()
 
         # split the number of layers for the encoder and decoders

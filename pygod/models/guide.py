@@ -18,6 +18,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import GCN
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
 
 
@@ -117,10 +118,7 @@ class GUIDE(BaseDetector):
         # training param
         self.lr = lr
         self.epoch = epoch
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
         self.batch_size = batch_size
         self.num_neigh = num_neigh
 
