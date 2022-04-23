@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
+import os
 import copy as cp
 
 import torch
@@ -23,7 +24,7 @@ class TestData(unittest.TestCase):
         self.k_attribute = 25
         self.random_state = 42
 
-        test_graph = torch.load('./test_graph.pt')
+        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
         self.data = test_graph
 
     def test_structure_outliers(self):

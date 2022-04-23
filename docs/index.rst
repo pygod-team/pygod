@@ -47,18 +47,17 @@ suspicious activities in social networks :cite:`dou2020enhancing`  and security 
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as Dominant (SDM'19) and GUIDE (BigData'21).
-For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with PyGOD in 5 lines!
 
-**PyGOD** is under actively developed and will be updated frequently!
-Please **star**, **watch**, and **fork**.
 
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
 * **Comprehensive coverage** of more than 10 latest graph outlier detectors.
-* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
+* **Full support of detections at multiple levels**, such as node-, edge- (WIP), and graph-level tasks (WIP).
+* **Scalable design for processing large graphs** via mini-batch and sampling.
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using PyGOD with 5 Lines of Code**\ :
@@ -70,13 +69,13 @@ Please **star**, **watch**, and **fork**.
     # train a dominant detector
     from pygod.models import DOMINANT
 
-    model = DOMINANT()  # hyperparameters can be set here
+    model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
     outlier_scores = model.decision_scores # raw outlier scores on the input data
 
-    # predict on the new data
+    # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
 

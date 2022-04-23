@@ -40,19 +40,17 @@ suspicious activities in social networks [#Dou2020Enhancing]_  and security syst
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as DOMINANT (SDM'19) and GUIDE (BigData'21).
-For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting outliers with PyGOD in 5 lines!
-
-**PyGOD** is under actively developed and will be updated frequently!
-Please **star**, **watch**, and **fork**.
 
 
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
 * **Comprehensive coverage** of more than 10 latest graph outlier detectors.
-* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
+* **Full support of detections at multiple levels**, such as node-, edge- (WIP), and graph-level tasks (WIP).
+* **Scalable design for processing large graphs** via mini-batch and sampling.
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using PyGOD with 5 Lines of Code**\ :
@@ -63,14 +61,15 @@ Please **star**, **watch**, and **fork**.
     # train a dominant detector
     from pygod.models import DOMINANT
 
-    model = DOMINANT()  # hyperparameters can be set here
+    model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
     outlier_scores = model.decision_scores # raw outlier scores on the input data
 
-    # predict on the new data
+    # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
+
 
 **Citing PyGOD (to be announced soon)**\ :
 
@@ -139,20 +138,24 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-
 * **fit(X)**\ : Fit detector.
 * **decision_function(G)**\ : Predict raw anomaly score of PyG data G using the fitted detector.
+
+Key Attributes of a fitted model:
+
+* **decision_scores_**\ : The outlier scores of the training data. The higher, the more abnormal.
+  Outliers tend to have higher scores.
+* **labels_**\ : The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+
+For the inductive setting:
+
 * **predict(G)**\ : Predict if nodes in PyG data G is an outlier or not using the fitted detector.
 * **predict_proba(G)**\ : Predict the probability of nodes in PyG data G being outlier using the fitted detector.
 * **predict_confidence(G)**\ : Predict the model's node-wise confidence (available in predict and predict_proba) [#Perini2020Quantifying]_.
 
 
-Key Attributes of a fitted model:
-
-
-* **decision_scores_**\ : The outlier scores of the training data. The higher, the more abnormal.
-  Outliers tend to have higher scores.
-* **labels_**\ : The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+**Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
+See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
 
 
 Implemented Algorithms
