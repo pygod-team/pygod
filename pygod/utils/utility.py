@@ -43,6 +43,8 @@ def validate_device(gpu_id):
                         include_right=False)
         device_id = 'cuda:{}'.format(gpu_id)
     else:
+        if gpu_id != 'cpu':
+            raise ValueError('The cuda is not available while gpu is set to gpu. Please verify.')
         device_id = 'cpu'
 
     return device_id
