@@ -31,7 +31,7 @@ def validate_device(gpu_id):
 
     """
     # if it is cpu
-    if gpu_id == 'cpu':
+    if gpu_id == -1:
         return 'cpu'
 
     # cast to int for checking
