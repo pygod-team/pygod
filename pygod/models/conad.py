@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""Contrastive Attributed Network Anomaly Detection with Data Augmentatin (CONAD)"""
+# Author: Zhiming Xu <zhimng.xu@gmail.com>
+# License: BSD 2 clause
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -60,8 +65,8 @@ class CONAD(BaseDetector):
 
     Examples
     --------
-    >>> from pygod.models import DOMINANT
-    >>> model = DOMINANT()
+    >>> from pygod.models import CONAD
+    >>> model = CONAD()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
@@ -115,44 +120,39 @@ class CONAD(BaseDetector):
             The optional outlier ground truth labels used to monitor the
             training progress. They are not used to optimize the
             unsupervised model.
+        kwargs :  parameters used to generate pseudo anomalies in
+            `_data_augmentation`
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        decoder_layers = int(self.num_layers / 2)
-        encoder_layers = self.num_layers - decoder_layers
-
+        
         x, adj, edge_index = self.process_graph(G)
 
-        self.encoder = conad_encoder(in_dim=x.shape[1],
-                                     hid_dim=self.hid_dim,
-                                     num_layers=encoder_layers,
-                                     dropout=self.dropout,
-                                     act=self.act).to(self.device)
+        self.model = CONAD_Base(in_dim=x.shape[1],
+                                hid_dim=self.hid_dim,
+                                num_layers=self.num_layers,
+                                dropout=self.dropout,
+                                act=self.act).to(self.device)
         
-        self.decoder = conad_decoder(in_dim=x.shape[1],
-                                     hid_dim=self.hid_dim,
-                                     num_layers=decoder_layers,
-                                     dropout=self.dropout,
-                                     act=self.act).to(self.device)
-        
-        optimizer = torch.optim.Adam(list(self.encoder.parameters())+list(self.decoder.parameters()),
+        optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
+        # generate augmented graph
+        x_aug, edge_index_aug, label_aug = self._data_augmentation(x, adj, **kwargs)
+        
         score = None
         for epoch in range(self.epoch):
-            self.encoder.train()
-            self.decoder.train()
-            x_aug, edge_index_aug, label_aug = self._make_pseudo_anomalies(x, adj)
-            h_aug = self.encoder(x_aug, edge_index_aug)
-            h = self.encoder(x, edge_index)
+            self.model.train()
+            h_aug = self.model.embed(x_aug, edge_index_aug)
+            h = self.model.embed(x, edge_index)
             
             margin_loss = self.margin_loss_func(h, h, h_aug) * label_aug
             margin_loss = torch.mean(margin_loss)
 
-            x_, adj_ = self.decoder(h, edge_index)
+            x_, adj_ = self.model.reconstruct(h, edge_index)
             score = self.loss_func(x, x_, adj, adj_)
             loss = self.eta * torch.mean(score) + (1 - self.eta) * margin_loss
 
@@ -189,21 +189,20 @@ class CONAD(BaseDetector):
         outlier_scores : numpy.ndarray
             The anomaly score of shape :math:`N`.
         """
-        check_is_fitted(self, ['encoder', 'decoder'])
+        check_is_fitted(self, ['model'])
 
         # get needed data object from the input data
         x, adj, edge_index = self.process_graph(G)
 
         # enable the evaluation mode
-        self.encoder.eval()
-        self.decoder.eval()
+        self.model.eval()
 
         # construct the vector for holding the reconstruction error
-        x_, adj_ = self.decoder(self.encoder(x, edge_index), edge_index)
+        x_, adj_ = self.model(x, edge_index)
         outlier_scores = self.loss_func(x, x_, adj, adj_)
         return outlier_scores.detach().cpu().numpy()
 
-    def _make_pseudo_anomalies(self, x, adj, rate=.1, num_added_edge=30, surround=50, scale_factor=10):
+    def _data_augmentation(self, x, adj, **kwargs):
         """
         Description
         -----------
@@ -225,11 +224,23 @@ class CONAD(BaseDetector):
             "deviated" pseudo anomalies
         scale_factor : scale ratio for
             "disproportionate" pseudo anomalies
+
+        Returns
+        -------
+        feat_aug, adj_aug, label_aug : augmented
+            attribute matrix, adjacency matrix, and
+            pseudo anomaly label to train contrastive
+            graph representations
         """
+        rate = kwargs.get('rate', .2)
+        num_added_edge = kwargs.get('num_added_edge', 30)
+        surround = kwargs.get('surround', 50)
+        scale_factor = kwargs.get('scale_factor', 10)
+        
         adj_aug, feat_aug  = deepcopy(adj), deepcopy(x)
-        label_aug = np.zeros(adj_aug.shape[0])
-        assert(adj_aug.shape[0]==feat_aug.shape[0])
         num_nodes = adj_aug.shape[0]
+        label_aug = torch.zeros(num_nodes, dtype=torch.int32)
+        
         for i in range(num_nodes):
             prob = np.random.uniform()
             if prob > rate: continue
@@ -238,19 +249,15 @@ class CONAD(BaseDetector):
             if one_fourth == 0:
                 # add clique
                 new_neighbors = np.random.choice(np.arange(num_nodes), num_added_edge, replace=False)
-                for n in new_neighbors:
-                    adj_aug[n][i] = 1
-                    adj_aug[i][n] = 1
+                adj_aug[i, new_neighbors] = 1
+                adj_aug[new_neighbors, i] = 1
             elif one_fourth == 1:
                 # drop all connection
-                neighbors = np.nonzero(adj[i])
+                neighbors = torch.nonzero(adj[i]).view(-1)
                 if not neighbors.any():
                     continue
-                else: 
-                    neighbors = neighbors[0]
-                for n in neighbors:
-                    adj_aug[i][n] = 0
-                    adj_aug[n][i] = 0
+                adj_aug[i, neighbors] = 0
+                adj_aug[neighbors, i] = 0
             elif one_fourth == 2:
                 # attrs
                 candidates = np.random.choice(np.arange(num_nodes), surround, replace=False)
@@ -268,9 +275,10 @@ class CONAD(BaseDetector):
                     feat_aug[i] *= scale_factor
                 else:
                     feat_aug[i] /= scale_factor
+        
         edge_index_aug = dense_to_sparse(adj_aug)[0].to(self.device)
         feat_aug = feat_aug.to(self.device)
-        label_aug = torch.LongTensor(label_aug).to(device=self.device)
+        label_aug = label_aug.to(device=self.device)
         return feat_aug, edge_index_aug, label_aug
 
     def process_graph(self, G):
@@ -319,7 +327,7 @@ class CONAD(BaseDetector):
         return score
 
 
-class conad_encoder(nn.Module):
+class CONAD_Base(nn.Module):
     def __init__(self,
                  in_dim,
                  hid_dim,
@@ -327,53 +335,48 @@ class conad_encoder(nn.Module):
                  dropout,
                  act):
 
-        super(conad_encoder, self).__init__()
+        super(CONAD_Base, self).__init__()
 
+        decoder_layers = int(num_layers / 2)
+        encoder_layers = num_layers - decoder_layers
 
         self.shared_encoder = GCN(in_channels=in_dim,
                                   hidden_channels=hid_dim,
-                                  num_layers=num_layers,
+                                  num_layers=encoder_layers,
                                   out_channels=hid_dim,
                                   dropout=dropout,
                                   act=act)
-    
-    def forward(self, x, edge_index):
-        # encode
-        h = self.shared_encoder(x, edge_index)
-        # return reconstructed matrices
-        return h
-
-
-class conad_decoder(nn.Module):
-    def __init__(self,
-                 in_dim,
-                 hid_dim,
-                 num_layers,
-                 dropout,
-                 act):
-        
-        super(conad_decoder, self).__init__()
 
         self.attr_decoder = GCN(in_channels=hid_dim,
                                 hidden_channels=hid_dim,
-                                num_layers=num_layers,
+                                num_layers=decoder_layers,
                                 out_channels=in_dim,
                                 dropout=dropout,
                                 act=act)
 
         self.struct_decoder = GCN(in_channels=hid_dim,
                                   hidden_channels=hid_dim,
-                                  num_layers=num_layers-1,
+                                  num_layers=decoder_layers-1,
                                   out_channels=in_dim,
                                   dropout=dropout,
                                   act=act)
+    
+    def embed(self, x, edge_index):
+        h = self.shared_encoder(x, edge_index)
+        return h
 
-    def forward(self, h, edge_index):
-        # decode feature matrix
+    def reconstruct(self, h, edge_index):
+        # decode attribute matrix
         x_ = self.attr_decoder(h, edge_index)
-        # decode adjacency matrix
+        # decode structure matrix
         h_ = self.struct_decoder(h, edge_index)
-        adj_ = h_ @ h_.T
 
-        # return reconstructed matrices
+        adj_ = h_ @ h_.T
+        return x_, adj_
+
+    def forward(self, x, edge_index):
+        # encode
+        h = self.shared_encoder(x, edge_index)
+        # reconstruct
+        x_, adj_ = self.reconstruct(h, edge_index)
         return x_, adj_
