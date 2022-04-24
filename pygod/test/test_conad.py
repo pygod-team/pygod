@@ -13,7 +13,7 @@ from pygod.utils.metric import eval_roc_auc
 seed_everything(42)
 
 
-class TestDominant(unittest.TestCase):
+class TestCONAD(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
@@ -38,10 +38,8 @@ class TestDominant(unittest.TestCase):
                 self.model._mu is not None)
         assert (hasattr(self.model, '_sigma') and
                 self.model._sigma is not None)
-        assert (hasattr(self.model, 'encoder') and
-                self.model.encoder is not None)
-        assert (hasattr(self.model, 'decoder') and
-                self.model.decoder is not None)
+        assert (hasattr(self.model, 'model') and
+                self.model.model is not None)
 
     def test_train_scores(self):
         assert_equal(len(self.model.decision_scores_), len(self.data.y))
