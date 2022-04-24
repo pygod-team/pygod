@@ -47,9 +47,9 @@ data.y = torch.logical_or(ys, ya).int()
 # `pygod.models.DOMINANT` as an example.
 
 
-from pygod.models import DOMINANT
+from pygod.models import DOMINANT, CONAD
 
-model = DOMINANT()
+model = CONAD(epoch=50)
 
 #######################################################################
 # Training
@@ -58,7 +58,7 @@ model = DOMINANT()
 # `torch_geometric.data.Data` object into the model via method `fit`.
 
 
-model.fit(data)
+model.fit(data, scale_factor=100, rate=.3, nonsense=None)
 
 #######################################################################
 # Inference
