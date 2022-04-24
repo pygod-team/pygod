@@ -17,18 +17,19 @@ MIN_INT = -1 * MAX_INT
 
 
 def validate_device(gpu_id):
-    """Validate the input device id (GPU id) is valid on the given machine. If no GPU is presented, return 'cpu'.
+    """Validate the input device id (GPU id) is valid on the given
+    machine. If no GPU is presented, return 'cpu'.
 
     Parameters
     ----------
     gpu_id : int
-        GPU id to be used. The function will validate the usability of the GPU. If failed, return device as 'cpu'
+        GPU id to be used. The function will validate the usability
+        of the GPU. If failed, return device as 'cpu'.
 
     Returns
     -------
     device_id : str
         Valid device id, e.g., 'cuda:0' or 'cpu'
-
     """
     # if it is cpu
     if gpu_id == -1:

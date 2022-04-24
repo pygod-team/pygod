@@ -27,7 +27,7 @@ class TestValidateDevice(unittest.TestCase):
         pass
 
     def test_check_parameter_range(self):
-        assert (validate_device('cpu') == 'cpu')
+        assert (validate_device(-1) == 'cpu')
 
         if torch.cuda.is_available():
             with assert_raises(ValueError):
