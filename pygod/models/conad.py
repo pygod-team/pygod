@@ -59,7 +59,7 @@ class CONAD(BaseDetector):
         Maximum number of training epoch. Default: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
-    r : float
+    r : float, optional
         The rate of augmented anomalies. Default: ``.2``.
     m : int, optional
         For densely connected nodes, the number of
