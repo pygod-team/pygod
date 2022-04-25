@@ -382,8 +382,6 @@ class OCGNN(BaseDetector):
 
        # get needed data object from the input data
         G.node_idx = torch.arange(G.x.shape[0])
-        G.s = to_dense_adj(G.edge_index)[0]
-
         loader = NeighborLoader(G,
                                 [self.num_neigh] * self.n_layers,
                                 batch_size=self.batch_size)
