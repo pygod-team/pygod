@@ -9,6 +9,7 @@ from .guide import GUIDE
 from .mlpae import MLPAE
 from .ocgnn import OCGNN
 from .one import ONE
+from .conad import CONAD
 
 
 
