@@ -59,6 +59,17 @@ class CONAD(BaseDetector):
         Maximum number of training epoch. Default: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
+    r : float
+        The rate of augmented anomalies. Default: ``.2``.
+    m : int, optional
+        For densely connected nodes, the number of
+        edges to add. Default: ``50``.
+    k : int, optional
+        same as ``k`` in ``utils.outlier_generator.gen_attribute_outliers``.
+        Default: ``50``.
+    f : int, optional
+        For disproportionate nodes, the scale factor applied
+        on their attribute value. Default: ``10``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
@@ -83,6 +94,10 @@ class CONAD(BaseDetector):
                  epoch=5,
                  gpu=0,
                  margin=.5,
+                 r=.2,
+                 m=50,
+                 k=50,
+                 f=10,
                  verbose=False):
         super(CONAD, self).__init__(contamination=contamination)
 
@@ -105,8 +120,12 @@ class CONAD(BaseDetector):
         self.margin_loss_func = torch.nn.MarginRankingLoss(margin=margin)
         # other param
         self.verbose = verbose
+        self.r = r
+        self.m = m
+        self.k = k
+        self.f = f
 
-    def fit(self, G, y_true=None, **kwargs):
+    def fit(self, G, y_true=None):
         """
         Description
         -----------
@@ -141,7 +160,7 @@ class CONAD(BaseDetector):
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
         # generate augmented graph
-        x_aug, edge_index_aug, label_aug = self._data_augmentation(x, adj, **kwargs)
+        x_aug, edge_index_aug, label_aug = self._data_augmentation(x, adj)
         
         score = None
         for epoch in range(self.epoch):
@@ -202,7 +221,7 @@ class CONAD(BaseDetector):
         outlier_scores = self.loss_func(x, x_, adj, adj_)
         return outlier_scores.detach().cpu().numpy()
 
-    def _data_augmentation(self, x, adj, **kwargs):
+    def _data_augmentation(self, x, adj):
         """
         Description
         -----------
@@ -217,13 +236,6 @@ class CONAD(BaseDetector):
         -----------
         x : note attribute matrix
         adj : dense adjacency matrix
-        rate : pseudo anomaly rate
-        num_added_edge : additional edges to add for 
-            "high-degree" pseudo anomalies
-        surround : num of candidate node attributes for
-            "deviated" pseudo anomalies
-        scale_factor : scale ratio for
-            "disproportionate" pseudo anomalies
 
         Returns
         -------
@@ -232,10 +244,10 @@ class CONAD(BaseDetector):
             pseudo anomaly label to train contrastive
             graph representations
         """
-        rate = kwargs.get('rate', .2)
-        num_added_edge = kwargs.get('num_added_edge', 50)
-        surround = kwargs.get('surround', 50)
-        scale_factor = kwargs.get('scale_factor', 10)
+        rate = self.r
+        num_added_edge = self.m
+        surround = self.k
+        scale_factor = self.f
         
         adj_aug, feat_aug  = deepcopy(adj), deepcopy(x)
         num_nodes = adj_aug.shape[0]
