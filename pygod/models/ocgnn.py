@@ -296,7 +296,7 @@ class OCGNN(BaseDetector):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                x, edge_index = self.process_graph(sampled_data)
+                x, adj, edge_index = self.process_graph(sampled_data)
                 outputs = self.model(x, edge_index)
                 loss, dist, score = self.loss_function(outputs)
                 epoch_loss += loss.item() * batch_size
@@ -399,7 +399,7 @@ class OCGNN(BaseDetector):
             batch_size = sampled_data.batch_size
             node_idx = sampled_data.node_idx
 
-            x, s, edge_index = self.process_graph(sampled_data)
+            x, adj, edge_index = self.process_graph(sampled_data)
 
             outputs = self.model(x, edge_index)
             loss, dist, score = self.loss_function(outputs)
