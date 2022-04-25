@@ -15,12 +15,14 @@ from torch_sparse import SparseTensor
 from . import BaseDetector
 from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
+from torch_geometric.loader import NeighborLoader
 
 
 class GCN_base(nn.Module):
     """
     Describe: Backbone GCN module.
     """
+
     def __init__(self, in_feats, n_hidden, n_layers, dropout, act):
         super(GCN_base, self).__init__()
         self.layers = nn.ModuleList()
@@ -47,7 +49,7 @@ class OCGNN(BaseDetector):
     Networks): OCGNN is an anomaly detector that measures the distance of
     anomaly to the centroid, in the similar fashion to the support vector
     machine, but in the embedding space after feeding towards several layers
-    of GCN.
+     of GCN.
 
     See :cite:`wang2021one` for details.
 
@@ -85,6 +87,11 @@ class OCGNN(BaseDetector):
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Defaults: ``False``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
 
     Examples
     --------
@@ -107,7 +114,9 @@ class OCGNN(BaseDetector):
                  epoch=5,
                  warmup_epoch=2,
                  verbose=False,
-                 act=F.relu):
+                 act=F.relu,
+                 batch_size = 0,
+                 num_neigh = -1):
         super(OCGNN, self).__init__(contamination=contamination)
         self.dropout = dropout
         self.n_hidden = n_hidden
@@ -122,6 +131,8 @@ class OCGNN(BaseDetector):
         self.warmup_epoch = warmup_epoch
         self.act = act
         self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        self.num_neigh = num_neigh
 
         # other param
         self.verbose = verbose
@@ -129,6 +140,8 @@ class OCGNN(BaseDetector):
 
     def init_center(self, x, edge_index):
         """
+        Descriptions
+        ----------
         Initialize hypersphere center c as the mean from
         an initial forward pass on the data.
   
@@ -161,6 +174,8 @@ class OCGNN(BaseDetector):
 
     def get_radius(self, dist):
         """
+        Description
+        ----------
         Optimally solve for radius R via the (1-nu)-quantile of distances.
         
         Parameters
@@ -179,6 +194,8 @@ class OCGNN(BaseDetector):
 
     def anomaly_scores(self, outputs):
         """
+        Description
+        ----------
         Calculate the anomaly score given by Euclidean distance to the center.
         
         Parameters
@@ -199,6 +216,8 @@ class OCGNN(BaseDetector):
 
     def loss_function(self, outputs, update=False):
         """
+        Description
+        ----------
         Calculate the loss in paper Equation (4)
         
         Parameters
@@ -227,6 +246,8 @@ class OCGNN(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
+        Description
+        -----------
         Fit detector with input data.
 
         Parameters
@@ -243,8 +264,14 @@ class OCGNN(BaseDetector):
         self : object
             Fitted estimator.
         """
-        x, adj, edge_index = self.process_graph(G)
-        self.in_feats = x.shape[1]
+        G.node_idx = torch.arange(G.x.shape[0])
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.n_layers,
+                                batch_size=self.batch_size)
+ 
+        self.in_feats = G.x.shape[1]
 
         # initialize the model and optimizer
         self.model = GCN_base(self.in_feats,
@@ -266,19 +293,25 @@ class OCGNN(BaseDetector):
 
         score = None
         for cur_epoch in range(self.epoch):
-            self.model.zero_grad()
-            outputs = self.model(x, edge_index)
-            loss, dist, score = self.loss_function(outputs)
-            if self.warmup_epoch is not None and cur_epoch < self.warmup_epoch:
-                self.data_center = self.init_center(x, edge_index)
-                self.radius = torch.tensor(self.get_radius(dist),
+            epoch_loss = 0.0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+                x, edge_index = self.process_graph(sampled_data)
+                outputs = self.model(x, edge_index)
+                loss, dist, score = self.loss_function(outputs)
+                epoch_loss += loss.item() * batch_size
+                if self.warmup_epoch is not None and cur_epoch < self.warmup_epoch:
+                    self.data_center = self.init_center(x, edge_index)
+                    self.radius = torch.tensor(self.get_radius(dist),
                                            device=self.device)
-            loss.backward()
-            self.optimizer.step()
+                self.model.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(cur_epoch, loss.item()), end='')
+                      .format(cur_epoch, epoch_loss), end='')
                 if y_true is not None:
                     auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
                     print(" | AUC {:.4f}".format(auc), end='')
@@ -290,6 +323,8 @@ class OCGNN(BaseDetector):
 
     def process_graph(self, G):
         """
+        Description
+        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
