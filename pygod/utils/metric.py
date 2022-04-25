@@ -10,8 +10,6 @@ from sklearn.metrics import roc_auc_score
 
 def eval_roc_auc(labels, pred):
     """
-    Description
-    -----------
     ROC-AUC score for binary classification.
 
     Parameters
@@ -35,8 +33,6 @@ def eval_roc_auc(labels, pred):
 
 def eval_recall_at_k(labels, pred, k, threshold=0.5):
     """
-    Description
-    -----------
     Recall score for top k instances with the highest outlier scores.
 
     Parameters
@@ -73,8 +69,6 @@ def eval_recall_at_k(labels, pred, k, threshold=0.5):
 
 def eval_precision_at_k(labels, pred, k, threshold=0.5):
     """
-    Description
-    -----------
     Precision score for top k instances with the highest outlier scores.
 
     Parameters

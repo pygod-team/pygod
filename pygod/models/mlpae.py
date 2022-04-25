@@ -92,8 +92,6 @@ class MLPAE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -156,8 +154,6 @@ class MLPAE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -186,8 +182,6 @@ class MLPAE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 

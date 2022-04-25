@@ -21,7 +21,7 @@ from ..utils.metric import eval_roc_auc
 class AdONE(BaseDetector):
     """
     AdONE (Adversarial Outlier Aware Attributed Network Embedding)
-    AdONE is consist of an attribute autoencoder and a structure
+    AdONE consist of an attribute autoencoder and a structure
     autoencoder. It estimates five loss to optimize the model,
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and an
@@ -133,8 +133,6 @@ class AdONE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -212,8 +210,6 @@ class AdONE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -263,8 +259,6 @@ class AdONE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 

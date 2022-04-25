@@ -18,8 +18,6 @@ from ..utils.metric import eval_roc_auc
 
 class StructureAE(nn.Module):
     """
-    Description
-    -----------
     Structure Autoencoder in AnomalyDAE model: the encoder
     transforms the node attribute X into the latent
     representation with the linear layer, and a graph attention
@@ -77,8 +75,6 @@ class StructureAE(nn.Module):
 
 class AttributeAE(nn.Module):
     """
-    Description
-    -----------
     Attribute Autoencoder in AnomalyDAE model: the encoder
     employs two non-linear feature transform to the node attribute
     x. The decoder takes both the node embeddings from the structure
@@ -131,8 +127,6 @@ class AttributeAE(nn.Module):
 
 class AnomalyDAE_Base(nn.Module):
     """
-    Description
-    -----------
     AdnomalyDAE_Base is an anomaly detector consisting of a structure autoencoder,
     and an attribute reconstruction autoencoder. 
 
@@ -271,8 +265,6 @@ class AnomalyDAE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -331,8 +323,6 @@ class AnomalyDAE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score of X using the fitted detector.
         The anomaly score of an input sample is computed based on different
         detector algorithms. For consistency, outliers are assigned with
@@ -364,8 +354,6 @@ class AnomalyDAE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 

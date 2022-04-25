@@ -147,8 +147,6 @@ class GUIDE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -166,7 +164,7 @@ class GUIDE(BaseDetector):
             Fitted estimator.
         """
         G.node_idx = torch.arange(G.x.shape[0])
-        G.s = self.get_nmf(G, self.cache_dir)
+        G.s = self._get_nmf(G, self.cache_dir)
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,
@@ -222,8 +220,6 @@ class GUIDE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -239,7 +235,7 @@ class GUIDE(BaseDetector):
         """
         check_is_fitted(self, ['model'])
         G.node_idx = torch.arange(G.x.shape[0])
-        G.s = self.get_nmf(G, self.cache_dir)
+        G.s = self._get_nmf(G, self.cache_dir)
         loader = NeighborLoader(G,
                                 [self.num_neigh] * self.num_layers,
                                 batch_size=self.batch_size)
@@ -265,8 +261,6 @@ class GUIDE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
@@ -303,13 +297,11 @@ class GUIDE(BaseDetector):
                 structure_errors
         return score
 
-    def get_nmf(self, G, cache_dir):
+    def _get_nmf(self, G, cache_dir):
         """
-        Description
-        -----------
         Calculation of Node Motif Degree / Graphlet Degree
         Distribution. Part of this function is adapted
-        from https://github.com/benedekrozemberczki/c.
+        from https://github.com/benedekrozemberczki/OrbitalFeatures.
 
         Parameters
         ----------

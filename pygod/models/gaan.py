@@ -117,8 +117,6 @@ class GAAN(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -215,8 +213,6 @@ class GAAN(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector.
         Outliers are assigned with larger anomaly scores.
 
@@ -254,8 +250,6 @@ class GAAN(BaseDetector):
 
     def train_model(self, X, gaussian_noise, edge_index):
         """
-        Description
-        -----------
         Complete the entire process from noise to generator,
         to encoder, and finally to discriminator.
 
@@ -294,8 +288,6 @@ class GAAN(BaseDetector):
     def loss_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index,
                       criterion):
         """
-        Description
-        -----------
         Obtain the generator and discriminator losses separately.
 
         Parameters
@@ -339,8 +331,6 @@ class GAAN(BaseDetector):
     def score_function(self, X, X_, Y_true_pre, Y_fake_pre, edge_index,
                        criterion):
         """
-        Description
-        -----------
         Get anomaly score after the model training by weighted context
         reconstruction loss and structure discriminator loss.
 
@@ -391,8 +381,6 @@ class GAAN(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 

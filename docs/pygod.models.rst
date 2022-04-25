@@ -1,113 +1,110 @@
 Models
 ==========
 
-pygod.models.adone module
-----------------------------
+AdONE
+-----
 
-.. automodule:: pygod.models.adone
-    :members: AdONE
-    :exclude-members: AdONE_Base, NeighDiff
+.. autoclass:: pygod.models.AdONE
+    :members:
+    :exclude-members: loss_func, process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
-pygod.models.anomalydae module
-------------------------------
+AnomalyDAE
+----------
 
-.. automodule:: pygod.models.anomalydae
-    :members: AnomalyDAE
-    :exclude-members: StructureAE, AttributeAE, AnomalyDAE_Base
+.. autoclass:: pygod.models.AnomalyDAE
+    :members:
+    :exclude-members: loss_func, process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
+DOMINANT
+--------
 
-
-pygod.models.dominant module
-----------------------------
-
-.. automodule:: pygod.models.dominant
-    :members: DOMINANT
-    :exclude-members: DOMINANT_Base
+.. autoclass:: pygod.models.DOMINANT
+    :members:
+    :exclude-members: loss_func, process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
-pygod.models.done module
-----------------------------
+DONE
+----
 
-.. automodule:: pygod.models.done
-    :members: DONE
-    :exclude-members: DONE_Base, NeighDiff
-    :undoc-members:
-    :show-inheritance:
-    :inherited-members:
-
-
-pygod.models.gaan module
-------------------------
-
-.. automodule:: pygod.models.gaan
-    :members: GAAN
-    :exclude-members: Generator, Discriminator, Encoder
-    :undoc-members:
-    :show-inheritance:
-    :inherited-members:
-
-pygod.models.gcnae module
--------------------------
-
-.. automodule:: pygod.models.gcnae
-    :members: GCNAE
-    :exclude-members: Generator, Discriminator, Encoder
+.. autoclass:: pygod.models.DONE
+    :members:
+    :exclude-members: loss_func, process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
 
-pygod.models.guide module
--------------------------
+GAAN
+----
 
-.. automodule:: pygod.models.guide
-    :members: GUIDE
-    :exclude-members: GUIDE_Base, GNA, GNAConv
+.. autoclass:: pygod.models.GAAN
+    :members:
+    :exclude-members: process_graph, score_function, train_model, loss_function
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
-pygod.models.mlpae module
--------------------------
+GCNAE
+-----
 
-.. automodule:: pygod.models.mlpae
-    :members: MLPAE
-    :exclude-members: GUIDE_Base, GNA, GNAConv
-    :undoc-members:
-    :show-inheritance:
-    :inherited-members:
-
-pygod.models.ocgnn module
--------------------------
-
-.. automodule:: pygod.models.ocgnn
-    :members: OCGNN
-    :exclude-members: GCN_base
-    :undoc-members:
-    :show-inheritance:
-    :inherited-members:
-
-pygod.models.one module
------------------------
-
-.. automodule:: pygod.models.one
-    :members: ONE
-    :exclude-members:
+.. autoclass:: pygod.models.GCNAE
+    :members:
+    :exclude-members: loss_func, process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
 
+GUIDE
+-----
 
-.. rubric:: References
+.. autoclass:: pygod.models.GUIDE
+    :members:
+    :exclude-members: loss_func, process_graph
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+MLPAE
+-----
+
+.. autoclass:: pygod.models.MLPAE
+    :members:
+    :exclude-members: loss_func, process_graph
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+OCGNN
+-----
+
+.. autoclass:: pygod.models.OCGNN
+    :members:
+    :exclude-members: anomaly_scores, get_radius, process_graph, init_center, loss_function
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+ONE
+---
+
+.. autoclass:: pygod.models.ONE
+    :members:
+    :exclude-members: cal_outlierScore, calc_lossValues, process_graph, loss_func
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+Reference
+---------
 
 .. bibliography::
    :cited:

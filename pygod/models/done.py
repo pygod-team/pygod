@@ -21,7 +21,7 @@ from ..utils.metric import eval_roc_auc
 class DONE(BaseDetector):
     """
     DONE (Deep Outlier Aware Attributed Network Embedding)
-    DONE is consist of an attribute autoencoder and a structure
+    DONE consist of an attribute autoencoder and a structure
     autoencoder. It estimates five loss to optimize the model,
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and a
@@ -133,8 +133,6 @@ class DONE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -210,8 +208,7 @@ class DONE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
+
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -258,8 +255,6 @@ class DONE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 

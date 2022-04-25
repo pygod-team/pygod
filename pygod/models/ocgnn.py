@@ -21,7 +21,6 @@ class GCN_base(nn.Module):
     """
     Describe: Backbone GCN module.
     """
-
     def __init__(self, in_feats, n_hidden, n_layers, dropout, act):
         super(GCN_base, self).__init__()
         self.layers = nn.ModuleList()
@@ -48,7 +47,7 @@ class OCGNN(BaseDetector):
     Networks): OCGNN is an anomaly detector that measures the distance of
     anomaly to the centroid, in the similar fashion to the support vector
     machine, but in the embedding space after feeding towards several layers
-     of GCN.
+    of GCN.
 
     See :cite:`wang2021one` for details.
 
@@ -130,8 +129,6 @@ class OCGNN(BaseDetector):
 
     def init_center(self, x, edge_index):
         """
-        Descriptions
-        ----------
         Initialize hypersphere center c as the mean from
         an initial forward pass on the data.
   
@@ -164,8 +161,6 @@ class OCGNN(BaseDetector):
 
     def get_radius(self, dist):
         """
-        Description
-        ----------
         Optimally solve for radius R via the (1-nu)-quantile of distances.
         
         Parameters
@@ -184,8 +179,6 @@ class OCGNN(BaseDetector):
 
     def anomaly_scores(self, outputs):
         """
-        Description
-        ----------
         Calculate the anomaly score given by Euclidean distance to the center.
         
         Parameters
@@ -206,8 +199,6 @@ class OCGNN(BaseDetector):
 
     def loss_function(self, outputs, update=False):
         """
-        Description
-        ----------
         Calculate the loss in paper Equation (4)
         
         Parameters
@@ -236,8 +227,6 @@ class OCGNN(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -301,8 +290,6 @@ class OCGNN(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
