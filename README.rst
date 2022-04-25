@@ -176,6 +176,7 @@ Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual a
 Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
 Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
 Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
+Unsupervised         GNN                  CONAD               Contrastive Attributed Network Anomaly Detection with Data Augmentation                                 2022   [#Xu2022Contrastive]_
 ===================  ===================  ==================  ======================================================================================================  =====  ========================================
 
 **(ii) Utility functions** :
@@ -257,3 +258,5 @@ Reference
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
+
+.. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).

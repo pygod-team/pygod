@@ -121,6 +121,7 @@ Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual a
 Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   :class:`pygod.models.gaan.GAAN`
 Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
 Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
+Unsupervised         GNN                  CONAD               Contrastive Attributed Network Anomaly Detection with Data Augmentation                                 2022   :class:`pygod.models.conad.CONAD`
 ===================  ===================  ==================  ======================================================================================================  =====  ==============================================
 
 
