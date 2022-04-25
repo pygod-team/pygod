@@ -290,8 +290,7 @@ class OCGNN(BaseDetector):
         self.model = self.model.to(self.device)
         # training the model
         self.model.train()
-
-        score = None
+        decision_scores = np.zeros(G.x.shape[0])
         for cur_epoch in range(self.epoch):
             epoch_loss = 0.0
             for sampled_data in loader:
@@ -305,19 +304,22 @@ class OCGNN(BaseDetector):
                     self.data_center = self.init_center(x, edge_index)
                     self.radius = torch.tensor(self.get_radius(dist),
                                            device=self.device)
+                
+                decision_scores[node_idx[:batch_size]] = score.detach()\
+                                                              .cpu().numpy()
                 self.model.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(cur_epoch, epoch_loss), end='')
+                      .format(cur_epoch,  epoch_loss / G.x.shape[0]), end='')
                 if y_true is not None:
-                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    auc = eval_roc_auc(y_true, decision_scores)
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
-        self.decision_scores_ = score.detach().cpu().numpy()
+        self.decision_scores_ = decision_scores
         self._process_decision_scores()
         return self
 
@@ -378,15 +380,31 @@ class OCGNN(BaseDetector):
         """
         check_is_fitted(self, ['model'])
 
-        # get needed data object from the input data
-        x, adj, edge_index = self.process_graph(G)
+       # get needed data object from the input data
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.n_layers,
+                                batch_size=self.batch_size)
+
 
         # enable the evaluation mode
         self.model.eval()
 
         # construct the vector for holding the reconstruction error
         # outlier_scores = torch.zeros([attrs.shape[0], ])
-        outputs = self.model(x, edge_index)
-        loss, dist, score = self.loss_function(outputs)
+        outlier_scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
 
-        return score.detach().cpu().numpy()
+            x, s, edge_index = self.process_graph(sampled_data)
+
+            outputs = self.model(x, edge_index)
+            loss, dist, score = self.loss_function(outputs)
+
+            outlier_scores[node_idx[:batch_size]] = score.detach() \
+                .cpu().numpy()
+
+        return outlier_scores
