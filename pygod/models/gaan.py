@@ -3,9 +3,12 @@
 # Author: Ruitong Zhang <rtzhang@buaa.edu.cn>
 # License: BSD 2 clause
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch_geometric.utils import to_dense_adj
+from torch_geometric.loader import NeighborLoader
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
@@ -37,9 +40,7 @@ class GAAN(BaseDetector):
     hid_dim3 :  int, optional
         Hidden dimension of MLP later 3. Defaults: ``128``.
     num_layers : int, optional
-        Total number of layers in model. A half (ceil) of the layers
-        are for the encoder, the other half (floor) of the layers are
-        for decoders. Defaults: ``3``.
+        Total number of layers in model. Defaults: ``3``.
     dropout : float, optional
         Dropout rate. Defaults: ``0.``.
     weight_decay : float, optional
@@ -60,6 +61,11 @@ class GAAN(BaseDetector):
         Maximum number of training epoch. Defaults: ``10``.
     gpu : int
         GPU Index, -1 for using CPU. Defaults: ``-1``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Defaults: ``False``.
@@ -78,7 +84,7 @@ class GAAN(BaseDetector):
                  hid_dim1=32,
                  hid_dim2=64,
                  hid_dim3=128,
-                 num_layers=3,
+                 num_layers=2,
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
@@ -87,6 +93,8 @@ class GAAN(BaseDetector):
                  lr=5e-3,
                  epoch=10,
                  gpu=0,
+                 batch_size=0,
+                 num_neigh=-1,
                  verbose=False):
         super(GAAN, self).__init__(contamination=contamination)
 
@@ -106,6 +114,8 @@ class GAAN(BaseDetector):
         self.lr = lr
         self.epoch = epoch
         self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        self.num_neigh = num_neigh
 
         # other param
         self.verbose = verbose
@@ -133,17 +143,24 @@ class GAAN(BaseDetector):
         self : object
             Fitted estimator.
         """
-        X, edge_index = self.process_graph(G)
+        #X, edge_index = self.process_graph(G)
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.num_layers,
+                                batch_size=self.batch_size)
 
         # initialize the model
         self.generator = Generator(in_dim=self.noise_dim,
                                    hid_dim1=self.hid_dim1,
                                    hid_dim2=self.hid_dim2,
                                    hid_dim3=self.hid_dim3,
-                                   out_dim=X.shape[1],
+                                   out_dim=G.x.shape[1],
                                    act=self.act).to(self.device)
 
-        self.encoder = Encoder(in_dim=X.shape[1],
+        self.encoder = Encoder(in_dim=G.x.shape[1],
                                hid_dim1=self.hid_dim1,
                                hid_dim2=self.hid_dim2,
                                hid_dim3=self.hid_dim3,
@@ -162,51 +179,76 @@ class GAAN(BaseDetector):
         optimizer_D = torch.optim.Adam(params=self.discriminator.parameters(),
                                        weight_decay=self.weight_decay)
 
+        # enable the training mode
+        self.generator.train()
+        self.encoder.train()
+        self.discriminator.train()
+
         # initialize the  criterion
         criterion = torch.nn.BCELoss()
-        X_, Y_true_pre, Y_fake_pre = None, None, None
 
+        scores = np.zeros(G.x.shape[0])
         for epoch in range(self.epoch):
+            epoch_loss_D, epoch_loss_GE = 0, 0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+                X, edge_index = self.process_graph(sampled_data)
 
-            # Generate noise for constructing fake attribute
-            gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
-                self.device)
+                # Generate noise for constructing fake attribute
+                gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
+                    self.device)
 
-            self.generator.train()
-            self.encoder.train()
-            self.discriminator.train()
+                optimizer_D.zero_grad()
+                optimizer_GE.zero_grad()
 
-            optimizer_D.zero_grad()
-            optimizer_GE.zero_grad()
+                # train the model
+                X_, Y_true_pre, Y_fake_pre = self.train_model(
+                    X, gaussian_noise, edge_index)
 
-            # train the model
-            X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise,
-                                                          edge_index)
+                edge_index_i = (
+                    edge_index[0] < batch_size).nonzero().to(
+                    self.device)
+                X, X_ = X[:batch_size], X_[:batch_size]
+                Y_true_pre = torch.reshape(Y_true_pre,
+                                           [Y_true_pre.shape[0]])[edge_index_i]
+                Y_fake_pre = torch.reshape(Y_fake_pre,
+                                           [Y_fake_pre.shape[0]])[edge_index_i]
+                edge_index = torch.index_select(
+                    edge_index, 1, torch.reshape(
+                        edge_index_i, [
+                            edge_index_i.shape[0]]))
 
-            # get loss
-            loss_D, loss_GE = self.loss_function(X, X_, Y_true_pre, Y_fake_pre,
-                                                 edge_index, criterion)
+                # get loss
+                loss_D, loss_GE = self.loss_function(X, X_,
+                                                     Y_true_pre, Y_fake_pre,
+                                                     edge_index, criterion)
+                epoch_loss_D += loss_D.item() * batch_size
+                epoch_loss_GE += loss_GE.item() * batch_size
 
-            loss_D.backward(retain_graph=True)
-            loss_GE.backward()
+                loss_D.backward(retain_graph=True)
+                loss_GE.backward()
 
-            optimizer_D.step()
-            optimizer_GE.step()
+                optimizer_D.step()
+                optimizer_GE.step()
 
-            # print out log information
-            if self.verbose:
-                score = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
+                score = self.score_function(X, X_,
+                                            Y_true_pre, Y_fake_pre,
                                             edge_index, criterion)
-                print(
-                    "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f}"
-                        .format(epoch, loss_GE.item(), loss_D.item()), end='')
-                if y_true is not None:
-                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
-                    print(" | AUC {:.4f}".format(auc))
+                scores[node_idx[:batch_size]] = score.detach().cpu().numpy()
 
-        score = self.score_function(X, X_, Y_true_pre, Y_fake_pre, edge_index,
-                                    criterion)
-        self.decision_scores_ = score.detach().cpu().numpy()
+                # print out log information
+                if self.verbose:
+                    print(
+                        "Epoch {:04d}: Loss GE {:.4f} | Loss D {:.4f}"
+                        .format(epoch,
+                                epoch_loss_GE / G.x.shape[0],
+                                epoch_loss_D / G.x.shape[0]), end='')
+                    if y_true is not None:
+                        auc = eval_roc_auc(y_true, scores)
+                        print(" | AUC {:.4f}".format(auc))
+
+        self.decision_scores_ = scores
         self._process_decision_scores()
 
         return self
@@ -229,24 +271,52 @@ class GAAN(BaseDetector):
         check_is_fitted(self, ['generator', 'encoder', 'discriminator'])
 
         # get needed data object from the input data
-        X, edge_index = self.process_graph(G)
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.num_layers,
+                                batch_size=self.batch_size)
 
         # enable the evaluation mode
         self.generator.eval()
         self.encoder.eval()
         self.discriminator.eval()
 
-        # construct the vector for holding the reconstruction error
-        gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
-            self.device)
-        X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise,
-                                                      edge_index)
-
         criterion = torch.nn.BCELoss()
-        outlier_scores = self.score_function(X, X_, Y_true_pre, Y_fake_pre,
-                                             edge_index, criterion)
 
-        return outlier_scores.detach().cpu().numpy()
+        scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
+
+            X, edge_index = self.process_graph(sampled_data)
+
+            # construct the vector for holding the reconstruction error
+            gaussian_noise = torch.randn(X.shape[0], self.noise_dim).to(
+                self.device)
+            X_, Y_true_pre, Y_fake_pre = self.train_model(X, gaussian_noise,
+                                                          edge_index)
+
+            edge_index_i = (
+                edge_index[0] < batch_size).nonzero().to(
+                self.device)
+            X, X_ = X[:batch_size], X_[:batch_size]
+            Y_true_pre = torch.reshape(Y_true_pre,
+                                       [Y_true_pre.shape[0]])[edge_index_i]
+            Y_fake_pre = torch.reshape(Y_fake_pre,
+                                       [Y_fake_pre.shape[0]])[edge_index_i]
+            edge_index = torch.index_select(
+                edge_index, 1, torch.reshape(
+                    edge_index_i, [
+                        edge_index_i.shape[0]]))
+
+            score = self.score_function(X, X_,
+                                        Y_true_pre, Y_fake_pre,
+                                        edge_index, criterion)
+
+            scores[node_idx[:batch_size]] = score.detach().cpu().numpy()
+
+        return scores
 
     def train_model(self, X, gaussian_noise, edge_index):
         """
@@ -375,7 +445,7 @@ class GAAN(BaseDetector):
                 Y_fake_pre_i, Y_fake)
 
         score = self.alpha * attribute_errors + (
-                1 - self.alpha) * structure_errors
+            1 - self.alpha) * structure_errors
 
         return score
 
