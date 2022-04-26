@@ -2,6 +2,7 @@
 """Deep Anomaly Detection on Attributed Networks (DOMINANT)"""
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
+
 import numpy as np
 import torch
 import torch.nn as nn
