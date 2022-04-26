@@ -16,7 +16,7 @@ def eval_roc_auc(labels, pred):
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
 
@@ -39,7 +39,7 @@ def eval_recall_at_k(labels, pred, k, threshold=0.5):
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
     k : int
@@ -75,7 +75,7 @@ def eval_precision_at_k(labels, pred, k, threshold=0.5):
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
     k : int
@@ -111,14 +111,14 @@ def eval_average_precision(labels, pred):
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
 
     Returns
     -------
     ap : float
-        Average precision score across different labels.
+        Average precision score.
     """
 
     # outlier detection is a binary classification problem

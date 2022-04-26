@@ -37,5 +37,5 @@ class TestMetric(unittest.TestCase):
                                             k=4))
 
     def test_eval_average_precision(self):
-        assert_allclose(average_precision_score(self.y, self.manual_labels),
+        assert_allclose(average_precision_score(self.y, self.decision_scores_),
                         eval_average_precision(self.y, self.decision_scores_))
