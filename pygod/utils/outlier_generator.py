@@ -10,7 +10,7 @@ import random
 
 import numpy as np
 import torch
-import torch_geometric
+from torch_geometric.data import Data
 
 from .utility import check_parameter
 
@@ -43,7 +43,7 @@ def gen_structure_outliers(data, m, n, random_state=None):
         regular nodes.
     """
 
-    if not isinstance(data, torch_geometric.data.Data):
+    if not isinstance(data, Data):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(m, int):
@@ -112,7 +112,7 @@ def gen_attribute_outliers(data, n, k, random_state=None):
         regular nodes.
     """
 
-    if not isinstance(data, torch_geometric.data.Data):
+    if not isinstance(data, Data):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(n, int):
