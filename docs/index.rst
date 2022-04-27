@@ -80,22 +80,22 @@ See examples below for detecting anomalies with PyGOD in 5 lines!
 
 
 
-**Citing PyGOD (to be announced soon)**\ :
+**Citing PyGOD**\ :
 
-`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
+`PyGOD paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`pygod2022`.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper (to be announced)::
+citations to the following paper::
 
-    @article{tba,
-      author  = {tba},
-      title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tba},
+    @article{pygod2022,
+      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      title   = {PyGOD: A Python Library for Graph Outlier Detection},
+      journal = {arXiv preprint arXiv:2204.12095},
       year    = {2022},
     }
 
 or::
 
-    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
 
 
 ----
