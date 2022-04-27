@@ -5,167 +5,17 @@
 
 
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_sparse import SparseTensor
 from torch_geometric.nn import GATConv
+from torch_geometric.utils import to_dense_adj
+from torch_geometric.loader import NeighborLoader
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
-
-
-class StructureAE(nn.Module):
-    """
-    Structure Autoencoder in AnomalyDAE model: the encoder
-    transforms the node attribute X into the latent
-    representation with the linear layer, and a graph attention
-    layer produces an embedding with weight importance of node 
-    neighbors. Finally, the decoder reconstructs the final embedding
-    to the original.
-
-    See :cite:`fan2020anomalydae` for details.
-
-    Parameters
-    ----------
-    in_dim: int
-        input dimension of node data
-    embed_dim: int
-        the latent representation dimension of node
-       (after the first linear layer)
-    out_dim: int 
-        the output dim after the graph attention layer
-    dropout: float
-        dropout probability for the linear layer
-    act: F, optional
-         Choice of activation function        
-    Returns
-    -------
-    x : torch.Tensor
-        Reconstructed attribute (feature) of nodes.
-    embed_x : torch.Tensor
-        Embed nodes after the attention layer
-    """
-
-    def __init__(self,
-                 in_dim,
-                 embed_dim,
-                 out_dim,
-                 dropout,
-                 act):
-        super(StructureAE, self).__init__()
-        self.dense = nn.Linear(in_dim, embed_dim)
-        self.attention_layer = GATConv(embed_dim, out_dim)
-        self.dropout = dropout
-        self.act = act
-
-    def forward(self,
-                x,
-                edge_index):
-        # encoder
-        x = self.act(self.dense(x))
-        x = F.dropout(x, self.dropout)
-        # print(x.shape, adj.shape)
-        embed_x = self.attention_layer(x, edge_index)
-        # decoder
-        x = torch.sigmoid(embed_x @ embed_x.T)
-        return x, embed_x
-
-
-class AttributeAE(nn.Module):
-    """
-    Attribute Autoencoder in AnomalyDAE model: the encoder
-    employs two non-linear feature transform to the node attribute
-    x. The decoder takes both the node embeddings from the structure
-    autoencoder and the reduced attribute representation to 
-    reconstruct the original node attribute.
-
-    Parameters
-    ----------
-    in_dim:  int
-        dimension of the input number of nodes
-    embed_dim: int
-        the latent representation dimension of node
-        (after the first linear layer)
-    out_dim:  int
-        the output dim after two linear layers
-    dropout: float
-        dropout probability for the linear layer
-    act: F, optional
-         Choice of activation function   
-    Returns
-    -------
-    x : torch.Tensor
-        Reconstructed attribute (feature) of nodes.
-    """
-
-    def __init__(self,
-                 in_dim,
-                 embed_dim,
-                 out_dim,
-                 dropout,
-                 act):
-        super(AttributeAE, self).__init__()
-        self.dense1 = nn.Linear(in_dim, embed_dim)
-        self.dense2 = nn.Linear(embed_dim, out_dim)
-        self.dropout = dropout
-        self.act = act
-
-    def forward(self,
-                x,
-                struct_embed):
-        # encoder
-        x = self.act(self.dense1(x.T))
-        x = F.dropout(x, self.dropout)
-        x = self.dense2(x)
-        x = F.dropout(x, self.dropout)
-        # decoder
-        x = struct_embed @ x.T
-        return x
-
-
-class AnomalyDAE_Base(nn.Module):
-    """
-    AdnomalyDAE_Base is an anomaly detector consisting of a structure autoencoder,
-    and an attribute reconstruction autoencoder. 
-
-    Parameters
-    ----------
-    in_node_dim : int
-         Dimension of input feature
-    in_num_dim: int
-         Dimension of the input number of nodes
-    embed_dim:: int
-         Dimension of the embedding after the first reduced linear layer (D1)   
-    out_dim : int
-         Dimension of final representation
-    dropout : float, optional
-        Dropout rate of the model
-        Default: 0
-    act: F, optional
-         Choice of activation function
-    """
-
-    def __init__(self,
-                 in_node_dim,
-                 in_num_dim,
-                 embed_dim,
-                 out_dim,
-                 dropout,
-                 act):
-        super(AnomalyDAE_Base, self).__init__()
-        self.structure_AE = StructureAE(in_node_dim, embed_dim,
-                                        out_dim, dropout, act)
-        self.attribute_AE = AttributeAE(in_num_dim, embed_dim,
-                                        out_dim, dropout, act)
-
-    def forward(self,
-                x,
-                edge_index):
-        A_hat, embed_x = self.structure_AE(x, edge_index)
-        X_hat = self.attribute_AE(x, embed_x)
-        return A_hat, X_hat
 
 
 class AnomalyDAE(BaseDetector):
@@ -216,6 +66,11 @@ class AnomalyDAE(BaseDetector):
         Maximum number of training epoch. Defaults: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Defaults: ``0``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Defaults: ``False``.
@@ -241,6 +96,8 @@ class AnomalyDAE(BaseDetector):
                  lr=0.004,
                  epoch=5,
                  gpu=0,
+                 batch_size=0,
+                 num_neigh=-1,
                  verbose=False):
         super(AnomalyDAE, self).__init__(contamination=contamination)
 
@@ -258,6 +115,8 @@ class AnomalyDAE(BaseDetector):
         self.lr = lr
         self.epoch = epoch
         self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        self.num_neigh = num_neigh
 
         # other param
         self.verbose = verbose
@@ -281,9 +140,16 @@ class AnomalyDAE(BaseDetector):
         self : object
             Fitted estimator.
         """
-        attrs, adj, edge_index = self.process_graph(G)
-        self.model = AnomalyDAE_Base(in_node_dim=attrs.shape[1],
-                                     in_num_dim=attrs.shape[0],
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh],
+                                batch_size=self.batch_size)
+
+        self.model = AnomalyDAE_Base(in_node_dim=G.x.shape[1],
+                                     in_num_dim=self.batch_size,
                                      embed_dim=self.embed_dim,
                                      out_dim=self.out_dim,
                                      dropout=self.dropout,
@@ -293,31 +159,38 @@ class AnomalyDAE(BaseDetector):
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
+        self.model.train()
+        decision_scores = np.zeros(G.x.shape[0])
         for epoch in range(self.epoch):
-            self.model.train()
-            optimizer.zero_grad()
-            A_hat, X_hat = self.model(attrs, edge_index)
-            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat,
-                                                          attrs, X_hat)
-            loss_mean = torch.mean(loss)
-            loss_mean.backward()
-            optimizer.step()
+            epoch_loss = 0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+                x, s, edge_index = self.process_graph(sampled_data)
+
+                x_, s_ = self.model(x, edge_index, batch_size)
+                score = self.loss_func(x[:batch_size],
+                                       x_[:batch_size],
+                                       s[:batch_size, node_idx],
+                                       s_[:batch_size])
+                decision_scores[node_idx[:batch_size]] = score.detach() \
+                    .cpu().numpy()
+                loss = torch.mean(score)
+                epoch_loss += loss.item() * batch_size
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
             if self.verbose:
-                print("Epoch:", '%04d' % epoch, "train_loss=",
-                      "{:.5f}".format(loss_mean.item()), "train/struct_loss=",
-                      "{:.5f}".format(struct_loss.item()), "train/feat_loss=",
-                      "{:.5f}".format(feat_loss.item()))
+                print("Epoch {:04d}: Loss {:.4f}"
+                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
+                if y_true is not None:
+                    auc = eval_roc_auc(y_true, decision_scores)
+                    print(" | AUC {:.4f}".format(auc), end='')
+                print()
 
-            self.model.eval()
-            A_hat, X_hat = self.model(attrs, edge_index)
-            loss, struct_loss, feat_loss = self.loss_func(adj, A_hat,
-                                                          attrs, X_hat)
-            score = loss.detach().cpu().numpy()
-            if self.verbose:
-                print('AUC', eval_roc_auc(y_true, score))
-
-        self.decision_scores_ = score
+        self.decision_scores_ = decision_scores
         self._process_decision_scores()
         return self
 
@@ -338,19 +211,31 @@ class AnomalyDAE(BaseDetector):
         anomaly_scores : numpy.ndarray
             The anomaly score of shape :math:`N`.
         """
-
         check_is_fitted(self, ['model'])
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
 
-        # get needed data object from the input data
-        attrs, adj, edge_index = self.process_graph(G)
+        loader = NeighborLoader(G,
+                                [self.num_neigh],
+                                batch_size=self.batch_size)
 
-        # enable the evaluation mode
         self.model.eval()
+        outlier_scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
 
-        # construct the vector for holding the reconstruction error
-        A_hat, X_hat = self.model(attrs, edge_index)
-        outlier_scores, _, _ = self.loss_func(adj, A_hat, attrs, X_hat)
-        return outlier_scores.detach().cpu().numpy()
+            x, s, edge_index = self.process_graph(sampled_data)
+
+            x_, s_ = self.model(x, edge_index, batch_size)
+            score = self.loss_func(x[:batch_size],
+                                   x_[:batch_size],
+                                   s[:batch_size, node_idx],
+                                   s_[:batch_size])
+
+            outlier_scores[node_idx[:batch_size]] = score.detach() \
+                .cpu().numpy()
+        return outlier_scores
 
     def process_graph(self, G):
         """
@@ -366,60 +251,193 @@ class AnomalyDAE(BaseDetector):
         -------
         x : torch.Tensor
             Attribute (feature) of nodes.
-        adj : torch.Tensor
+        s : torch.Tensor
             Adjacency matrix of the graph.
         edge_index : torch.Tensor
             Edge list of the graph.
         """
-        edge_index = G.edge_index
-
-        #  via sparse matrix operation
-        dense_adj \
-            = SparseTensor(row=edge_index[0], col=edge_index[1]).to_dense()
-
-        # adjacency matrix normalization
-        rowsum = dense_adj.sum(1)
-        d_inv_sqrt = torch.pow(rowsum, -0.5).flatten()
-        d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0.
-        d_mat_inv_sqrt = torch.diag(d_inv_sqrt)
-        adj = (dense_adj * d_mat_inv_sqrt).T * d_mat_inv_sqrt
-
-        edge_index = edge_index.to(self.device)
-        adj = adj.to(self.device)
+        s = G.s.to(self.device)
+        edge_index = G.edge_index.to(self.device)
         x = G.x.to(self.device)
 
-        # return data objects needed for the network
-        return x, adj, edge_index
+        return x, s, edge_index
 
-    def loss_func(self,
-                  adj,
-                  A_hat,
-                  attrs,
-                  X_hat):
+    def loss_func(self, x, x_, s, s_):
         # generate hyperparameter - structure penalty
-        reversed_adj = torch.ones(adj.shape).to(self.device) - adj
+        reversed_adj = 1 - s
         thetas = torch.where(reversed_adj > 0, reversed_adj,
-                             torch.full(adj.shape, self.theta).to(self.device))
+                             torch.full(s.shape, self.theta).to(self.device))
 
         # generate hyperparameter - node penalty
-        reversed_attr = torch.ones(attrs.shape).to(self.device) - attrs
+        reversed_attr = 1 - x
         etas = torch.where(reversed_attr == 1, reversed_attr,
-                           torch.full(attrs.shape, self.eta).to(self.device))
+                           torch.full(x.shape, self.eta).to(self.device))
 
-        # Attribute reconstruction loss
-        diff_attribute = torch.pow(X_hat -
-                                   attrs, 2) * etas
-        attribute_reconstruction_errors = \
-            torch.sqrt(torch.sum(diff_attribute, 1))
-        attribute_cost = torch.mean(attribute_reconstruction_errors)
+        # attribute reconstruction loss
+        diff_attribute = torch.pow(x_ - x, 2) * etas
+        attribute_errors = torch.sqrt(torch.sum(diff_attribute, 1))
 
         # structure reconstruction loss
-        diff_structure = torch.pow(A_hat - adj, 2) * thetas
-        structure_reconstruction_errors = \
-            torch.sqrt(torch.sum(diff_structure, 1))
-        structure_cost = torch.mean(structure_reconstruction_errors)
+        diff_structure = torch.pow(s_ - s, 2) * thetas
+        structure_errors = torch.sqrt(torch.sum(diff_structure, 1))
 
-        cost = self.alpha * attribute_reconstruction_errors + (
-                1 - self.alpha) * structure_reconstruction_errors
+        score = self.alpha * attribute_errors \
+                + (1 - self.alpha) * structure_errors
 
-        return cost, structure_cost, attribute_cost
+        return score
+
+
+class AnomalyDAE_Base(nn.Module):
+    """
+    AnomalyDAE_Base is an anomaly detector consisting of a structure
+    autoencoder and an attribute reconstruction autoencoder.
+
+    Parameters
+    ----------
+    in_node_dim : int
+         Dimension of input feature
+    in_num_dim: int
+         Dimension of the input number of nodes
+    embed_dim:: int
+         Dimension of the embedding after the first reduced linear
+         layer (D1)
+    out_dim : int
+         Dimension of final representation
+    dropout : float, optional
+        Dropout rate of the model
+        Default: 0
+    act: F, optional
+         Choice of activation function
+    """
+
+    def __init__(self,
+                 in_node_dim,
+                 in_num_dim,
+                 embed_dim,
+                 out_dim,
+                 dropout,
+                 act):
+        super(AnomalyDAE_Base, self).__init__()
+
+        self.num_center_nodes = in_num_dim
+        self.structure_ae = StructureAE(in_node_dim,
+                                        embed_dim,
+                                        out_dim,
+                                        dropout,
+                                        act)
+        self.attribute_ae = AttributeAE(self.num_center_nodes,
+                                        embed_dim,
+                                        out_dim,
+                                        dropout,
+                                        act)
+
+    def forward(self, x, edge_index, batch_size):
+        s_, h = self.structure_ae(x, edge_index)
+        if batch_size < self.num_center_nodes:
+            x = F.pad(x, (0, 0, 0, self.num_center_nodes - batch_size))
+        x_ = self.attribute_ae(x[:self.num_center_nodes], h)
+        return x_, s_
+
+
+class StructureAE(nn.Module):
+    """
+    Structure Autoencoder in AnomalyDAE model: the encoder
+    transforms the node attribute X into the latent
+    representation with the linear layer, and a graph attention
+    layer produces an embedding with weight importance of node
+    neighbors. Finally, the decoder reconstructs the final embedding
+    to the original.
+
+    Parameters
+    ----------
+    in_dim: int
+        input dimension of node data
+    embed_dim: int
+        the latent representation dimension of node
+       (after the first linear layer)
+    out_dim: int
+        the output dim after the graph attention layer
+    dropout: float
+        dropout probability for the linear layer
+    act: F, optional
+         Choice of activation function
+
+    Returns
+    -------
+    x : torch.Tensor
+        Reconstructed attribute (feature) of nodes.
+    embed_x : torch.Tensor
+        Embed nodes after the attention layer
+    """
+
+    def __init__(self,
+                 in_dim,
+                 embed_dim,
+                 out_dim,
+                 dropout,
+                 act):
+        super(StructureAE, self).__init__()
+        self.dense = nn.Linear(in_dim, embed_dim)
+        self.attention_layer = GATConv(embed_dim, out_dim)
+        self.dropout = dropout
+        self.act = act
+
+    def forward(self, x, edge_index):
+        # encoder
+        x = self.act(self.dense(x))
+        x = F.dropout(x, self.dropout)
+        h = self.attention_layer(x, edge_index)
+        # decoder
+        s_ = torch.sigmoid(h @ h.T)
+        return s_, h
+
+
+class AttributeAE(nn.Module):
+    """
+    Attribute Autoencoder in AnomalyDAE model: the encoder
+    employs two non-linear feature transform to the node attribute
+    x. The decoder takes both the node embeddings from the structure
+    autoencoder and the reduced attribute representation to
+    reconstruct the original node attribute.
+
+    Parameters
+    ----------
+    in_dim:  int
+        dimension of the input number of nodes
+    embed_dim: int
+        the latent representation dimension of node
+        (after the first linear layer)
+    out_dim:  int
+        the output dim after two linear layers
+    dropout: float
+        dropout probability for the linear layer
+    act: F, optional
+         Choice of activation function
+
+    Returns
+    -------
+    x : torch.Tensor
+        Reconstructed attribute (feature) of nodes.
+    """
+
+    def __init__(self,
+                 in_dim,
+                 embed_dim,
+                 out_dim,
+                 dropout,
+                 act):
+        super(AttributeAE, self).__init__()
+        self.dense1 = nn.Linear(in_dim, embed_dim)
+        self.dense2 = nn.Linear(embed_dim, out_dim)
+        self.dropout = dropout
+        self.act = act
+
+    def forward(self, x, h):
+        # encoder
+        x = self.act(self.dense1(x.T))
+        x = F.dropout(x, self.dropout)
+        x = self.dense2(x)
+        x = F.dropout(x, self.dropout)
+        # decoder
+        x = h @ x.T
+        return x

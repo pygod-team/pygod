@@ -156,7 +156,7 @@ class DOMINANT(BaseDetector):
                 x_, s_ = self.model(x, edge_index)
                 score = self.loss_func(x[:batch_size],
                                        x_[:batch_size],
-                                       s[:batch_size],
+                                       s[:batch_size, node_idx],
                                        s_[:batch_size])
                 decision_scores[node_idx[:batch_size]] = score.detach() \
                     .cpu().numpy()
@@ -213,7 +213,7 @@ class DOMINANT(BaseDetector):
             x_, s_ = self.model(x, edge_index)
             score = self.loss_func(x[:batch_size],
                                    x_[:batch_size],
-                                   s[:batch_size],
+                                   s[:batch_size, node_idx],
                                    s_[:batch_size])
 
             outlier_scores[node_idx[:batch_size]] = score.detach() \
