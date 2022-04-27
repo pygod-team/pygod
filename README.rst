@@ -179,6 +179,7 @@ Unsupervised         GNN                  OCGNN               2021   Yes        
 Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
 Unsupervised         GNN                  GUIDE               2021   Yes          [#Yuan2021Higher]_
 Unsupervised/SSL     GNN                  CONAD               2022   Yes          [#Xu2022Contrastive]_
+Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  [#Jin2021ANEMONE]_
 ===================  ===================  ==================  =====  ===========  ========================================
 
 **(ii) Utility functions** :
@@ -265,3 +266,5 @@ Reference
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
 
 .. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).
+
+.. [#Jin2021ANEMONE] Jin, M., Liu, Y., Zheng, Y., Chi, L., Li, Y. and Pan, S., 2021. ANEMONE: Graph Anomaly Detection with Multi-Scale Contrastive Learning. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management (CIKM).
