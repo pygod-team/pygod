@@ -89,6 +89,7 @@ or::
     Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
 
 
+
 ----
 
 Installation
@@ -163,21 +164,22 @@ PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
-Type                 Backbone             Abbr                Algorithm                                                                                               Year   Ref
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
-Unsupervised         MLP                  MLPAE               Anomaly Detection Using Autoencoders with Nonlinear Dimensionality Reduction                            2014   [#Sakurada2014Anomaly]_
-Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2016   [#Kipf2016Variational]_
-Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
-Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   [#Ding2019Deep]_
-Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   [#Fan2020AnomalyDAE]_
-Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
-Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
-Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
-Unsupervised         GNN                  CONAD               Contrastive Attributed Network Anomaly Detection with Data Augmentation                                 2022   [#Xu2022Contrastive]_
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
+===================  ===================  ==================  =====  ===========  ========================================
+Type                 Backbone             Abbr                Year   Sampling      Ref
+===================  ===================  ==================  =====  ===========  ========================================
+Unsupervised         MLP                  MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
+Unsupervised         GNN                  GCNAE               2016   Yes          [#Kipf2016Variational]_
+Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
+Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
+Unsupervised         GNN                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         GNN                  AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         GNN                  AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
+Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
+Unsupervised         GNN                  OCGNN               2021   Yes          [#Wang2021One]_
+Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
+Unsupervised         GNN                  GUIDE               2021   Yes          [#Yuan2021Higher]_
+Unsupervised/SSL     GNN                  CONAD               2022   Yes          [#Xu2022Contrastive]_
+===================  ===================  ==================  =====  ===========  ========================================
 
 **(ii) Utility functions** :
 
@@ -187,6 +189,7 @@ Type                 Name                    Function                           
 Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
 Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
 Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
+Metric               eval_average_precision  Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_average_precision>`_
 Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
 Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  ==================================  ======================================================================================================================================
@@ -260,3 +263,5 @@ Reference
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
 
 .. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).
+
+.. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).

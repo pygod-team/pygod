@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning (COLA)"""
+"""Anomaly Detection on Attributed Networks via Contrastive
+Self-Supervised Learning (CoLA)"""
 # Author: Canyu Chen <cchen151@hawk.iit.edu>
 # License: BSD 2 clause
 
@@ -31,11 +32,12 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 def sparse_to_tuple(sparse_mx, insert_batch=False):
     """Convert sparse matrix to tuple representation."""
     """Set insert_batch=True if you want to insert a batch dimension."""
+
     def to_tuple(mx):
         if not sp.isspmatrix_coo(mx):
             mx = mx.tocoo()
         if insert_batch:
-            coords = np.vstack((np.zeros(mx.row.shape[0]), mx.row, mx.col)).transpose()
+            coords = np.vstack((np.zeros(mx.row.shape[0]), mx.row, mx.col)).T
             values = mx.data
             shape = (1,) + mx.shape
         else:
@@ -52,6 +54,7 @@ def sparse_to_tuple(sparse_mx, insert_batch=False):
 
     return sparse_mx
 
+
 def preprocess_features(features):
     """Row-normalize feature matrix and convert to tuple representation"""
     rowsum = np.array(features.sum(1))
@@ -60,6 +63,7 @@ def preprocess_features(features):
     r_mat_inv = sp.diags(r_inv)
     features = r_mat_inv.dot(features)
     return features.todense(), sparse_to_tuple(features)
+
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
@@ -70,13 +74,15 @@ def normalize_adj(adj):
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
+
 def dense_to_one_hot(labels_dense, num_classes):
     """Convert class labels from scalars to one-hot vectors."""
     num_labels = labels_dense.shape[0]
     index_offset = np.arange(num_labels) * num_classes
     labels_one_hot = np.zeros((num_labels, num_classes))
-    labels_one_hot.flat[index_offset+labels_dense.ravel()] = 1
+    labels_one_hot.flat[index_offset + labels_dense.ravel()] = 1
     return labels_one_hot
+
 
 def generate_rw_subgraph(pyg_graph, nb_nodes, subgraph_size):
     """Generate subgraph with random walk algorithm."""
@@ -86,10 +92,13 @@ def generate_rw_subgraph(pyg_graph, nb_nodes, subgraph_size):
     subv = traces.tolist()
     return subv
 
-class COLA(BaseDetector):
+
+class CoLA(BaseDetector):
     """
-    COLA (Anomaly Detection on Attributed Networks via Contrastive Self-Supervised Learning)
-    COLA is a contrastive self-supervised learning-based method for graph anomaly detection.
+    CoLA (Anomaly Detection on Attributed Networks via
+    Contrastive Self-Supervised Learning)
+    CoLA is a contrastive self-supervised learning-based method
+    for graph anomaly detection. (beta)
 
     Parameters
     ----------
@@ -115,29 +124,29 @@ class COLA(BaseDetector):
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
 
-
     Examples
     --------
-    >>> from pygod.models import COLA
-    >>> model = COLA()
+    >>> from pygod.models import CoLA
+    >>> model = CoLA()
     >>> model.fit(data)
     >>> prediction = model.predict(data)
     """
+
     def __init__(self,
-                 lr = None,
-                 verbose = False,
-                 epoch = None,
-                 embedding_dim = 64,
-                 negsamp_ratio = 1,
-                 readout = 'avg',
-                 dataset = 'cora',
-                 weight_decay = 0.0,
-                 batch_size = 300,
-                 subgraph_size = 4,
-                 auc_test_rounds = 256,
+                 lr=None,
+                 verbose=False,
+                 epoch=None,
+                 embedding_dim=64,
+                 negsamp_ratio=1,
+                 readout='avg',
+                 dataset='cora',
+                 weight_decay=0.0,
+                 batch_size=300,
+                 subgraph_size=4,
+                 auc_test_rounds=256,
                  contamination=0.1,
-                 gpu = 0):
-        super(COLA, self).__init__(contamination=contamination)
+                 gpu=0):
+        super(CoLA, self).__init__(contamination=contamination)
 
         self.dataset = dataset
         self.embedding_dim = embedding_dim
@@ -153,7 +162,7 @@ class COLA(BaseDetector):
             self.device = 'cpu'
 
         if lr is None:
-            if self.dataset in ['cora','citeseer','pubmed','Flickr']:
+            if self.dataset in ['cora', 'citeseer', 'pubmed', 'Flickr']:
                 self.lr = 1e-3
             elif self.dataset == 'ACM':
                 self.lr = 5e-4
@@ -161,11 +170,11 @@ class COLA(BaseDetector):
                 self.lr = 3e-3
             else:
                 self.lr = 1e-3
-        
+
         if epoch is None:
-            if self.dataset in ['cora','citeseer','pubmed']:
+            if self.dataset in ['cora', 'citeseer', 'pubmed']:
                 self.num_epoch = 100
-            elif self.dataset in ['BlogCatalog','Flickr','ACM']:
+            elif self.dataset in ['BlogCatalog', 'Flickr', 'ACM']:
                 self.num_epoch = 400
             else:
                 self.num_epoch = 100
@@ -175,8 +184,6 @@ class COLA(BaseDetector):
 
     def fit(self, G):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
@@ -206,18 +213,19 @@ class COLA(BaseDetector):
 
         # Initialize model and optimiser
         self.model = COLA_Base(ft_size,
-                          self.embedding_dim, 
-                          'prelu', 
-                          self.negsamp_ratio, 
-                          self.readout)
+                               self.embedding_dim,
+                               'prelu',
+                               self.negsamp_ratio,
+                               self.readout)
 
         optimiser = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
-        b_xent = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor([self.negsamp_ratio]))
-        cnt_wait = 0
-        best = 1e9
+        b_xent = nn.BCEWithLogitsLoss(reduction='none',
+                                      pos_weight=torch.tensor(
+                                          [self.negsamp_ratio]))
+
         batch_num = nb_nodes // self.batch_size + 1
 
         multi_epoch_ano_score = np.zeros((self.num_epoch, nb_nodes))
@@ -228,7 +236,6 @@ class COLA(BaseDetector):
 
             all_idx = list(range(nb_nodes))
             random.shuffle(all_idx)
-            total_loss = 0.
 
             subgraphs = generate_rw_subgraph(G, nb_nodes, self.subgraph_size)
 
@@ -239,21 +246,25 @@ class COLA(BaseDetector):
                 is_final_batch = (batch_idx == (batch_num - 1))
 
                 if not is_final_batch:
-                    idx = all_idx[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+                    idx = all_idx[batch_idx * self.batch_size: (
+                        batch_idx + 1) * self.batch_size]
                 else:
                     idx = all_idx[batch_idx * self.batch_size:]
 
                 cur_batch_size = len(idx)
 
-                lbl = torch.unsqueeze(torch.cat((torch.ones(cur_batch_size), torch.zeros(cur_batch_size * self.negsamp_ratio))), 1)
+                lbl = torch.unsqueeze(torch.cat((torch.ones(cur_batch_size),
+                    torch.zeros(cur_batch_size * self.negsamp_ratio))), 1)
 
                 ba = []
                 bf = []
-                added_adj_zero_row = torch.zeros((cur_batch_size, 1, self.subgraph_size))
-                added_adj_zero_col = torch.zeros((cur_batch_size, self.subgraph_size + 1, 1))
+                added_adj_zero_row = torch.zeros(
+                    (cur_batch_size, 1, self.subgraph_size))
+                added_adj_zero_col = torch.zeros(
+                    (cur_batch_size, self.subgraph_size + 1, 1))
                 added_adj_zero_col[:, -1, :] = 1.
                 added_feat_zero_row = torch.zeros((cur_batch_size, 1, ft_size))
-                
+
                 for i in idx:
                     cur_adj = adj[:, subgraphs[i], :][:, :, subgraphs[i]]
                     cur_feat = x[:, subgraphs[i], :]
@@ -264,7 +275,8 @@ class COLA(BaseDetector):
                 ba = torch.cat((ba, added_adj_zero_row), dim=1)
                 ba = torch.cat((ba, added_adj_zero_col), dim=2)
                 bf = torch.cat(bf)
-                bf = torch.cat((bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]),dim=1)
+                bf = torch.cat(
+                    (bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]), dim=1)
 
                 logits = self.model(bf, ba)
                 loss_all = b_xent(logits.cpu(), lbl.cpu())
@@ -278,12 +290,13 @@ class COLA(BaseDetector):
 
                 logits = torch.sigmoid(logits)
 
-                ano_score = - (logits[:cur_batch_size] - logits[cur_batch_size:]).detach().cpu().numpy()
+                ano_score = - (logits[:cur_batch_size] - logits[
+                    cur_batch_size:]).detach().cpu().numpy()
                 multi_epoch_ano_score[epoch, idx] = ano_score
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                    .format(epoch, loss.item()), end='')
+                      .format(epoch, loss.item()), end='')
                 if labels is not None:
                     auc = eval_roc_auc(labels, loss_all.detach().cpu().numpy())
                     print(" | AUC {:.4f}".format(auc), end='')
@@ -297,8 +310,6 @@ class COLA(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -346,7 +357,8 @@ class COLA(BaseDetector):
                 is_final_batch = (batch_idx == (batch_num - 1))
 
                 if not is_final_batch:
-                    idx = all_idx[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+                    idx = all_idx[batch_idx * self.batch_size: (
+                        batch_idx + 1) * self.batch_size]
                 else:
                     idx = all_idx[batch_idx * self.batch_size:]
 
@@ -354,8 +366,10 @@ class COLA(BaseDetector):
 
                 ba = []
                 bf = []
-                added_adj_zero_row = torch.zeros((cur_batch_size, 1, self.subgraph_size))
-                added_adj_zero_col = torch.zeros((cur_batch_size, self.subgraph_size + 1, 1))
+                added_adj_zero_row = torch.zeros(
+                    (cur_batch_size, 1, self.subgraph_size))
+                added_adj_zero_col = torch.zeros(
+                    (cur_batch_size, self.subgraph_size + 1, 1))
                 added_adj_zero_col[:, -1, :] = 1.
                 added_feat_zero_row = torch.zeros((cur_batch_size, 1, ft_size))
 
@@ -369,7 +383,8 @@ class COLA(BaseDetector):
                 ba = torch.cat((ba, added_adj_zero_row), dim=1)
                 ba = torch.cat((ba, added_adj_zero_col), dim=2)
                 bf = torch.cat(bf)
-                bf = torch.cat((bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]), dim=1)
+                bf = torch.cat(
+                    (bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]), dim=1)
 
                 with torch.no_grad():
                     model_output = self.model(bf, ba)
@@ -378,7 +393,8 @@ class COLA(BaseDetector):
 
                     logits = torch.sigmoid(logits)
 
-                ano_score = - (logits[:cur_batch_size] - logits[cur_batch_size:]).cpu().numpy()
+                ano_score = - (logits[:cur_batch_size] - logits[
+                    cur_batch_size:]).cpu().numpy()
 
                 multi_round_ano_score[round, idx] = ano_score
 
@@ -425,12 +441,13 @@ class COLA(BaseDetector):
         # return data objects needed for the network
         return x, adj, edge_index, y
 
+
 class COLA_Base(nn.Module):
-    def __init__(self, 
-                 n_in, 
-                 n_h, 
-                 activation, 
-                 negsamp_round, 
+    def __init__(self,
+                 n_in,
+                 n_h,
+                 activation,
+                 negsamp_round,
                  readout):
 
         super(COLA_Base, self).__init__()
@@ -451,22 +468,23 @@ class COLA_Base(nn.Module):
         h_1 = self.gcn(seq1, adj, sparse)
 
         if self.read_mode != 'weighted_sum':
-            c = self.read(h_1[:,: -1,:])
-            h_mv = h_1[:,-1,:]
+            c = self.read(h_1[:, : -1, :])
+            h_mv = h_1[:, -1, :]
         else:
             h_mv = h_1[:, -1, :]
-            c = self.read(h_1[:,: -1,:], h_1[:,-2: -1, :])
+            c = self.read(h_1[:, : -1, :], h_1[:, -2: -1, :])
 
         ret = self.disc(c, h_mv)
 
         return ret
+
 
 class GCN(nn.Module):
     def __init__(self, in_ft, out_ft, act, bias=True):
         super(GCN, self).__init__()
         self.fc = nn.Linear(in_ft, out_ft, bias=False)
         self.act = nn.PReLU() if act == 'prelu' else act
-        
+
         if bias:
             self.bias = nn.Parameter(torch.FloatTensor(out_ft))
             self.bias.data.fill_(0.0)
@@ -485,13 +503,15 @@ class GCN(nn.Module):
     def forward(self, seq, adj, sparse=False):
         seq_fts = self.fc(seq)
         if sparse:
-            out = torch.unsqueeze(torch.spmm(adj, torch.squeeze(seq_fts, 0)), 0)
+            out = torch.unsqueeze(torch.spmm(adj, torch.squeeze(seq_fts, 0)),
+                                  0)
         else:
             out = torch.bmm(adj, seq_fts)
         if self.bias is not None:
             out += self.bias
-        
+
         return self.act(out)
+
 
 class AvgReadout(nn.Module):
     def __init__(self):
@@ -500,12 +520,14 @@ class AvgReadout(nn.Module):
     def forward(self, seq):
         return torch.mean(seq, 1)
 
+
 class MaxReadout(nn.Module):
     def __init__(self):
         super(MaxReadout, self).__init__()
 
     def forward(self, seq):
-        return torch.max(seq,1).values
+        return torch.max(seq, 1).values
+
 
 class MinReadout(nn.Module):
     def __init__(self):
@@ -514,18 +536,20 @@ class MinReadout(nn.Module):
     def forward(self, seq):
         return torch.min(seq, 1).values
 
+
 class WSReadout(nn.Module):
     def __init__(self):
         super(WSReadout, self).__init__()
 
     def forward(self, seq, query):
-        query = query.permute(0,2,1)
-        sim = torch.matmul(seq,query)
-        sim = F.softmax(sim,dim=1)
+        query = query.permute(0, 2, 1)
+        sim = torch.matmul(seq, query)
+        sim = F.softmax(sim, dim=1)
         sim = sim.repeat(1, 1, 64)
-        out = torch.mul(seq,sim)
-        out = torch.sum(out,1)
+        out = torch.mul(seq, sim)
+        out = torch.sum(out, 1)
         return out
+
 
 class Discriminator(nn.Module):
     def __init__(self, n_h, negsamp_round):
@@ -551,7 +575,7 @@ class Discriminator(nn.Module):
         # negative
         c_mi = c
         for _ in range(self.negsamp_round):
-            c_mi = torch.cat((c_mi[-2:-1,:], c_mi[:-1,:]),0)
+            c_mi = torch.cat((c_mi[-2:-1, :], c_mi[:-1, :]), 0)
             scs.append(self.f_k(h_pl, c_mi))
 
         logits = torch.cat(tuple(scs))

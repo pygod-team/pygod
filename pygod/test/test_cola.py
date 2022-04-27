@@ -7,7 +7,7 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.models import COLA
+from pygod.models import CoLA
 from pygod.utils.metric import eval_roc_auc
 
 seed_everything(42)
@@ -19,12 +19,12 @@ class TestCola(unittest.TestCase):
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.60
+        self.roc_floor = 0.5
 
         test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
         self.data = test_graph
 
-        self.model = COLA()
+        self.model = CoLA()
         self.model.fit(self.data)
 
     def test_parameters(self):

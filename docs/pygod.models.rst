@@ -21,6 +21,16 @@ AnomalyDAE
     :show-inheritance:
     :inherited-members:
 
+CONAD
+-----
+
+.. autoclass:: pygod.models.CONAD
+    :members:
+    :exclude-members: cal_outlierScore, calc_lossValues, process_graph, loss_func
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
 DOMINANT
 --------
 
