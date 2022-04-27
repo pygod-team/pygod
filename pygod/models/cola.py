@@ -4,23 +4,15 @@ Self-Supervised Learning (CoLA)"""
 # Author: Canyu Chen <cchen151@hawk.iit.edu>
 # License: BSD 2 clause
 
-from telnetlib import GA
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics import roc_auc_score
 import random
 import os
-import argparse
-from tqdm import tqdm
-import networkx as nx
-import scipy.io as sio
 
 from torch_geometric.utils import to_dense_adj
-from torch_sparse import SparseTensor
-from torch_geometric.utils.num_nodes import maybe_num_nodes
 from torch_cluster import random_walk
 
 from . import BaseDetector
