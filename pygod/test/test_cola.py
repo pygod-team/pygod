@@ -13,7 +13,7 @@ from pygod.utils.metric import eval_roc_auc
 seed_everything(42)
 
 
-class TestCola(unittest.TestCase):
+class TestCoLA(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
