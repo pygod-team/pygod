@@ -322,21 +322,21 @@ class BaseDetector(object):
 
     # noinspection PyPep8
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
-        See https://scikit-learn.org/stable/modules/generated/sklearn.base
-        .BaseEstimator.html
-        and sklearn/base.py for more information.
+        r"""Get parameters for this estimator. See `sklearn.base.BaseEstimator
+        <https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html>`_
+        for more information.
+
         Parameters
         ----------
-        deep : bool, optional (default=True)
+        deep : bool, optional
             If True, will return the parameters for this estimator and
             contained sub-objects that are estimators.
+            Default: ```True```.
 
         Returns
         -------
         params : mapping of string to any
             Parameter names mapped to their values.
-
         """
 
         out = dict()
@@ -369,9 +369,10 @@ class BaseDetector(object):
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
-        See https://scikit-learn.org/stable/modules/generated/sklearn.base
-        .BaseEstimator.html
-        and sklearn/base.py for more information.
+        See `sklearn.base.BaseEstimator
+        <https://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html>`_
+        for more information.
+
         Returns
         -------
         self : object
@@ -403,12 +404,6 @@ class BaseDetector(object):
 
     def __repr__(self):
         # noinspection PyPep8
-        """
-        See https://scikit-learn.org/stable/modules/generated/sklearn.base
-        .BaseEstimator.html
-        and sklearn/base.py for more information.
-        """
-
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name), ),)

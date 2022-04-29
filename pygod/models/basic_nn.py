@@ -275,3 +275,37 @@ class GCN(torch.nn.Module):
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.in_channels}, '
                 f'{self.out_channels}, num_layers={self.num_layers})')
+
+
+class Vanilla_GCN(torch.nn.Module):
+    def __init__(self, in_ft, out_ft, act, bias=True):
+        super(Vanilla_GCN, self).__init__()
+        self.fc = torch.nn.Linear(in_ft, out_ft, bias=False)
+        self.act = torch.nn.PReLU() if act == 'prelu' else act
+
+        if bias:
+            self.bias = torch.nn.Parameter(torch.FloatTensor(out_ft))
+            self.bias.data.fill_(0.0)
+        else:
+            self.register_parameter('bias', None)
+
+        for m in self.modules():
+            self.weights_init(m)
+
+    def weights_init(self, m):
+        if isinstance(m, torch.nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight.data)
+            if m.bias is not None:
+                m.bias.data.fill_(0.0)
+
+    def forward(self, seq, adj, sparse=False):
+        seq_fts = self.fc(seq)
+        if sparse:
+            out = torch.unsqueeze(torch.spmm(adj, torch.squeeze(seq_fts, 0)),
+                                  0)
+        else:
+            out = torch.bmm(adj, seq_fts)
+        if self.bias is not None:
+            out += self.bias
+
+        return self.act(out)

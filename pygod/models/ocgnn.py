@@ -13,7 +13,9 @@ from sklearn.utils.validation import check_is_fitted
 from torch_sparse import SparseTensor
 
 from . import BaseDetector
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
+from torch_geometric.loader import NeighborLoader
 
 
 class GCN_base(nn.Module):
@@ -47,7 +49,7 @@ class OCGNN(BaseDetector):
     Networks): OCGNN is an anomaly detector that measures the distance of
     anomaly to the centroid, in the similar fashion to the support vector
     machine, but in the embedding space after feeding towards several layers
-     of GCN.
+    of GCN.
 
     See :cite:`wang2021one` for details.
 
@@ -85,6 +87,11 @@ class OCGNN(BaseDetector):
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Defaults: ``False``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
 
     Examples
     --------
@@ -107,7 +114,9 @@ class OCGNN(BaseDetector):
                  epoch=5,
                  warmup_epoch=2,
                  verbose=False,
-                 act=F.relu):
+                 act=F.relu,
+                 batch_size = 0,
+                 num_neigh = -1):
         super(OCGNN, self).__init__(contamination=contamination)
         self.dropout = dropout
         self.n_hidden = n_hidden
@@ -121,11 +130,9 @@ class OCGNN(BaseDetector):
         self.epoch = epoch
         self.warmup_epoch = warmup_epoch
         self.act = act
-
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        self.num_neigh = num_neigh
 
         # other param
         self.verbose = verbose
@@ -133,8 +140,6 @@ class OCGNN(BaseDetector):
 
     def init_center(self, x, edge_index):
         """
-        Descriptions
-        ----------
         Initialize hypersphere center c as the mean from
         an initial forward pass on the data.
   
@@ -167,8 +172,6 @@ class OCGNN(BaseDetector):
 
     def get_radius(self, dist):
         """
-        Description
-        ----------
         Optimally solve for radius R via the (1-nu)-quantile of distances.
         
         Parameters
@@ -187,8 +190,6 @@ class OCGNN(BaseDetector):
 
     def anomaly_scores(self, outputs):
         """
-        Description
-        ----------
         Calculate the anomaly score given by Euclidean distance to the center.
         
         Parameters
@@ -209,8 +210,6 @@ class OCGNN(BaseDetector):
 
     def loss_function(self, outputs, update=False):
         """
-        Description
-        ----------
         Calculate the loss in paper Equation (4)
         
         Parameters
@@ -239,26 +238,30 @@ class OCGNN(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
         ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : torch_geometric.data.Data
             The input data.
-        y_true : numpy.array, optional (default=None)
-            The optional outlier ground truth labels used to monitor the
-            training progress. They are not used to optimize the
-            unsupervised model.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
-        x, adj, edge_index = self.process_graph(G)
-        self.in_feats = x.shape[1]
+        G.node_idx = torch.arange(G.x.shape[0])
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.n_layers,
+                                batch_size=self.batch_size)
+ 
+        self.in_feats = G.x.shape[1]
 
         # initialize the model and optimizer
         self.model = GCN_base(self.in_feats,
@@ -277,35 +280,41 @@ class OCGNN(BaseDetector):
         self.model = self.model.to(self.device)
         # training the model
         self.model.train()
-
-        score = None
+        decision_scores = np.zeros(G.x.shape[0])
         for cur_epoch in range(self.epoch):
-            self.model.zero_grad()
-            outputs = self.model(x, edge_index)
-            loss, dist, score = self.loss_function(outputs)
-            if self.warmup_epoch is not None and cur_epoch < self.warmup_epoch:
-                self.data_center = self.init_center(x, edge_index)
-                self.radius = torch.tensor(self.get_radius(dist),
+            epoch_loss = 0.0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+                x, adj, edge_index = self.process_graph(sampled_data)
+                outputs = self.model(x, edge_index)
+                loss, dist, score = self.loss_function(outputs)
+                epoch_loss += loss.item() * batch_size
+                if self.warmup_epoch is not None and cur_epoch < self.warmup_epoch:
+                    self.data_center = self.init_center(x, edge_index)
+                    self.radius = torch.tensor(self.get_radius(dist),
                                            device=self.device)
-            loss.backward()
-            self.optimizer.step()
+                
+                decision_scores[node_idx[:batch_size]] = score.detach()\
+                                                              .cpu().numpy()
+                self.model.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(cur_epoch, loss.item()), end='')
+                      .format(cur_epoch,  epoch_loss / G.x.shape[0]), end='')
                 if y_true is not None:
-                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    auc = eval_roc_auc(y_true, decision_scores)
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
-        self.decision_scores_ = score.detach().cpu().numpy()
+        self.decision_scores_ = decision_scores
         self._process_decision_scores()
         return self
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
@@ -359,15 +368,29 @@ class OCGNN(BaseDetector):
         """
         check_is_fitted(self, ['model'])
 
-        # get needed data object from the input data
-        x, adj, edge_index = self.process_graph(G)
+       # get needed data object from the input data
+        G.node_idx = torch.arange(G.x.shape[0])
+        loader = NeighborLoader(G,
+                                [self.num_neigh] * self.n_layers,
+                                batch_size=self.batch_size)
+
 
         # enable the evaluation mode
         self.model.eval()
 
         # construct the vector for holding the reconstruction error
         # outlier_scores = torch.zeros([attrs.shape[0], ])
-        outputs = self.model(x, edge_index)
-        loss, dist, score = self.loss_function(outputs)
+        outlier_scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
 
-        return score.detach().cpu().numpy()
+            x, adj, edge_index = self.process_graph(sampled_data)
+
+            outputs = self.model(x, edge_index)
+            loss, dist, score = self.loss_function(outputs)
+
+            outlier_scores[node_idx[:batch_size]] = score.detach() \
+                .cpu().numpy()
+
+        return outlier_scores

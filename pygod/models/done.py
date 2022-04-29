@@ -4,21 +4,24 @@
 # License: BSD 2 clause
 
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.utils import to_dense_adj
 from torch_geometric.nn import MessagePassing
+from torch_geometric.utils import to_dense_adj
+from torch_geometric.loader import NeighborLoader
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
+from ..utils.utility import validate_device
 from ..utils.metric import eval_roc_auc
 
 
 class DONE(BaseDetector):
     """
     DONE (Deep Outlier Aware Attributed Network Embedding)
-    DONE is consist of an attribute autoencoder and a structure
+    DONE consist of an attribute autoencoder and a structure
     autoencoder. It estimates five loss to optimize the model,
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and a
@@ -68,6 +71,11 @@ class DONE(BaseDetector):
         Maximum number of training epoch. Default: ``5``.
     gpu : int
         GPU Index, -1 for using CPU. Default: ``0``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
@@ -95,6 +103,8 @@ class DONE(BaseDetector):
                  lr=5e-3,
                  epoch=5,
                  gpu=0,
+                 batch_size=0,
+                 num_neigh=-1,
                  verbose=False):
         super(DONE, self).__init__(contamination=contamination)
 
@@ -113,10 +123,9 @@ class DONE(BaseDetector):
         # training param
         self.lr = lr
         self.epoch = epoch
-        if gpu >= 0 and torch.cuda.is_available():
-            self.device = 'cuda:{}'.format(gpu)
-        else:
-            self.device = 'cpu'
+        self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        self.num_neigh = num_neigh
 
         # other param
         self.verbose = verbose
@@ -124,29 +133,32 @@ class DONE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
         ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : torch_geometric.data.Data
             The input data.
-        y_true : numpy.array, optional (default=None)
-            The optional outlier ground truth labels used to monitor the
-            training progress. They are not used to optimize the
-            unsupervised model.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh],
+                                batch_size=self.batch_size)
 
-        x, s, edge_index = self.process_graph(G)
-
-        self.model = DONE_Base(x_dim=x.shape[1],
-                               s_dim=s.shape[1],
+        self.model = DONE_Base(x_dim=G.x.shape[1],
+                               s_dim=G.s.shape[1],
                                hid_dim=self.hid_dim,
                                num_layers=self.num_layers,
                                dropout=self.dropout,
@@ -155,32 +167,48 @@ class DONE(BaseDetector):
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
-        score = None
-        for epoch in range(self.epoch):
-            self.model.train()
-            x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
-            score, loss = self.loss_func(x, x_, s, s_, h_a, h_s, dna, dns)
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        self.model.train()
+        decision_scores = np.zeros(G.x.shape[0])
+        for epoch in range(self.epoch):
+            epoch_loss = 0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+                x, s, edge_index = self.process_graph(G)
+
+                x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
+                score, loss = self.loss_func(x[:batch_size],
+                                             x_[:batch_size],
+                                             s[:batch_size],
+                                             s_[:batch_size],
+                                             h_a[:batch_size],
+                                             h_s[:batch_size],
+                                             dna[:batch_size],
+                                             dns[:batch_size])
+                epoch_loss += loss.item() * batch_size
+                decision_scores[node_idx[:batch_size]] = score.detach() \
+                                                              .cpu().numpy()
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, loss.item()), end='')
+                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
                 if y_true is not None:
-                    auc = eval_roc_auc(y_true, score.detach().cpu().numpy())
+                    auc = eval_roc_auc(y_true, decision_scores)
                     print(" | AUC {:.4f}".format(auc), end='')
                 print()
 
-        self.decision_scores_ = score.detach().cpu().numpy()
+        self.decision_scores_ = decision_scores
         self._process_decision_scores()
         return self
 
     def decision_function(self, G):
         """
-        Description
-        -----------
+
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -195,22 +223,38 @@ class DONE(BaseDetector):
             The anomaly score of shape :math:`N`.
         """
         check_is_fitted(self, ['model'])
+        G.node_idx = torch.arange(G.x.shape[0])
+        G.s = to_dense_adj(G.edge_index)[0]
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                [self.num_neigh],
+                                batch_size=self.batch_size)
 
-        # get needed data object from the input data
-        x, s, edge_index = self.process_graph(G)
-
-        # enable the evaluation mode
         self.model.eval()
+        outlier_scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
 
-        # construct the vector for holding the reconstruction error
-        x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
-        outlier_scores, _ = self.loss_func(x, x_, s, s_, h_a, h_s, dna, dns)
-        return outlier_scores.detach().cpu().numpy()
+            x, s, edge_index = self.process_graph(G)
+
+            x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
+            score, _ = self.loss_func(x[:batch_size],
+                                      x_[:batch_size],
+                                      s[:batch_size],
+                                      s_[:batch_size],
+                                      h_a[:batch_size],
+                                      h_s[:batch_size],
+                                      dna[:batch_size],
+                                      dns[:batch_size])
+
+            outlier_scores[node_idx[:batch_size]] = score.detach() \
+                                                         .cpu().numpy()
+        return outlier_scores
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
@@ -228,10 +272,8 @@ class DONE(BaseDetector):
         edge_index : torch.Tensor
             Edge list of the graph.
         """
-        edge_index = G.edge_index
-
-        s = to_dense_adj(edge_index)[0].to(self.device)
-        edge_index = edge_index.to(self.device)
+        s = G.s.to(self.device)
+        edge_index = G.edge_index.to(self.device)
         x = G.x.to(self.device)
 
         return x, s, edge_index

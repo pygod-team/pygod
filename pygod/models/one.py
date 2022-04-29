@@ -90,18 +90,16 @@ class ONE(BaseDetector):
 
     def fit(self, G, y_true=None):
         """
-        Description
-        -----------
         Fit detector with input data.
 
         Parameters
         ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+        G : torch_geometric.data.Data
             The input data.
-        y_true : numpy.array, optional (default=None)
-            The optional outlier ground truth labels used to monitor the
-            training progress. They are not used to optimize the
-            unsupervised model.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------
@@ -350,8 +348,6 @@ class ONE(BaseDetector):
 
     def decision_function(self, G):
         """
-        Description
-        -----------
         Predict raw anomaly score using the fitted detector. Outliers
         are assigned with larger anomaly scores.
 
@@ -376,8 +372,6 @@ class ONE(BaseDetector):
 
     def process_graph(self, G):
         """
-        Description
-        -----------
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
 
@@ -420,8 +414,6 @@ class ONE(BaseDetector):
                         beta,
                         gamma):
         """
-        Description
-        -----------
         Calculate the loss. This function is called inside the fit() function.
 
         Parameters
@@ -461,8 +453,6 @@ class ONE(BaseDetector):
                          A,
                          C):
         """
-        Description
-        -----------
         Calculate the outlier scores.
 
         Parameters

@@ -2,32 +2,30 @@ Utility Functions
 ==================
 
 
-pygod.utils.early\_stopping module
-----------------------------------
+Early Stopping
+--------------
 
-.. automodule:: pygod.utils.early_stopping
+.. autoclass:: pygod.utils.EarlyStopping
     :members:
     :undoc-members:
-    :show-inheritance:
-    :inherited-members:
 
 
-pygod.utils.metric module
--------------------------
+Metric
+------
 
 .. automodule:: pygod.utils.metric
     :members:
     :undoc-members:
-    :show-inheritance:
-    :inherited-members:
 
 
-pygod.utils.outlier\_generator module
--------------------------------------
+Outlier Generator
+-----------------
 
-.. automodule:: pygod.utils.outlier_generator
+.. autoclass:: pygod.utils.gen_attribute_outliers
     :members:
     :undoc-members:
-    :show-inheritance:
     :inherited-members:
 
+.. autoclass:: pygod.utils.gen_structure_outliers
+    :members:
+    :undoc-members:
