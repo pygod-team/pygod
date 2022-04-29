@@ -21,6 +21,16 @@ AnomalyDAE
     :show-inheritance:
     :inherited-members:
 
+CoLA
+----
+
+.. autoclass:: pygod.models.CoLA
+    :members:
+    :exclude-members: loss_func, process_graph
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
 CONAD
 -----
 

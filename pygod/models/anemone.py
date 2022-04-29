@@ -139,7 +139,7 @@ class ANEMONE(BaseDetector):
                  batch_size=300,
                  subgraph_size=4,
                  alpha=1.0,
-                 negsamp_ratio_patch=1, 
+                 negsamp_ratio_patch=1,
                  negsamp_ratio_context=1,
                  auc_test_rounds=256,
                  contamination=0.1,
@@ -213,20 +213,22 @@ class ANEMONE(BaseDetector):
         adj = torch.FloatTensor(adj[np.newaxis])
 
         self.model = ANEMONE_Base(ft_size,
-                               self.embedding_dim,
-                               'prelu',
-                               self.negsamp_ratio_patch, 
-                               self.negsamp_ratio_context,
-                               self.readout)
+                                  self.embedding_dim,
+                                  'prelu',
+                                  self.negsamp_ratio_patch,
+                                  self.negsamp_ratio_context,
+                                  self.readout)
 
         optimiser = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
         b_xent_patch = nn.BCEWithLogitsLoss(reduction='none',
-                                            pos_weight=torch.tensor([self.negsamp_ratio_patch]))
+                                            pos_weight=torch.tensor(
+                                                [self.negsamp_ratio_patch]))
         b_xent_context = nn.BCEWithLogitsLoss(reduction='none',
-                                            pos_weight=torch.tensor([self.negsamp_ratio_context]))
+                                              pos_weight=torch.tensor([
+                                                  self.negsamp_ratio_context]))
 
         batch_num = nb_nodes // self.batch_size + 1
 
@@ -247,22 +249,28 @@ class ANEMONE(BaseDetector):
 
                 is_final_batch = (batch_idx == (batch_num - 1))
                 if not is_final_batch:
-                    idx = all_idx[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+                    idx = all_idx[batch_idx * self.batch_size:
+                                  (batch_idx + 1) * self.batch_size]
                 else:
                     idx = all_idx[batch_idx * self.batch_size:]
 
                 cur_batch_size = len(idx)
 
                 lbl_patch = torch.unsqueeze(torch.cat(
-                    (torch.ones(cur_batch_size), torch.zeros(cur_batch_size * self.negsamp_ratio_patch))), 1)
+                    (torch.ones(cur_batch_size),
+                     torch.zeros(cur_batch_size * self.negsamp_ratio_patch))),
+                    1)
 
                 lbl_context = torch.unsqueeze(torch.cat(
-                    (torch.ones(cur_batch_size), torch.zeros(cur_batch_size * self.negsamp_ratio_context))), 1)
+                    (torch.ones(cur_batch_size), torch.zeros(
+                        cur_batch_size * self.negsamp_ratio_context))), 1)
 
                 ba = []
                 bf = []
-                added_adj_zero_row = torch.zeros((cur_batch_size, 1, self.subgraph_size))
-                added_adj_zero_col = torch.zeros((cur_batch_size, self.subgraph_size + 1, 1))
+                added_adj_zero_row = torch.zeros(
+                    (cur_batch_size, 1, self.subgraph_size))
+                added_adj_zero_col = torch.zeros(
+                    (cur_batch_size, self.subgraph_size + 1, 1))
                 added_adj_zero_col[:, -1, :] = 1.
                 added_feat_zero_row = torch.zeros((cur_batch_size, 1, ft_size))
 
@@ -276,7 +284,8 @@ class ANEMONE(BaseDetector):
                 ba = torch.cat((ba, added_adj_zero_row), dim=1)
                 ba = torch.cat((ba, added_adj_zero_col), dim=2)
                 bf = torch.cat(bf)
-                bf = torch.cat((bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]), dim=1)
+                bf = torch.cat(
+                    (bf[:, :-1, :], added_feat_zero_row, bf[:, -1:, :]), dim=1)
 
                 logits_1, logits_2 = self.model(bf, ba)
 
@@ -297,27 +306,41 @@ class ANEMONE(BaseDetector):
                 logits_2 = torch.sigmoid(torch.squeeze(logits_2))
 
                 if self.alpha != 1.0 and self.alpha != 0.0:
-                    if self.negsamp_ratio_context == 1 and self.negsamp_ratio_patch == 1:
-                        ano_score_1 = - (logits_1[:cur_batch_size] - logits_1[cur_batch_size:]).detach().cpu().numpy()
-                        ano_score_2 = - (logits_2[:cur_batch_size] - logits_2[cur_batch_size:]).detach().cpu().numpy()
+                    if self.negsamp_ratio_context == 1 and \
+                            self.negsamp_ratio_patch == 1:
+                        ano_score_1 = - (logits_1[:cur_batch_size] -
+                            logits_1[cur_batch_size:]).detach().cpu().numpy()
+                        ano_score_2 = - (logits_2[:cur_batch_size] -
+                            logits_2[cur_batch_size:]).detach().cpu().numpy()
                     else:
-                        ano_score_1 = - (logits_1[:cur_batch_size] - torch.mean(logits_1[cur_batch_size:].view(
-                            cur_batch_size, self.negsamp_ratio_context), dim=1)).detach().cpu().numpy()  # context
-                        ano_score_2 = - (logits_2[:cur_batch_size] - torch.mean(logits_2[cur_batch_size:].view(
-                            cur_batch_size, self.negsamp_ratio_patch), dim=1)).detach().cpu().numpy()  # patch
-                    ano_score = self.alpha * ano_score_1 + (1 - self.alpha) * ano_score_2
+                        ano_score_1 = - (logits_1[:cur_batch_size] -
+                            torch.mean(logits_1[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_context),
+                                dim=1)).detach().cpu().numpy()  # context
+                        ano_score_2 = - (logits_2[:cur_batch_size] -
+                            torch.mean(logits_2[cur_batch_size:].view(
+                                    cur_batch_size, self.negsamp_ratio_patch),
+                                    dim=1)).detach().cpu().numpy()  # patch
+                    ano_score = self.alpha * ano_score_1 + (
+                                1 - self.alpha) * ano_score_2
                 elif self.alpha == 1.0:
                     if self.negsamp_ratio_context == 1:
-                        ano_score = - (logits_1[:cur_batch_size] - logits_1[cur_batch_size:]).detach().cpu().numpy()
+                        ano_score = - (logits_1[:cur_batch_size] -
+                            logits_1[cur_batch_size:]).detach().cpu().numpy()
                     else:
-                        ano_score = - (logits_1[:cur_batch_size] - torch.mean(logits_1[cur_batch_size:].view(
-                                cur_batch_size, self.negsamp_ratio_context), dim=1)).detach().cpu().numpy()  # context
+                        ano_score = - (logits_1[:cur_batch_size] -
+                            torch.mean(logits_1[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_context),
+                                dim=1)).detach().cpu().numpy()  # context
                 elif self.alpha == 0.0:
                     if self.negsamp_ratio_patch == 1:
-                        ano_score = - (logits_2[:cur_batch_size] - logits_2[cur_batch_size:]).detach().cpu().numpy()
+                        ano_score = - (logits_2[:cur_batch_size] -
+                            logits_2[cur_batch_size:]).detach().cpu().numpy()
                     else:
-                        ano_score = - (logits_2[:cur_batch_size] - torch.mean(logits_2[cur_batch_size:].view(
-                                cur_batch_size, self.negsamp_ratio_patch), dim=1)).detach().cpu().numpy()  # patch
+                        ano_score = - (logits_2[:cur_batch_size] -
+                            torch.mean(logits_2[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_patch),
+                                dim=1)).detach().cpu().numpy()  # patch
 
                 multi_epoch_ano_score[epoch, idx] = ano_score
 
@@ -376,8 +399,8 @@ class ANEMONE(BaseDetector):
                 is_final_batch = (batch_idx == (batch_num - 1))
 
                 if not is_final_batch:
-                    idx = all_idx[batch_idx * self.batch_size: (
-                        batch_idx + 1) * self.batch_size]
+                    idx = all_idx[batch_idx * self.batch_size:
+                                  (batch_idx + 1) * self.batch_size]
                 else:
                     idx = all_idx[batch_idx * self.batch_size:]
 
@@ -412,27 +435,41 @@ class ANEMONE(BaseDetector):
                     test_logits_2 = torch.sigmoid(torch.squeeze(test_logits_2))
 
                 if self.alpha != 1.0 and self.alpha != 0.0:
-                    if self.negsamp_ratio_context == 1 and self.negsamp_ratio_patch == 1:
-                        ano_score_1 = - (test_logits_1[:cur_batch_size] - test_logits_1[cur_batch_size:]).cpu().numpy()
-                        ano_score_2 = - (test_logits_2[:cur_batch_size] - test_logits_2[cur_batch_size:]).cpu().numpy()
+                    if self.negsamp_ratio_context == 1 and \
+                            self.negsamp_ratio_patch == 1:
+                        ano_score_1 = - (test_logits_1[:cur_batch_size] -
+                            test_logits_1[cur_batch_size:]).cpu().numpy()
+                        ano_score_2 = - (test_logits_2[:cur_batch_size] -
+                            test_logits_2[cur_batch_size:]).cpu().numpy()
                     else:
-                        ano_score_1 = - (test_logits_1[:cur_batch_size] - torch.mean(test_logits_1[cur_batch_size:].view(
-                            cur_batch_size, self.negsamp_ratio_context), dim=1)).cpu().numpy()  # context
-                        ano_score_2 = - (test_logits_2[:cur_batch_size] - torch.mean(test_logits_2[cur_batch_size:].view(
-                            cur_batch_size, self.negsamp_ratio_patch), dim=1)).cpu().numpy()  # patch
-                    ano_score = self.alpha * ano_score_1 + (1 - self.alpha) * ano_score_2
+                        ano_score_1 = - (test_logits_1[:cur_batch_size] -
+                            torch.mean(test_logits_1[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_context),
+                                dim=1)).cpu().numpy()  # context
+                        ano_score_2 = - (test_logits_2[:cur_batch_size] -
+                            torch.mean(test_logits_2[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_patch),
+                                dim=1)).cpu().numpy()  # patch
+                    ano_score = self.alpha * ano_score_1 + \
+                                (1 - self.alpha) * ano_score_2
                 elif self.alpha == 1.0:
                     if self.negsamp_ratio_context == 1:
-                        ano_score = - (test_logits_1[:cur_batch_size] - test_logits_1[cur_batch_size:]).cpu().numpy()
+                        ano_score = - (test_logits_1[:cur_batch_size] -
+                            test_logits_1[cur_batch_size:]).cpu().numpy()
                     else:
-                        ano_score = - (test_logits_1[:cur_batch_size] - torch.mean(test_logits_1[cur_batch_size:].view(
-                                cur_batch_size, self.negsamp_ratio_context), dim=1)).cpu().numpy()  # context
+                        ano_score = - (test_logits_1[:cur_batch_size] -
+                            torch.mean(test_logits_1[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_context),
+                                dim=1)).cpu().numpy()  # context
                 elif self.alpha == 0.0:
                     if self.negsamp_ratio_patch == 1:
-                        ano_score = - (test_logits_2[:cur_batch_size] - test_logits_2[cur_batch_size:]).cpu().numpy()
+                        ano_score = - (test_logits_2[:cur_batch_size] -
+                            test_logits_2[cur_batch_size:]).cpu().numpy()
                     else:
-                        ano_score = - (test_logits_2[:cur_batch_size] - torch.mean(test_logits_2[cur_batch_size:].view(
-                                cur_batch_size, self.negsamp_ratio_patch), dim=1)).cpu().numpy()  # patch
+                        ano_score = - (test_logits_2[:cur_batch_size] -
+                            torch.mean(test_logits_2[cur_batch_size:].view(
+                                cur_batch_size, self.negsamp_ratio_patch),
+                                dim=1)).cpu().numpy()  # patch
 
                 multi_round_ano_score[round, idx] = ano_score
 
@@ -504,7 +541,8 @@ class ANEMONE_Base(nn.Module):
         self.c_disc = Contextual_Discriminator(n_h, negsamp_round_context)
         self.p_disc = Patch_Discriminator(n_h, negsamp_round_patch)
 
-    def forward(self, seq1, adj, sparse=False, msk=None, samp_bias1=None, samp_bias2=None):
+    def forward(self, seq1, adj, sparse=False, samp_bias1=None,
+                samp_bias2=None):
         h_1 = self.gcn_context(seq1, adj, sparse)
         h_2 = self.gcn_patch(seq1, adj, sparse)
 
@@ -648,10 +686,11 @@ class Contextual_Discriminator(nn.Module):
         scs.append(self.f_k(h_pl, c))
         c_mi = c
         for _ in range(self.negsamp_round):
-            c_mi = torch.cat((c_mi[-2:-1,:], c_mi[:-1,:]),0)
+            c_mi = torch.cat((c_mi[-2:-1, :], c_mi[:-1, :]), 0)
             scs.append(self.f_k(h_pl, c_mi))
         logits = torch.cat(tuple(scs))
         return logits
+
 
 class Patch_Discriminator(nn.Module):
     def __init__(self, n_h, negsamp_round):
@@ -676,4 +715,3 @@ class Patch_Discriminator(nn.Module):
             scs.append(self.f_k(h_unano, h_mi))
         logits = torch.cat(tuple(scs))
         return logits
-

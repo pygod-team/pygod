@@ -119,6 +119,7 @@ Unsupervised         GNN                  AnomalyDAE          2020   Yes        
 Unsupervised         GAN                  GAAN                2020   Yes          :class:`pygod.models.GAAN`
 Unsupervised         GNN                  OCGNN               2021   Yes          :class:`pygod.models.OCGNN`
 Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  :class:`pygod.models.CoLA`
+Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  :class:`pygod.models.ANEMONE`
 Unsupervised         GNN                  GUIDE               2021   Yes          :class:`pygod.models.GUIDE`
 Unsupervised/SSL     GNN                  CONAD               2022   Yes          :class:`pygod.models.CONAD`
 ===================  ===================  ==================  =====  ===========  ==============================================
