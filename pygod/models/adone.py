@@ -21,11 +21,11 @@ from ..utils.metric import eval_roc_auc
 class AdONE(BaseDetector):
     """
     AdONE (Adversarial Outlier Aware Attributed Network Embedding)
-    AdONE consist of an attribute autoencoder and a structure
+    consists of an attribute autoencoder and a structure
     autoencoder. It estimates five loss to optimize the model,
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and an
-    alignment loss. It calculates three outlier score, and averages
+    alignment loss. It calculates three outlier scores, and averages
     them as an overall score.
 
     See :cite:`bandyopadhyay2020outlier` for details.

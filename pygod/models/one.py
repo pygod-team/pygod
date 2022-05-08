@@ -47,9 +47,8 @@ def calculate_G(G_mat, alpha, outl1, H, A, gamma, outl3, U, W):
 # in PyTorch yet. Need NetworkX for it.
 class ONE(BaseDetector):
     """
-    ONE (Outlier Aware Network Embedding for Attributed Networks)
-    Reference: <https://arxiv.org/pdf/1811.07609.pdf>
-
+    ONE (Outlier Aware Network
+    Embedding for Attributed Networks)
 
     See :cite:`bandyopadhyay2019outlier` for details.
 

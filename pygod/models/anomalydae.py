@@ -20,16 +20,17 @@ from ..utils.metric import eval_roc_auc
 
 class AnomalyDAE(BaseDetector):
     """
-    AnomalyDAE (Dual autoencoder for anomaly detection on attributed networks):
-    AnomalyDAE is an anomaly detector that. consists of a structure autoencoder 
-    and an attribute autoencoder to learn both node embedding and attribute 
-    embedding jointly in latent space. The structural autoencoer uses Graph Attention
-    layers. The reconstruction mean square error of the decoders are defined 
-    as structure anamoly score and attribute anomaly score, respectively, 
+    AnomalyDAE (Dual autoencoder for anomaly detection on attributed
+    networks) is an anomaly detector that consists of a structure
+    autoencoder and an attribute autoencoder to learn both node
+    embedding and attribute embedding jointly in latent space. The
+    structural autoencoder uses Graph Attention layers. The
+    reconstruction mean square error of the decoders are defined as
+    structure anomaly score and attribute anomaly score, respectively,
     with two additional penalties on the reconstructed adj matrix and 
     node attributes (force entries to be nonzero).
 
-    See: cite 'fan2020anomalydae' for details.
+    See: cite `fan2020anomalydae` for details.
 
     Parameters
     ----------

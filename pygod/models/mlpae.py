@@ -19,7 +19,7 @@ from ..utils.dataset import PlainDataset
 
 class MLPAE(BaseDetector):
     """
-    Vanila Multilayer Perceptron Autoencoder
+    Vanila Multilayer Perceptron Autoencoder.
 
     See :cite:`yuan2021higher` for details.
 

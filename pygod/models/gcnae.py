@@ -18,7 +18,7 @@ from ..utils.metric import eval_roc_auc
 
 class GCNAE(BaseDetector):
     """
-    Vanila Graph Convolutional Networks Autoencoder
+    Vanila Graph Convolutional Networks Autoencoder.
 
     See :cite:`yuan2021higher` for details.
 

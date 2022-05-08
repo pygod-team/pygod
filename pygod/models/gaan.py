@@ -19,11 +19,11 @@ from ..utils.metric import eval_roc_auc
 class GAAN(BaseDetector):
     """
     GAAN (Generative Adversarial Attributed Network Anomaly Detection)
-    GAAN is a generative adversarial attribute network anomaly detection
-    framework, including a generator module, an encoder module, a discriminator
-    module, and uses anomaly evaluation measures that consider sample
-    reconstruction error and real sample recognition confidence to make
-    predictions.
+    is a generative adversarial attribute network anomaly detection
+    framework, including a generator module, an encoder module, a
+    discriminator module, and uses anomaly evaluation measures that
+    consider sample reconstruction error and real sample recognition
+    confidence to make predictions.
 
     See :cite:`chen2020generative` for details.
 

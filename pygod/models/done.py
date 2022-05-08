@@ -20,13 +20,12 @@ from ..utils.metric import eval_roc_auc
 
 class DONE(BaseDetector):
     """
-    DONE (Deep Outlier Aware Attributed Network Embedding)
-    DONE consist of an attribute autoencoder and a structure
-    autoencoder. It estimates five loss to optimize the model,
-    including an attribute proximity loss, an attribute homophily loss,
-    a structure proximity loss, a structure homophily loss, and a
-    combination loss. It calculates three outlier score, and averages
-    them as an overall score.
+    DONE (Deep Outlier Aware Attributed Network Embedding) consists of
+    an attribute autoencoder and a structure autoencoder. It estimates
+    five losses to optimize the model, including an attribute proximity
+    loss, an attribute homophily loss, a structure proximity loss, a
+    structure homophily loss, and a combination loss. It calculates
+    three outlier scores, and averages them as an overall scores.
 
     See :cite:`bandyopadhyay2020outlier` for details.
 

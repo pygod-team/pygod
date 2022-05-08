@@ -19,12 +19,12 @@ from ..utils.metric import eval_roc_auc
 
 class DOMINANT(BaseDetector):
     """
-    DOMINANT (Deep Anomaly Detection on Attributed Networks)
-    DOMINANT is an anomaly detector consisting of a shared graph
-    convolutional encoder, a structure reconstruction decoder, and an
-    attribute reconstruction decoder. The reconstruction mean square
-    error of the decoders are defined as structure anomaly score and
-    attribute anomaly score, respectively.
+    DOMINANT (Deep Anomaly Detection on Attributed Networks) is an
+    anomaly detector consisting of a shared graph convolutional
+    encoder, a structure reconstruction decoder, and an attribute
+    reconstruction decoder. The reconstruction mean square error of the
+    decoders are defined as structure anomaly score and attribute
+    anomaly score, respectively.
 
     See :cite:`ding2019deep` for details.
 

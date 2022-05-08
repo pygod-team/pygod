@@ -27,8 +27,7 @@ from ..utils.metric import eval_roc_auc
 class GUIDE(BaseDetector):
     """
     GUIDE (Higher-order Structure based Anomaly Detection on Attributed
-    Networks)
-    GUIDE is an anomaly detector consisting of an attribute graph
+    Networks) is an anomaly detector consisting of an attribute graph
     convolutional autoencoder, and a structure graph attentive
     autoencoder (not same as the graph attention networks). Instead of
     adjacency matrix, node motif degree (graphlet degree is used in
