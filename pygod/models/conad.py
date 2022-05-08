@@ -34,13 +34,13 @@ class CONAD(BaseDetector):
     Parameters
     ----------
     hid_dim :  int, optional
-        Hidden dimension of model. Default: ``0``.
+        Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
         Total number of layers in model. A half (ceil) of the layers
         are for the encoder, the other half (floor) of the layers are
         for decoders. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Default: ``0.``.
+        Dropout rate. Default: ``0.3``.
     weight_decay : float, optional
         Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
@@ -48,7 +48,7 @@ class CONAD(BaseDetector):
         Default: ``torch.nn.functional.relu``.
     alpha : float, optional
         Loss balance weight for attribute and structure.
-        Default: ``0.5``.
+        Default: ``0.8``.
     eta : float, optional
         Loss balance weight for contrastive and reconstruction.
         Default: ``0.5``.
@@ -57,7 +57,7 @@ class CONAD(BaseDetector):
         Used when fitting to define the threshold on the decision
         function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Default: ``0.004``.
+        Learning rate. Default: ``0.005``.
     epoch : int, optional
         Maximum number of training epoch. Default: ``5``.
     gpu : int

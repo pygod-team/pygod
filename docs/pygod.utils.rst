@@ -2,14 +2,6 @@ Utility Functions
 ==================
 
 
-Early Stopping
---------------
-
-.. autoclass:: pygod.utils.EarlyStopping
-    :members:
-    :undoc-members:
-
-
 Metric
 ------
 
