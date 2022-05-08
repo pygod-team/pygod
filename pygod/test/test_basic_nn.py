@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import os
 import torch
 import unittest
 from torch_geometric.seed import seed_everything
 from pygod.models.basic_nn import MLP, GCN
-from torch_geometric.testing import is_full_test
 
 seed_everything(42)
 
@@ -27,7 +27,7 @@ class TestBasicNN(unittest.TestCase):
         out = mlp(x)
         assert out.size() == (4, 64)
 
-        if is_full_test():
+        if os.getenv('FULL_TEST', '0') == '1':
             jit = torch.jit.script(mlp)
             assert torch.allclose(jit(x), out)
 
