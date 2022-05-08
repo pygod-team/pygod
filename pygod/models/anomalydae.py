@@ -30,7 +30,7 @@ class AnomalyDAE(BaseDetector):
     with two additional penalties on the reconstructed adj matrix and 
     node attributes (force entries to be nonzero).
 
-    See: cite `fan2020anomalydae` for details.
+    See :cite:`fan2020anomalydae` for details.
 
     Parameters
     ----------

@@ -19,7 +19,7 @@
    :target: https://github.com/pygod-team/pygod/network
    :alt: GitHub forks
 
-.. image:: https://static.pepy.tech/personalized-badge/pygod?period=total&units=international_system&left_color=black&right_color=blue&left_text=Downloads
+.. image:: https://static.pepy.tech/personalized-badge/pygod?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads
    :target: https://pepy.tech/project/pygod
    :alt: PyPI downloads
 

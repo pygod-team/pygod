@@ -47,7 +47,7 @@ class OCGNN(BaseDetector):
     """
     OCGNN (One-Class Graph Neural Networks for Anomaly Detection in
     Attributed Networks) is an anomaly detector that measures the
-    distance of anomaly to the centroid, in the similar fashion to the
+    distance of anomaly to the centroid, in a similar fashion to the
     support vector machine, but in the embedding space after feeding
     towards several layers of GCN.
 

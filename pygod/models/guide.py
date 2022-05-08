@@ -29,15 +29,14 @@ class GUIDE(BaseDetector):
     GUIDE (Higher-order Structure based Anomaly Detection on Attributed
     Networks) is an anomaly detector consisting of an attribute graph
     convolutional autoencoder, and a structure graph attentive
-    autoencoder (not same as the graph attention networks). Instead of
-    adjacency matrix, node motif degree (graphlet degree is used in
-    this implementation by default) is used as input of
+    autoencoder (not the same as the graph attention networks). Instead
+    of the adjacency matrix, node motif degree is used as input of
     structure autoencoder. The reconstruction mean square error of the
     autoencoders are defined as structure anomaly score and attribute
     anomaly score, respectively.
 
-    Note: The calculation of node motif degree in preprocesing has high
-    time complexity. It may take longer than you expect.
+    Note: The calculation of node motif degree in preprocessing has
+    high time complexity. It may take longer than you expect.
 
     See :cite:`yuan2021higher` for details.
 

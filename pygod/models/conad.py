@@ -21,8 +21,8 @@ from ..utils.utility import validate_device
 
 class CONAD(BaseDetector):
     """
-    CONAD (Contrastive Attributed Network Anomaly Detection)
-    CONAD is an anomaly detector consisting of a shared graph
+    CONAD (Contrastive Attributed Network Anomaly Detection) is an
+    anomaly detector consisting of a shared graph
     convolutional encoder, a structure reconstruction decoder, and an
     attribute reconstruction decoder. The model is trained with both
     contrastive loss and structure/attribute reconstruction loss.
