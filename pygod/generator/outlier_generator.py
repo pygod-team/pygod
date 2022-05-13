@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from .utility import check_parameter
+from pygod.utils.utility import check_parameter
 
 
 def gen_structure_outliers(data, m, n, random_state=None):

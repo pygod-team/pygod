@@ -12,8 +12,8 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 from ..utils.dataset import PlainDataset
 
 

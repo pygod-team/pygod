@@ -9,7 +9,7 @@ import torch
 from torch_geometric.seed import seed_everything
 
 from pygod.models import AnomalyDAE
-from pygod.utils.metric import eval_roc_auc
+from pygod.metrics import eval_roc_auc
 
 
 seed_everything(42)

@@ -10,8 +10,8 @@ import copy as cp
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.utils.outlier_generator import gen_attribute_outliers
-from pygod.utils.outlier_generator import gen_structure_outliers
+from pygod.generator import gen_attribute_outliers
+from pygod.generator import gen_structure_outliers
 
 seed_everything(42)
 

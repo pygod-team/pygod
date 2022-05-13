@@ -13,8 +13,8 @@ from sklearn.utils.validation import check_is_fitted
 from torch_sparse import SparseTensor
 
 from . import BaseDetector
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 from torch_geometric.loader import NeighborLoader
 
 
