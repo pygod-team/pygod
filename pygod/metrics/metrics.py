@@ -105,6 +105,7 @@ def eval_average_precision(labels, pred):
     ap = average_precision_score(y_true=labels, y_score=pred)
     return ap
 
+
 def eval_ndcg(labels, pred):
     """
     Normalized discounted cumulative gain for ranking.
@@ -123,6 +124,5 @@ def eval_ndcg(labels, pred):
         Average precision score.
     """
 
-    # outlier detection is a binary classification problem
     ndcg = ndcg_score(y_true=labels, y_score=pred)
     return ndcg
