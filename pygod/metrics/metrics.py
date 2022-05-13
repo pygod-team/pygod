@@ -5,6 +5,7 @@ Metrics used to evaluate the anomaly detection performance
 # Author: Yingtong Dou <ytongdou@gmail.com>, Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
+import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, ndcg_score
 
 
@@ -14,10 +15,10 @@ def eval_roc_auc(labels, pred):
 
     Parameters
     ----------
-    labels : numpy.array
+    labels : numpy.ndarray
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.array
+    pred : numpy.ndarray
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -52,7 +53,7 @@ def eval_recall_at_k(labels, pred, k):
     """
 
     N = len(pred)
-    recall_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / sum(labels)
+    recall_at_k = sum(labels[np.argpartition(pred, N - k)[-k:]]) / sum(labels)
 
     return recall_at_k
 
@@ -78,7 +79,7 @@ def eval_precision_at_k(labels, pred, k):
     """
 
     N = len(pred)
-    precision_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / k
+    precision_at_k = sum(labels[np.argpartition(pred, N - k)[-k:]]) / k
 
     return precision_at_k
 
