@@ -1,1 +1,1 @@
-from outlier_generator import *
+from .outlier_generator import *
