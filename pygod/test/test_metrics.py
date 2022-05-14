@@ -22,17 +22,18 @@ class TestMetric(unittest.TestCase):
         self.y = [0, 0, 1, 1, 1, 0, 0, 0, 1, 0]
         self.decision_scores_ = [0.1, 0.2, 0.2, 0.8, 0.2, 0.5, 0.7, 0.9, 1.,
                                  0.3]
+        self.manual_labels = [0, 0, 0, 1, 0, 0, 1, 1, 1, 0]
 
     def test_eval_roc_auc(self):
-        assert_allclose(roc_auc_score(self.y, self.decision_scores_),
+        assert_allclose(roc_auc_score(self.y, self.manual_labels),
                         eval_roc_auc(self.y, self.decision_scores_))
 
     def test_eval_recall_at_k(self):
-        assert_allclose(recall_score(self.y, self.decision_scores_),
+        assert_allclose(recall_score(self.y, self.manual_labels),
                         eval_recall_at_k(self.y, self.decision_scores_, k=4))
 
     def test_eval_precision_at_k(self):
-        assert_allclose(precision_score(self.y, self.decision_scores_),
+        assert_allclose(precision_score(self.y, self.manual_labels),
                         eval_precision_at_k(self.y,
                                             self.decision_scores_,
                                             k=4))
@@ -42,5 +43,5 @@ class TestMetric(unittest.TestCase):
                         eval_average_precision(self.y, self.decision_scores_))
 
     def test_eval_ndcg(self):
-        assert_allclose(ndcg_score(self.y, self.decision_scores_),
+        assert_allclose(ndcg_score([self.y], [self.decision_scores_]),
                         eval_ndcg(self.y, self.decision_scores_))

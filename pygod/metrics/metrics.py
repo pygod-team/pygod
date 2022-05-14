@@ -53,7 +53,9 @@ def eval_recall_at_k(labels, pred, k):
     """
 
     N = len(pred)
-    recall_at_k = sum(labels[np.argpartition(pred, N - k)[-k:]]) / sum(labels)
+    labels = np.array(labels)
+    pred = np.array(pred)
+    recall_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / sum(labels)
 
     return recall_at_k
 
@@ -79,7 +81,9 @@ def eval_precision_at_k(labels, pred, k):
     """
 
     N = len(pred)
-    precision_at_k = sum(labels[np.argpartition(pred, N - k)[-k:]]) / k
+    labels = np.array(labels)
+    pred = np.array(pred)
+    precision_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / k
 
     return precision_at_k
 
@@ -125,5 +129,5 @@ def eval_ndcg(labels, pred):
         Average precision score.
     """
 
-    ndcg = ndcg_score(y_true=labels, y_score=pred)
+    ndcg = ndcg_score(y_true=[labels], y_score=[pred])
     return ndcg
