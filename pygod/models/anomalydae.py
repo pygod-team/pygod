@@ -47,8 +47,8 @@ class AnomalyDAE(BaseDetector):
         Activation function if not None.
         Defaults: ``torch.nn.functional.relu``.
     alpha : float, optional
-        loss balance weight for attribute and structure.
-        Defaults: ``0.5``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     theta: float, optional
          greater than 1, impose penalty to the reconstruction error of
          the non-zero elements in the adjacency matrix
@@ -90,7 +90,7 @@ class AnomalyDAE(BaseDetector):
                  dropout=0.2,
                  weight_decay=1e-5,
                  act=F.relu,
-                 alpha=0.5,
+                 alpha=None,
                  theta=1.01,
                  eta=1.01,
                  contamination=0.1,
@@ -143,6 +143,12 @@ class AnomalyDAE(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = to_dense_adj(G.edge_index)[0]
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,

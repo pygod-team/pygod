@@ -129,5 +129,9 @@ def eval_ndcg(labels, pred):
         Average precision score.
     """
 
+    labels = np.array(labels)
+    pred = np.array(pred)
+    if labels.dtype == bool:
+        labels = labels.astype(int)
     ndcg = ndcg_score(y_true=[labels], y_score=[pred])
     return ndcg

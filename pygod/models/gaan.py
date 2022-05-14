@@ -49,8 +49,8 @@ class GAAN(BaseDetector):
         Activation function if not None.
         Defaults: ``torch.nn.functional.relu``.
     alpha : float, optional
-        loss balance weight for attribute and structure.
-        Defaults: ``0.2``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
@@ -88,7 +88,7 @@ class GAAN(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.2,
+                 alpha=None,
                  contamination=0.1,
                  lr=5e-3,
                  epoch=10,
@@ -146,6 +146,12 @@ class GAAN(BaseDetector):
         #X, edge_index = self.process_graph(G)
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = to_dense_adj(G.edge_index)[0]
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,

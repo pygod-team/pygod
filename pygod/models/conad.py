@@ -47,8 +47,8 @@ class CONAD(BaseDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        Loss balance weight for attribute and structure.
-        Default: ``0.8``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     eta : float, optional
         Loss balance weight for contrastive and reconstruction.
         Default: ``0.5``.
@@ -73,7 +73,7 @@ class CONAD(BaseDetector):
         For densely connected nodes, the number of
         edges to add. Default: ``50``.
     k : int, optional
-        same as ``k`` in ``utils.outlier_generator.gen_attribute_outliers``.
+        same as ``k`` in ``pygod.generator.gen_attribute_outliers``.
         Default: ``50``.
     f : int, optional
         For disproportionate nodes, the scale factor applied
@@ -96,7 +96,7 @@ class CONAD(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.8,
+                 alpha=None,
                  eta=.5,
                  contamination=0.1,
                  lr=5e-3,
@@ -157,6 +157,12 @@ class CONAD(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = to_dense_adj(G.edge_index)[0]
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,

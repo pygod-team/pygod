@@ -56,8 +56,8 @@ class GUIDE(BaseDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        Loss balance weight for attribute and structure.
-        Default: ``0.5``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
@@ -101,7 +101,7 @@ class GUIDE(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.1,
+                 alpha=None,
                  contamination=0.1,
                  lr=0.001,
                  epoch=10,
@@ -163,6 +163,12 @@ class GUIDE(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = self._get_nmf(G, self.cache_dir)
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,
