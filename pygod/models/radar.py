@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Multilayer Perceptron Autoencoder
+""" Residual Analysis for Anomaly Detection in Attributed Networks
 """
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
@@ -30,7 +30,7 @@ class Radar(BaseDetector):
         Default: ``1.``.
     weight_decay : float, optional
         Weight decay (alpha and beta in the original paper).
-        Default: ``0.``.
+        Default: ``0.01``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
