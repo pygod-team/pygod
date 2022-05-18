@@ -119,10 +119,12 @@ Type                 Backbone             Abbr                Year   Sampling   
 ===================  ===================  ==================  =====  ===========  ==============================================
 Unsupervised         NN                   MLPAE               2014   Yes          :class:`pygod.models.MLPAE`
 Unsupervised         GNN                  GCNAE               2016   Yes          :class:`pygod.models.GCNAE`
+Unsupervised         N/A                  Radar               2017   No           :class:`pygod.models.Radar`
+Unsupervised         N/A                  ANOMALOUS           2018   No           :class:`pygod.models.ANOMALOUS`
 Unsupervised         MF                   ONE                 2019   No           :class:`pygod.models.ONE`
 Unsupervised         GNN                  DOMINANT            2019   Yes          :class:`pygod.models.DOMINANT`
-Unsupervised         GNN                  DONE                2020   Yes          :class:`pygod.models.DONE`
-Unsupervised         GNN                  AdONE               2020   Yes          :class:`pygod.models.AdONE`
+Unsupervised         NN                   DONE                2020   Yes          :class:`pygod.models.DONE`
+Unsupervised         NN                   AdONE               2020   Yes          :class:`pygod.models.AdONE`
 Unsupervised         GNN                  AnomalyDAE          2020   Yes          :class:`pygod.models.AnomalyDAE`
 Unsupervised         GAN                  GAAN                2020   Yes          :class:`pygod.models.GAAN`
 Unsupervised         GNN                  OCGNN               2021   Yes          :class:`pygod.models.OCGNN`

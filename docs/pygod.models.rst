@@ -11,6 +11,16 @@ AdONE
     :show-inheritance:
     :inherited-members:
 
+ANOMALOUS
+---------
+
+.. autoclass:: pygod.models.ANOMALOUS
+    :members:
+    :exclude-members: process_graph
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
 AnomalyDAE
 ----------
 
@@ -119,6 +129,16 @@ ONE
 .. autoclass:: pygod.models.ONE
     :members:
     :exclude-members: cal_outlierScore, calc_lossValues, process_graph, loss_func
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
+Radar
+-----
+
+.. autoclass:: pygod.models.Radar
+    :members:
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:

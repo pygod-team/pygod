@@ -173,6 +173,8 @@ Type                 Backbone             Abbr                Year   Sampling   
 ===================  ===================  ==================  =====  ===========  ========================================
 Unsupervised         MLP                  MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
 Unsupervised         GNN                  GCNAE               2016   Yes          [#Kipf2016Variational]_
+Unsupervised         N/A                  Radar               2017   No           [#Li2017Radar]_
+Unsupervised         N/A                  ANOMALOUS           2018   No           [#Peng2018Anomalous]_
 Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
 Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
 Unsupervised         GNN                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
@@ -252,6 +254,10 @@ Reference
 .. [#Sakurada2014Anomaly] Sakurada, M. and Yairi, T., 2014, December. Anomaly detection using autoencoders with nonlinear dimensionality reduction. In Proceedings of the MLSDA 2014 2nd workshop on machine learning for sensory data analysis.
 
 .. [#Kipf2016Variational] Kipf, T.N. and Welling, M., 2016. Variational graph auto-encoders. arXiv preprint arXiv:1611.07308.
+
+.. [#Li2017Radar] Li, J., Dani, H., Hu, X. and Liu, H., 2017, August. Radar: Residual Analysis for Anomaly Detection in Attributed Networks. In Proceedings of the Twenty-Sixth International Joint Conference on Artificial Intelligence (IJCAI).
+
+.. [#Peng2018Anomalous] Peng, Z., Luo, M., Li, J., Liu, H. and Zheng, Q., 2018, July. ANOMALOUS: A Joint Modeling Approach for Anomaly Detection on Attributed Networks. In Proceedings of the Twenty-Seventh International Joint Conference on Artificial Intelligence (IJCAI).
 
 .. [#Bandyopadhyay2019Outlier] Bandyopadhyay, S., Lokesh, N. and Murty, M.N., 2019, July. Outlier aware network embedding for attributed networks. In Proceedings of the AAAI conference on artificial intelligence (AAAI).
 
