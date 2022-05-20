@@ -185,7 +185,7 @@ class Radar(BaseDetector):
 class Radar_Base(nn.Module):
     def __init__(self, n, d, r):
         super(Radar_Base, self).__init__()
-        self.w = nn.Parameter(torch.eye(n))
+        self.w = nn.Parameter(torch.eye(n).to(self.device))
         self.r = nn.Parameter(r)
 
     def forward(self, x):
