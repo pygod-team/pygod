@@ -167,7 +167,7 @@ class Radar(BaseDetector):
         s = torch.max(s, s.T)
         l = self._comp_laplacian(s)
 
-        w_init = torch.eye(n).to(self.device)
+        w_init = torch.eye(x.shape[0]).to(self.device)
         r_init = torch.inverse((1 + self.weight_decay) *
             torch.eye(x.shape[0]).to(self.device) + self.gamma * l) @ x
 
