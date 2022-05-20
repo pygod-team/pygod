@@ -92,10 +92,9 @@ class Radar(BaseDetector):
             Fitted estimator.
         """
         G.s = to_dense_adj(G.edge_index)[0]
-        x, s, l, r_init = self.process_graph(G)
+        x, s, l, w_init, r_init = self.process_graph(G)
 
-        n, d = x.shape
-        self.model = Radar_Base(n, d, r_init)
+        self.model = Radar_Base(w_init, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
@@ -168,10 +167,11 @@ class Radar(BaseDetector):
         s = torch.max(s, s.T)
         l = self._comp_laplacian(s)
 
+        w_init = torch.eye(n).to(self.device)
         r_init = torch.inverse((1 + self.weight_decay) *
             torch.eye(x.shape[0]).to(self.device) + self.gamma * l) @ x
 
-        return x, s, l, r_init
+        return x, s, l, w_init, r_init
 
     def _loss(self, x, x_, r, l):
         return torch.norm(x - x_ - r, 2) + \
@@ -183,9 +183,9 @@ class Radar(BaseDetector):
 
 
 class Radar_Base(nn.Module):
-    def __init__(self, n, d, r):
+    def __init__(self, w, r):
         super(Radar_Base, self).__init__()
-        self.w = nn.Parameter(torch.eye(n).to(self.device))
+        self.w = nn.Parameter(w)
         self.r = nn.Parameter(r)
 
     def forward(self, x):

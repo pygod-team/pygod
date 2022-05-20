@@ -95,7 +95,6 @@ class ANOMALOUS(BaseDetector):
         G.s = to_dense_adj(G.edge_index)[0]
         x, s, l, w_init, r_init = self.process_graph(G)
 
-        n, d = x.shape
         self.model = ANOMALOUS_Base(w_init, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
