@@ -98,7 +98,10 @@ class ANOMALOUS(BaseDetector):
         l = self._comp_laplacian(s)
 
         n, d = x.shape
-        self.model = ANOMALOUS_Base(n, d)
+        w_init = torch.inverse(x)
+        r_init = torch.inverse((1 + self.weight_decay) * torch.eye(n)
+            + self.gamma * l) @ x
+        self.model = Radar_Base(w_init, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
@@ -180,10 +183,10 @@ class ANOMALOUS(BaseDetector):
 
 
 class ANOMALOUS_Base(nn.Module):
-    def __init__(self, n, d):
+    def __init__(self, w, r):
         super(ANOMALOUS_Base, self).__init__()
-        self.w = nn.Parameter(torch.randn(d, n))
-        self.r = nn.Parameter(torch.zeros(n, d))
+        self.w = nn.Parameter(w)
+        self.r = nn.Parameter(r)
 
     def forward(self, x):
         return x @ self.w @ x, self.r

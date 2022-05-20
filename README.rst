@@ -173,8 +173,8 @@ Type                 Backbone             Abbr                Year   Sampling   
 ===================  ===================  ==================  =====  ===========  ========================================
 Unsupervised         MLP                  MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
 Unsupervised         GNN                  GCNAE               2016   Yes          [#Kipf2016Variational]_
-Unsupervised         N/A                  Radar               2017   No           [#Li2017Radar]_
-Unsupervised         N/A                  ANOMALOUS           2018   No           [#Peng2018Anomalous]_
+Unsupervised         MF                   Radar               2017   No           [#Li2017Radar]_
+Unsupervised         MF                   ANOMALOUS           2018   No           [#Peng2018Anomalous]_
 Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
 Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
 Unsupervised         GNN                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_

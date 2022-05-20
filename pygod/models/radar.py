@@ -97,7 +97,9 @@ class Radar(BaseDetector):
         l = self._comp_laplacian(s)
 
         n, d = x.shape
-        self.model = Radar_Base(n, d)
+        r_init = torch.inverse((1 + self.weight_decay) * torch.eye(n)
+            + self.gamma * l) @ x
+        self.model = Radar_Base(n, d, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
@@ -179,10 +181,10 @@ class Radar(BaseDetector):
 
 
 class Radar_Base(nn.Module):
-    def __init__(self, n, d):
+    def __init__(self, n, d, r):
         super(Radar_Base, self).__init__()
-        self.linear = nn.Linear(d, d)
-        self.r = nn.Parameter(torch.zeros(n, d))
+        self.w = nn.Parameter(torch.eye(n))
+        self.r = nn.Parameter(r)
 
     def forward(self, x):
-        return self.linear(x), self.r
+        return self.w @ x, self.r
