@@ -92,14 +92,9 @@ class Radar(BaseDetector):
             Fitted estimator.
         """
         G.s = to_dense_adj(G.edge_index)[0]
-        x, s = self.process_graph(G)
-
-        s = torch.max(s, s.T)
-        l = self._comp_laplacian(s)
+        x, s, l, r_init = self.process_graph(G)
 
         n, d = x.shape
-        r_init = torch.inverse((1 + self.weight_decay) * torch.eye(n)
-            + self.gamma * l) @ x
         self.model = Radar_Base(n, d, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
@@ -170,7 +165,13 @@ class Radar(BaseDetector):
         x = G.x.to(self.device)
         s = G.s.to(self.device)
 
-        return x, s
+        s = torch.max(s, s.T)
+        l = self._comp_laplacian(s)
+
+        r_init = torch.inverse((1 + self.weight_decay) *
+            torch.eye(x.shape[0]).to(self.device) + self.gamma * l) @ x
+
+        return x, s, l, r_init
 
     def _loss(self, x, x_, r, l):
         return torch.norm(x - x_ - r, 2) + \
