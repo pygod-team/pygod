@@ -177,8 +177,8 @@ Unsupervised         MF                   Radar               2017   No         
 Unsupervised         MF                   ANOMALOUS           2018   No           [#Peng2018Anomalous]_
 Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
 Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
-Unsupervised         GNN                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         MLP                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         MLP                  AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
 Unsupervised         GNN                  AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
 Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
 Unsupervised         GNN                  OCGNN               2021   Yes          [#Wang2021One]_

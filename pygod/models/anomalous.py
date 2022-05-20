@@ -6,6 +6,7 @@
 # License: BSD 2 clause
 
 import torch
+import warnings
 from torch import nn
 from pygod.metrics import *
 import torch.nn.functional as F
@@ -98,7 +99,7 @@ class ANOMALOUS(BaseDetector):
         l = self._comp_laplacian(s)
 
         n, d = x.shape
-        w_init = torch.inverse(x)
+        w_init = torch.randn(d, n)
         r_init = torch.inverse((1 + self.weight_decay) * torch.eye(n)
             + self.gamma * l) @ x
         self.model = Radar_Base(w_init, r_init)

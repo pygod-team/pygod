@@ -5,6 +5,7 @@
 # License: BSD 2 clause
 
 import torch
+import warnings
 from torch import nn
 from pygod.metrics import *
 import torch.nn.functional as F
