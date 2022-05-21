@@ -175,7 +175,7 @@ class AdONE(BaseDetector):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                x, s, edge_index = self.process_graph(G)
+                x, s, edge_index = self.process_graph(sampled_data)
                 x_, s_, h_a, h_s, dna, dns, dis_a, dis_s \
                     = self.model(x, s, edge_index)
                 score, loss = self.loss_func(x[:batch_size],
