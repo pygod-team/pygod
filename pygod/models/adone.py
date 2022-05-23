@@ -276,10 +276,8 @@ class AdONE(BaseDetector):
         edge_index : torch.Tensor
             Edge list of the graph.
         """
-        edge_index = G.edge_index
-
-        s = to_dense_adj(edge_index)[0].to(self.device)
-        edge_index = edge_index.to(self.device)
+        s = G.s.to(self.device)
+        edge_index = G.edge_index.to(self.device)
         x = G.x.to(self.device)
 
         return x, s, edge_index
