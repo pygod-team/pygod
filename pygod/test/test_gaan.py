@@ -38,8 +38,6 @@ class TestGAAN(unittest.TestCase):
                 self.model._mu is not None)
         assert (hasattr(self.model, '_sigma') and
                 self.model._sigma is not None)
-        assert (hasattr(self.model, 'generator') and
-                self.model.generator is not None)
 
     def test_train_scores(self):
         assert_equal(len(self.model.decision_scores_), len(self.data.y))
