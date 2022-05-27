@@ -141,7 +141,9 @@ class GCNAE(BaseDetector):
                 x, edge_index = self.process_graph(sampled_data)
 
                 x_ = self.model(x, edge_index)
-                score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+                score = torch.mean(F.mse_loss(x_[:batch_size],
+                                              x[:batch_size],
+                                              reduction='none'), dim=1)
                 decision_scores[node_idx[:batch_size]] = score.detach()\
                                                               .cpu().numpy()
                 loss = torch.mean(score)

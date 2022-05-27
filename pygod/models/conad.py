@@ -156,12 +156,13 @@ class CONAD(BaseDetector):
             Fitted estimator.
         """
         G.node_idx = torch.arange(G.x.shape[0])
-        G.s = to_dense_adj(G.edge_index)[0]
 
         # automated balancing by std
         if self.alpha is None:
-            self.alpha = torch.std(G.s).detach() / \
-                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+            adj = to_dense_adj(G.edge_index)[0]
+            self.alpha = torch.std(adj).detach() / \
+                         (torch.std(G.x).detach() + torch.std(adj).detach())
+            adj = None
 
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
@@ -198,9 +199,12 @@ class CONAD(BaseDetector):
                 margin_loss = torch.mean(margin_loss)
 
                 x_, s_ = self.model.reconstruct(h, edge_index)
-                score = self.loss_func(x, x_, s, s_)
+                score = self.loss_func(x[:batch_size],
+                                       x_[:batch_size],
+                                       s[:batch_size],
+                                       s_[:batch_size])
                 loss = self.eta * torch.mean(score) + \
-                    (1 - self.eta) * margin_loss
+                       (1 - self.eta) * margin_loss
 
                 decision_scores[node_idx[:batch_size]] = score.detach() \
                     .cpu().numpy()
@@ -293,46 +297,36 @@ class CONAD(BaseDetector):
         num_nodes = adj_aug.shape[0]
         label_aug = torch.zeros(num_nodes, dtype=torch.int32)
 
-        for i in range(num_nodes):
-            prob = np.random.uniform()
-            if prob > rate: continue
-            label_aug[i] = 1
-            one_fourth = np.random.randint(0, 4)
-            if one_fourth == 0:
-                # add clique
-                new_neighbors = np.random.choice(np.arange(num_nodes),
-                                                 num_added_edge, replace=False)
-                adj_aug[i, new_neighbors] = 1
-                adj_aug[new_neighbors, i] = 1
-            elif one_fourth == 1:
-                # drop all connection
-                neighbors = torch.nonzero(adj[i]).view(-1)
-                if not neighbors.any():
-                    continue
-                adj_aug[i, neighbors] = 0
-                adj_aug[neighbors, i] = 0
-            elif one_fourth == 2:
-                # attrs
-                candidates = np.random.choice(np.arange(num_nodes), surround,
-                                              replace=False)
-                max_dev, max_idx = 0, i
-                for c in candidates:
-                    dev = torch.square(feat_aug[i] - feat_aug[c]).sum()
-                    if dev > max_dev:
-                        max_dev = dev
-                        max_idx = c
-                feat_aug[i] = feat_aug[max_idx]
-            else:
-                # scale attr
-                prob = np.random.uniform(0, 1)
-                if prob > 0.5:
-                    feat_aug[i] *= scale_factor
-                else:
-                    feat_aug[i] /= scale_factor
+        prob = torch.rand(num_nodes)
+        label_aug[prob < rate] = 1
+
+        # high-degree
+        n_hd = torch.sum(prob < rate / 4)
+        edges_mask = torch.rand(n_hd, num_nodes) < num_added_edge / num_nodes
+        edges_mask = edges_mask.to(self.device)
+        adj_aug[prob <= rate / 4, :] = edges_mask.float()
+        adj_aug[:, prob <= rate / 4] = edges_mask.float().T
+
+        # outlying
+        ol_mask = torch.logical_and(rate / 4 <= prob, prob < rate / 2)
+        adj_aug[ol_mask, :] = 0
+        adj_aug[:, ol_mask] = 0
+
+        # deviated
+        dv_mask = torch.logical_and(rate / 2 <= prob, prob < rate * 3 / 4)
+        feat_c = feat_aug[torch.randperm(num_nodes)[:surround]]
+        ds = torch.cdist(feat_aug[dv_mask], feat_c)
+        feat_aug[dv_mask] = feat_c[torch.argmax(ds, 1)]
+
+        # disproportionate
+        mul_mask = torch.logical_and(rate * 3 / 4 <= prob, prob < rate * 7 / 8)
+        div_mask = rate * 7 / 8 <= prob
+        feat_aug[mul_mask] *= scale_factor
+        feat_aug[div_mask] /= scale_factor
 
         edge_index_aug = dense_to_sparse(adj_aug)[0].to(self.device)
         feat_aug = feat_aug.to(self.device)
-        label_aug = label_aug.to(device=self.device)
+        label_aug = label_aug.to(self.device)
         return feat_aug, edge_index_aug, label_aug
 
     def process_graph(self, G):
@@ -354,7 +348,7 @@ class CONAD(BaseDetector):
         edge_index : torch.Tensor
             Edge list of the graph.
         """
-        s = G.s.to(self.device)
+        s = to_dense_adj(G.edge_index)[0].to(self.device)
         edge_index = G.edge_index.to(self.device)
         x = G.x.to(self.device)
 
