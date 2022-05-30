@@ -47,16 +47,16 @@ def gen_structure_outliers(data, m, n, random_state=None):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(m, int):
-        check_parameter(m, low=1, high= data.num_nodes, param_name='m')
+        check_parameter(m, low=0, high=data.num_nodes, param_name='m')
     else:
         raise ValueError("m should be int, got %s" % m)
 
     if isinstance(n, int):
-        check_parameter(n, low=1, high=data.num_nodes, param_name='n')
+        check_parameter(n, low=0, high=data.num_nodes, param_name='n')
     else:
         raise ValueError("n should be int, got %s" % n)
 
-    check_parameter(m*n, low=1, high=data.num_nodes, param_name='m*n')
+    check_parameter(m * n, low=0, high=data.num_nodes, param_name='m*n')
 
     if random_state:
         np.random.seed(random_state)
@@ -116,12 +116,12 @@ def gen_attribute_outliers(data, n, k, random_state=None):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(n, int):
-        check_parameter(n, low=1, high=data.num_nodes, param_name='n')
+        check_parameter(n, low=0, high=data.num_nodes, param_name='n')
     else:
         raise ValueError("n should be int, got %s" % n)
 
     if isinstance(k, int):
-        check_parameter(k, low=1, high=data.num_nodes-n, param_name='k')
+        check_parameter(k, low=0, high=data.num_nodes - n, param_name='k')
     else:
         raise ValueError("k should be int, got %s" % k)
 
