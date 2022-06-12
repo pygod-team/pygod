@@ -47,18 +47,17 @@ suspicious activities in social networks :cite:`dou2020enhancing`  and security 
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as Dominant (SDM'19) and GUIDE (BigData'21).
-For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with PyGOD in 5 lines!
 
-**PyGOD** is under actively developed and will be updated frequently!
-Please **star**, **watch**, and **fork**.
 
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
 * **Comprehensive coverage** of more than 10 latest graph outlier detectors.
-* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
+* **Full support of detections at multiple levels**, such as node-, edge- (WIP), and graph-level tasks (WIP).
+* **Scalable design for processing large graphs** via mini-batch and sampling.
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using PyGOD with 5 Lines of Code**\ :
@@ -70,36 +69,34 @@ Please **star**, **watch**, and **fork**.
     # train a dominant detector
     from pygod.models import DOMINANT
 
-    model = DOMINANT()  # hyperparameters can be set here
+    model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
     outlier_scores = model.decision_scores # raw outlier scores on the input data
 
-    # predict on the new data
+    # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
 
 
-**Citing PyGOD (to be announced soon)**\ :
+**Citing PyGOD**\ :
 
-`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
+`PyGOD paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`pygod2022`.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper (to be announced)::
+citations to the following paper::
 
-    @article{tba,
-      author  = {tba},
-      title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tba},
+    @article{pygod2022,
+      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      title   = {PyGOD: A Python Library for Graph Outlier Detection},
+      journal = {arXiv preprint arXiv:2204.12095},
       year    = {2022},
     }
 
 or::
 
-    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
 
-
-----
 
 
 Implemented Algorithms
@@ -109,20 +106,23 @@ PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 
-===================  ===================  ==================  ======================================================================================================  =====  ==============================================
-Type                 Backbone             Abbr                Algorithm                                                                                               Year   Class
-===================  ===================  ==================  ======================================================================================================  =====  ==============================================
-Unsupervised         NN                   MLPAE               Neural Networks and Deep Learning                                                                       2021   :class:`pygod.models.mlpae.MLPAE`
-Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2021   :class:`pygod.models.gcnae.GCNAE`
-Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   :class:`pygod.models.one.ONE`
-Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   :class:`pygod.models.dominant.DOMINANT`
-Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.done.DONE`
-Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   :class:`pygod.models.adone.AdONE`
-Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   :class:`pygod.models.anomalydae.AnomalyDAE`
-Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   :class:`pygod.models.gaan.GAAN`
-Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   :class:`pygod.models.ocgnn.OCGNN`
-Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   :class:`pygod.models.guide.GUIDE`
-===================  ===================  ==================  ======================================================================================================  =====  ==============================================
+===================  ===================  ==================  =====  ===========  ==============================================
+Type                 Backbone             Abbr                Year   Sampling     Class
+===================  ===================  ==================  =====  ===========  ==============================================
+Unsupervised         NN                   MLPAE               2014   Yes          :class:`pygod.models.MLPAE`
+Unsupervised         GNN                  GCNAE               2016   Yes          :class:`pygod.models.GCNAE`
+Unsupervised         MF                   ONE                 2019   No           :class:`pygod.models.ONE`
+Unsupervised         GNN                  DOMINANT            2019   Yes          :class:`pygod.models.DOMINANT`
+Unsupervised         GNN                  DONE                2020   Yes          :class:`pygod.models.DONE`
+Unsupervised         GNN                  AdONE               2020   Yes          :class:`pygod.models.AdONE`
+Unsupervised         GNN                  AnomalyDAE          2020   Yes          :class:`pygod.models.AnomalyDAE`
+Unsupervised         GAN                  GAAN                2020   Yes          :class:`pygod.models.GAAN`
+Unsupervised         GNN                  OCGNN               2021   Yes          :class:`pygod.models.OCGNN`
+Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  :class:`pygod.models.CoLA`
+Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  :class:`pygod.models.ANEMONE`
+Unsupervised         GNN                  GUIDE               2021   Yes          :class:`pygod.models.GUIDE`
+Unsupervised/SSL     GNN                  CONAD               2022   Yes          :class:`pygod.models.CONAD`
+===================  ===================  ==================  =====  ===========  ==============================================
 
 
 **(ii) Utility functions** :
@@ -133,6 +133,7 @@ Type                 Name                    Function                           
 Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
 Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
 Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
+Metric               eval_average_precision  Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_average_precision>`_
 Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
 Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  ==================================  ======================================================================================================================================

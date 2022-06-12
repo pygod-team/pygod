@@ -5,20 +5,18 @@ Metrics used to evaluate the anomaly detection performance
 # Author: Yingtong Dou <ytongdou@gmail.com>
 # License: BSD 2 clause
 
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 def eval_roc_auc(labels, pred):
     """
-    Description
-    -----------
     ROC-AUC score for binary classification.
 
     Parameters
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
 
@@ -35,15 +33,13 @@ def eval_roc_auc(labels, pred):
 
 def eval_recall_at_k(labels, pred, k, threshold=0.5):
     """
-    Description
-    -----------
     Recall score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
     k : int
@@ -73,15 +69,13 @@ def eval_recall_at_k(labels, pred, k, threshold=0.5):
 
 def eval_precision_at_k(labels, pred, k, threshold=0.5):
     """
-    Description
-    -----------
     Precision score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
     labels : numpy.array
         Labels in shape of ``(N, )``, where 1 represents outliers,
-        0 represents normal nodes.
+        0 represents normal instances.
     pred : numpy.array
         Outlier scores in shape of ``(N, )``.
     k : int
@@ -107,3 +101,26 @@ def eval_precision_at_k(labels, pred, k, threshold=0.5):
     precision_at_k = n_true_and_pred_k / n_pred_k if n_pred_k != 0 else 0.0
 
     return precision_at_k
+
+
+def eval_average_precision(labels, pred):
+    """
+    Average precision score for binary classification.
+
+    Parameters
+    ----------
+    labels : numpy.array
+        Labels in shape of ``(N, )``, where 1 represents outliers,
+        0 represents normal instances.
+    pred : numpy.array
+        Outlier scores in shape of ``(N, )``.
+
+    Returns
+    -------
+    ap : float
+        Average precision score.
+    """
+
+    # outlier detection is a binary classification problem
+    ap = average_precision_score(y_true=labels, y_score=pred)
+    return ap

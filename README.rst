@@ -40,19 +40,17 @@ suspicious activities in social networks [#Dou2020Enhancing]_  and security syst
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
 such as DOMINANT (SDM'19) and GUIDE (BigData'21).
-For consistently and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
+For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting outliers with PyGOD in 5 lines!
-
-**PyGOD** is under actively developed and will be updated frequently!
-Please **star**, **watch**, and **fork**.
 
 
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
 * **Comprehensive coverage** of more than 10 latest graph outlier detectors.
-* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks (WIP).
+* **Full support of detections at multiple levels**, such as node-, edge- (WIP), and graph-level tasks (WIP).
+* **Scalable design for processing large graphs** via mini-batch and sampling.
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
 **Outlier Detection Using PyGOD with 5 Lines of Code**\ :
@@ -63,31 +61,33 @@ Please **star**, **watch**, and **fork**.
     # train a dominant detector
     from pygod.models import DOMINANT
 
-    model = DOMINANT()  # hyperparameters can be set here
+    model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
     outlier_scores = model.decision_scores # raw outlier scores on the input data
 
-    # predict on the new data
+    # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
 
-**Citing PyGOD (to be announced soon)**\ :
 
-`PyGOD paper <https://pygod.org>`_ will be available on arxiv soon.
+**Citing PyGOD**\ :
+
+`PyGOD paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv.
 If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper (to be announced)::
+citations to the following paper::
 
-    @article{tba,
-      author  = {tba},
-      title   = {PyGOD: A Comprehensive Python Library for Graph Outlier Detection},
-      journal = {tba},
+    @article{pygod2022,
+      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      title   = {PyGOD: A Python Library for Graph Outlier Detection},
+      journal = {arXiv preprint arXiv:2204.12095},
       year    = {2022},
     }
 
 or::
 
-    tba, 2022. PyGOD: A Comprehensive Python Library for Graph Outlier Detection. tba.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
+
 
 
 ----
@@ -114,11 +114,9 @@ Alternatively, you could clone and run setup.py file:
 **Required Dependencies**\ :
 
 * Python 3.6 +
-* argparse>=1.4.0
 * numpy>=1.19.4
 * scikit-learn>=0.22.1
 * scipy>=1.5.2
-* pandas>=1.1.3
 * setuptools>=50.3.1.post20201107
 
 
@@ -139,20 +137,24 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-
 * **fit(X)**\ : Fit detector.
 * **decision_function(G)**\ : Predict raw anomaly score of PyG data G using the fitted detector.
+
+Key Attributes of a fitted model:
+
+* **decision_scores_**\ : The outlier scores of the training data. The higher, the more abnormal.
+  Outliers tend to have higher scores.
+* **labels_**\ : The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+
+For the inductive setting:
+
 * **predict(G)**\ : Predict if nodes in PyG data G is an outlier or not using the fitted detector.
 * **predict_proba(G)**\ : Predict the probability of nodes in PyG data G being outlier using the fitted detector.
 * **predict_confidence(G)**\ : Predict the model's node-wise confidence (available in predict and predict_proba) [#Perini2020Quantifying]_.
 
 
-Key Attributes of a fitted model:
-
-
-* **decision_scores_**\ : The outlier scores of the training data. The higher, the more abnormal.
-  Outliers tend to have higher scores.
-* **labels_**\ : The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+**Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
+See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
 
 
 Implemented Algorithms
@@ -162,20 +164,23 @@ PyGOD toolkit consists of two major functional groups:
 
 **(i) Node-level detection** :
 
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
-Type                 Backbone             Abbr                Algorithm                                                                                               Year   Ref
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
-Unsupervised         MLP                  MLPAE               Anomaly Detection Using Autoencoders with Nonlinear Dimensionality Reduction                            2014   [#Sakurada2014Anomaly]_
-Unsupervised         GNN                  GCNAE               Variational Graph Auto-Encoders                                                                         2016   [#Kipf2016Variational]_
-Unsupervised         MF                   ONE                 Outlier aware network embedding for attributed networks                                                 2019   [#Bandyopadhyay2019Outlier]_
-Unsupervised         GNN                  DOMINANT            Deep anomaly detection on attributed networks                                                           2019   [#Ding2019Deep]_
-Unsupervised         GNN                  DONE                Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AdONE               Outlier Resistant Unsupervised Deep Architectures for Attributed Network Embedding                      2020   [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AnomalyDAE          AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks                               2020   [#Fan2020AnomalyDAE]_
-Unsupervised         GAN                  GAAN                Generative Adversarial Attributed Network Anomaly Detection                                             2020   [#Chen2020Generative]_
-Unsupervised         GNN                  OCGNN               One-Class Graph Neural Networks for Anomaly Detection in Attributed Networks                            2021   [#Wang2021One]_
-Unsupervised         GNN                  GUIDE               Higher-order Structure Based Anomaly Detection on Attributed Networks                                   2021   [#Yuan2021Higher]_
-===================  ===================  ==================  ======================================================================================================  =====  ========================================
+===================  ===================  ==================  =====  ===========  ========================================
+Type                 Backbone             Abbr                Year   Sampling      Ref
+===================  ===================  ==================  =====  ===========  ========================================
+Unsupervised         MLP                  MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
+Unsupervised         GNN                  GCNAE               2016   Yes          [#Kipf2016Variational]_
+Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
+Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
+Unsupervised         GNN                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         GNN                  AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         GNN                  AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
+Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
+Unsupervised         GNN                  OCGNN               2021   Yes          [#Wang2021One]_
+Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
+Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  [#Jin2021ANEMONE]_
+Unsupervised         GNN                  GUIDE               2021   Yes          [#Yuan2021Higher]_
+Unsupervised/SSL     GNN                  CONAD               2022   Yes          [#Xu2022Contrastive]_
+===================  ===================  ==================  =====  ===========  ========================================
 
 **(ii) Utility functions** :
 
@@ -185,6 +190,7 @@ Type                 Name                    Function                           
 Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
 Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
 Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
+Metric               eval_average_precision  Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_average_precision>`_
 Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
 Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
 ===================  ======================  ==================================  ======================================================================================================================================
@@ -255,4 +261,10 @@ Reference
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 
+.. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
+
+.. [#Jin2021ANEMONE] Jin, M., Liu, Y., Zheng, Y., Chi, L., Li, Y. and Pan, S., 2021. ANEMONE: Graph Anomaly Detection with Multi-Scale Contrastive Learning. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management (CIKM).
+
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
+
+.. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).

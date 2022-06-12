@@ -1,10 +1,10 @@
 """
-DOMINANT Example
+Model Example
 ================
 
 In this introductory tutorial, you will learn the basic workflow of
-PyGOD. This tutorial assumes that you have basic familiarity with
-PyTorch and PyTorch Geometric (PyG).
+PyGOD with a model example of DOMINANT. This tutorial assumes that
+you have basic familiarity with PyTorch and PyTorch Geometric (PyG).
 
 (Time estimate: 5 minutes)
 """
@@ -63,8 +63,9 @@ model.fit(data)
 #######################################################################
 # Inference
 # ---------
-# Then, your model is ready to use. We provide several inference methods.
-#######################################################################
+# Then, your model is ready to use.
+# We provide several inference methods.
+#
 # To predict the labels only:
 
 
