@@ -8,7 +8,9 @@ from torch_geometric import seed_everything
 
 
 def main(args):
-    auc, ap, rec = [], [], []
+    aucc, aucs = [], []
+    apc, aps = [], []
+    recc, recs = [], []
 
     for _ in tqdm.tqdm(range(num_trial)):
         model = init_model(args)
@@ -21,25 +23,33 @@ def main(args):
             model.fit(data)
             score = model.decision_scores_
 
-        y = data.y.bool()
-        k = sum(y)
+        yc = data.y >> 0 & 1
+        ys = data.y >> 1 & 1
+        kc, ks = sum(yc), sum(ys)
 
         if np.isnan(score).any():
             warnings.warn('contains NaN, skip one trial.')
             continue
 
-        auc.append(eval_roc_auc(y, score))
-        ap.append(eval_average_precision(y, score))
-        rec.append(eval_recall_at_k(y, score, k))
+        aucc.append(eval_roc_auc(yc, score))
+        apc.append(eval_average_precision(yc, score))
+        recc.append(eval_recall_at_k(yc, score, kc))
 
-    print(args.dataset + " " + model.__class__.__name__ + " " +
-          "AUC: {:.4f}±{:.4f} ({:.4f})\t"
-          "AP: {:.4f}±{:.4f} ({:.4f})\t"
-          "Recall: {:.4f}±{:.4f} ({:.4f})".format(np.mean(auc), np.std(auc),
-                                                  np.max(auc), np.mean(ap),
-                                                  np.std(ap), np.max(ap),
-                                                  np.mean(rec), np.std(rec),
-                                                  np.max(rec)))
+        aucs.append(eval_roc_auc(ys, score))
+        aps.append(eval_average_precision(ys, score))
+        recs.append(eval_recall_at_k(ys, score, ks))
+
+    print(args.dataset + " " + model.__class__.__name__ + "\n" +
+          "Contextual: AUC: {:.4f}±{:.4f} ({:.4f})\t"
+          "AP: {:.4f}±{:.4f} ({:.4f})\tRecall: {:.4f}±{:.4f} ({:.4f})\n"
+          "Structural: AUC: {:.4f}±{:.4f} ({:.4f})\t"
+          "AP: {:.4f}±{:.4f} ({:.4f})\tRecall: {:.4f}±{:.4f} ({:.4f})"
+          .format(np.mean(aucc), np.std(aucc), np.max(aucc),
+                  np.mean(apc), np.std(apc), np.max(apc),
+                  np.mean(recc), np.std(recc), np.max(recc),
+                  np.mean(aucs), np.std(aucs), np.max(aucs),
+                  np.mean(aps), np.std(aps), np.max(aps),
+                  np.mean(recs), np.std(recs), np.max(recs)))
 
 
 if __name__ == '__main__':
@@ -52,7 +62,7 @@ if __name__ == '__main__':
                         help="GPU Index. Default: -1, using CPU.")
     parser.add_argument("--dataset", type=str, default='inj_cora',
                         help="supported dataset: [inj_cora, inj_amazon, "
-                             "inj_flickr, weibo, reddit]")
+                             "inj_flickr]")
     args = parser.parse_args()
 
     # global setting
