@@ -5,9 +5,6 @@ from sklearn.ensemble import IsolationForest
 
 
 def init_model(args):
-    model_name = args.model
-    gpu = args.gpu
-
     dropout = [0, 0.1, 0.3]
     lr = [0.1, 0.05, 0.01]
     weight_decay = 0.01
@@ -21,6 +18,12 @@ def init_model(args):
         batch_size = 0
         num_neigh = -1
         epoch = 300
+
+    model_name = args.model
+    gpu = args.gpu
+
+    if hasattr(args, 'epoch'):
+        epoch = args.epoch
 
     if args.dataset == 'reddit':
         # for the low feature dimension dataset
@@ -116,7 +119,8 @@ def init_model(args):
                      gpu=gpu,
                      alpha=choice(alpha),
                      batch_size=batch_size,
-                     num_neigh=num_neigh)
+                     num_neigh=num_neigh,
+                     cache_dir='./tmp')
     elif model_name == "mlpae":
         return MLPAE(hid_dim=choice(hid_dim),
                      weight_decay=weight_decay,
