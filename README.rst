@@ -77,20 +77,20 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 
 **Citing PyGOD**\ :
 
-`PyGOD paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv.
+Our `PyGOD benchmark paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`liu2022benchmarking`.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
-    @article{pygod2022,
-      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-      title   = {PyGOD: A Python Library for Graph Outlier Detection},
+    @article{liu2022benchmarking,
+      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      title   = {Benchmarking Node Outlier Detection on Graphs},
       journal = {arXiv preprint arXiv:2204.12095},
       year    = {2022},
     }
 
 or::
 
-    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2204.12095.
 
 
 
@@ -171,21 +171,22 @@ PyGOD toolkit consists of two major functional groups:
 ===================  ===================  ==================  =====  ===========  ========================================
 Type                 Backbone             Abbr                Year   Sampling      Ref
 ===================  ===================  ==================  =====  ===========  ========================================
-Unsupervised         MLP                  MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
-Unsupervised         GNN                  GCNAE               2016   Yes          [#Kipf2016Variational]_
+Unsupervised         MLP+AE               MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
+Unsupervised         Clustering           SCAN                2007   No           [#Xu2007Scan]_
+Unsupervised         GNN+AE               GCNAE               2016   Yes          [#Kipf2016Variational]_
 Unsupervised         MF                   Radar               2017   No           [#Li2017Radar]_
 Unsupervised         MF                   ANOMALOUS           2018   No           [#Peng2018Anomalous]_
 Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
-Unsupervised         GNN                  DOMINANT            2019   Yes          [#Ding2019Deep]_
-Unsupervised         MLP                  DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
-Unsupervised         MLP                  AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN                  AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
+Unsupervised         GNN+AE               DOMINANT            2019   Yes          [#Ding2019Deep]_
+Unsupervised         MLP+AE               DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         MLP+AE               AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
+Unsupervised         GNN+AE               AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
 Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
-Unsupervised         GNN                  OCGNN               2021   Yes          [#Wang2021One]_
-Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
-Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  [#Jin2021ANEMONE]_
-Unsupervised         GNN                  GUIDE               2021   Yes          [#Yuan2021Higher]_
-Unsupervised/SSL     GNN                  CONAD               2022   Yes          [#Xu2022Contrastive]_
+Unsupervised         GNN+AE               OCGNN               2021   Yes          [#Wang2021One]_
+Unsupervised/SSL     GNN+AE               CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
+Unsupervised/SSL     GNN+AE               ANEMONE (beta)      2021   In progress  [#Jin2021ANEMONE]_
+Unsupervised         GNN+AE               GUIDE               2021   Yes          [#Yuan2021Higher]_
+Unsupervised/SSL     GNN+AE               CONAD               2022   Yes          [#Xu2022Contrastive]_
 ===================  ===================  ==================  =====  ===========  ========================================
 
 **(ii) Utility functions** :
@@ -252,6 +253,8 @@ Reference
 .. [#Perini2020Quantifying] Perini, L., Vercruyssen, V., Davis, J. Quantifying the confidence of anomaly detectors in their example-wise predictions. In *Joint European Conference on Machine Learning and Knowledge Discovery in Databases (ECML-PKDD)*, 2020.
 
 .. [#Sakurada2014Anomaly] Sakurada, M. and Yairi, T., 2014, December. Anomaly detection using autoencoders with nonlinear dimensionality reduction. In Proceedings of the MLSDA 2014 2nd workshop on machine learning for sensory data analysis.
+
+.. [#Xu2007Scan] Xu, X., Yuruk, N., Feng, Z. and Schweiger, T.A., 2007, August. Scan: a structural clustering algorithm for networks. In Proceedings of the 13th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD).
 
 .. [#Kipf2016Variational] Kipf, T.N. and Welling, M., 2016. Variational graph auto-encoders. arXiv preprint arXiv:1611.07308.
 

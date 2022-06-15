@@ -86,20 +86,20 @@ See examples below for detecting anomalies with PyGOD in 5 lines!
 
 **Citing PyGOD**\ :
 
-`PyGOD paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`pygod2022`.
+Our `PyGOD benchmark paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`liu2022benchmarking`.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
-    @article{pygod2022,
-      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-      title   = {PyGOD: A Python Library for Graph Outlier Detection},
+    @article{liu2022benchmarking,
+      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      title   = {Benchmarking Node Outlier Detection on Graphs},
       journal = {arXiv preprint arXiv:2204.12095},
       year    = {2022},
     }
 
 or::
 
-    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2204.12095.
 
 
 
@@ -118,6 +118,7 @@ PyGOD toolkit consists of two major functional groups:
 Type                 Backbone             Abbr                Year   Sampling     Class
 ===================  ===================  ==================  =====  ===========  ==============================================
 Unsupervised         MLP                  MLPAE               2014   Yes          :class:`pygod.models.MLPAE`
+Unsupervised         Clustering           SCAN                2007   No           :class:`pygod.models.SCAN`
 Unsupervised         GNN                  GCNAE               2016   Yes          :class:`pygod.models.GCNAE`
 Unsupervised         MF                   Radar               2017   No           :class:`pygod.models.Radar`
 Unsupervised         MF                   ANOMALOUS           2018   No           :class:`pygod.models.ANOMALOUS`
