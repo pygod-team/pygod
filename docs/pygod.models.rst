@@ -143,6 +143,16 @@ Radar
     :show-inheritance:
     :inherited-members:
 
+SCAN
+----
+
+.. autoclass:: pygod.models.SCAN
+    :members:
+    :exclude-members:
+    :undoc-members:
+    :show-inheritance:
+    :inherited-members:
+
 Reference
 ---------
 
