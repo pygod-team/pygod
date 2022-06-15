@@ -77,7 +77,7 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 
 **Citing PyGOD**\ :
 
-Our `PyGOD benchmark paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv :cite:`liu2022benchmarking`.
+Our `PyGOD benchmark paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
