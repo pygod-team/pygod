@@ -10,7 +10,7 @@ import copy as cp
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.generator import gen_attribute_outliers
+from pygod.generator import gen_contextual_outliers
 from pygod.generator import gen_structure_outliers
 
 seed_everything(42)
@@ -44,9 +44,9 @@ class TestData(unittest.TestCase):
 
     def test_attribute_outliers(self):
         test_data = cp.deepcopy(self.data)
-        test_data, y_outlier = gen_attribute_outliers(data=test_data,
-                                                      n=self.n_attribute,
-                                                      k=self.k_attribute)
+        test_data, y_outlier = gen_contextual_outliers(data=test_data,
+                                                       n=self.n_attribute,
+                                                       k=self.k_attribute)
 
         assert_equal(self.data.edge_index.numpy(),
                      test_data.edge_index.numpy())
@@ -74,16 +74,16 @@ class TestData(unittest.TestCase):
 
     def test_attribute_outliers2(self):
         test_data, y_outlier = \
-            gen_attribute_outliers(data=cp.deepcopy(self.data),
-                                   n=self.n_attribute,
-                                   k=self.k_attribute,
-                                   random_state=self.random_state)
+            gen_contextual_outliers(data=cp.deepcopy(self.data),
+                                    n=self.n_attribute,
+                                    k=self.k_attribute,
+                                    random_state=self.random_state)
 
         test_data2, y_outlier2 = \
-            gen_attribute_outliers(data=cp.deepcopy(self.data),
-                                   n=self.n_attribute,
-                                   k=self.k_attribute,
-                                   random_state=self.random_state)
+            gen_contextual_outliers(data=cp.deepcopy(self.data),
+                                    n=self.n_attribute,
+                                    k=self.k_attribute,
+                                    random_state=self.random_state)
 
         assert_equal(test_data.x.numpy(), test_data2.x.numpy())
         assert_equal(test_data.edge_index.numpy(),
@@ -107,14 +107,14 @@ class TestData(unittest.TestCase):
         test_data = cp.deepcopy(self.data)
 
         with assert_raises(ValueError):
-            gen_attribute_outliers(data=test_data,
-                                   n='not int',
-                                   k=self.k_attribute)
+            gen_contextual_outliers(data=test_data,
+                                    n='not int',
+                                    k=self.k_attribute)
 
         with assert_raises(ValueError):
-            gen_attribute_outliers(data=test_data,
-                                   n=self.n_attribute,
-                                   k='not int')
+            gen_contextual_outliers(data=test_data,
+                                    n=self.n_attribute,
+                                    k='not int')
 
     def tearDown(self):
         pass
