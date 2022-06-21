@@ -2,10 +2,11 @@
 """
 Metrics used to evaluate the anomaly detection performance
 """
-# Author: Yingtong Dou <ytongdou@gmail.com>
+# Author: Yingtong Dou <ytongdou@gmail.com>, Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
-from sklearn.metrics import roc_auc_score, average_precision_score
+import numpy as np
+from sklearn.metrics import roc_auc_score, average_precision_score, ndcg_score
 
 
 def eval_roc_auc(labels, pred):
@@ -14,10 +15,10 @@ def eval_roc_auc(labels, pred):
 
     Parameters
     ----------
-    labels : numpy.array
+    labels : numpy.ndarray
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.array
+    pred : numpy.ndarray
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -31,21 +32,19 @@ def eval_roc_auc(labels, pred):
     return roc_auc
 
 
-def eval_recall_at_k(labels, pred, k, threshold=0.5):
+def eval_recall_at_k(labels, pred, k):
     """
     Recall score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
-    labels : numpy.array
+    labels : numpy.ndarray
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.array
+    pred : numpy.ndarray
         Outlier scores in shape of ``(N, )``.
     k : int
         The number of instances to evaluate.
-    threshold : float
-        The binary classification threshold.
 
     Returns
     -------
@@ -53,35 +52,27 @@ def eval_recall_at_k(labels, pred, k, threshold=0.5):
         Recall for top k instances with the highest outlier scores.
     """
 
-    scores = [(s, l) for s, l in zip(pred, labels)]
-    scores.sort(reverse=True, key=lambda x: x[0])
-
-    # Number of true outliers
-    n_true = sum(l for (_, l) in scores)
-
-    # Number of true positive instances in top k
-    n_true_and_pred_k = sum((l and (s >= threshold)) for (s, l) in scores[:k])
-
-    recall_at_k = n_true_and_pred_k / n_true if n_true != 0 else 0.0
+    N = len(pred)
+    labels = np.array(labels)
+    pred = np.array(pred)
+    recall_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / sum(labels)
 
     return recall_at_k
 
 
-def eval_precision_at_k(labels, pred, k, threshold=0.5):
+def eval_precision_at_k(labels, pred, k):
     """
     Precision score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
-    labels : numpy.array
+    labels : numpy.ndarray
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.array
+    pred : numpy.ndarray
         Outlier scores in shape of ``(N, )``.
     k : int
         The number of instances to evaluate.
-    threshold : float
-        The binary classification threshold.
 
     Returns
     -------
@@ -89,16 +80,10 @@ def eval_precision_at_k(labels, pred, k, threshold=0.5):
         Precision for top k instances with the highest outlier scores.
     """
 
-    scores = [(s, l) for s, l in zip(pred, labels)]
-    scores.sort(reverse=True, key=lambda x: x[0])
-
-    # Number of predicted outliers in top k
-    n_pred_k = sum((s >= threshold) for (s, _) in scores[:k])
-
-    # Number of true positive instances in top k
-    n_true_and_pred_k = sum((l and (s >= threshold)) for (s, l) in scores[:k])
-
-    precision_at_k = n_true_and_pred_k / n_pred_k if n_pred_k != 0 else 0.0
+    N = len(pred)
+    labels = np.array(labels)
+    pred = np.array(pred)
+    precision_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / k
 
     return precision_at_k
 
@@ -109,10 +94,10 @@ def eval_average_precision(labels, pred):
 
     Parameters
     ----------
-    labels : numpy.array
+    labels : numpy.ndarray
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.array
+    pred : numpy.ndarray
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -124,3 +109,29 @@ def eval_average_precision(labels, pred):
     # outlier detection is a binary classification problem
     ap = average_precision_score(y_true=labels, y_score=pred)
     return ap
+
+
+def eval_ndcg(labels, pred):
+    """
+    Normalized discounted cumulative gain for ranking.
+
+    Parameters
+    ----------
+    labels : numpy.ndarray
+        Labels in shape of ``(N, )``, where 1 represents outliers,
+        0 represents normal instances.
+    pred : numpy.ndarray
+        Outlier scores in shape of ``(N, )``.
+
+    Returns
+    -------
+    ndcg : float
+        Average precision score.
+    """
+
+    labels = np.array(labels)
+    pred = np.array(pred)
+    if labels.dtype == bool:
+        labels = labels.astype(int)
+    ndcg = ndcg_score(y_true=[labels], y_score=[pred])
+    return ndcg

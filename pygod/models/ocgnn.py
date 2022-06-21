@@ -13,8 +13,8 @@ from sklearn.utils.validation import check_is_fitted
 from torch_sparse import SparseTensor
 
 from . import BaseDetector
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 from torch_geometric.loader import NeighborLoader
 
 
@@ -45,11 +45,11 @@ class GCN_base(nn.Module):
 
 class OCGNN(BaseDetector):
     """
-    OCGNN (One-Class Graph Neural Networks for Anomaly Detection in Attributed
-    Networks): OCGNN is an anomaly detector that measures the distance of
-    anomaly to the centroid, in the similar fashion to the support vector
-    machine, but in the embedding space after feeding towards several layers
-    of GCN.
+    OCGNN (One-Class Graph Neural Networks for Anomaly Detection in
+    Attributed Networks) is an anomaly detector that measures the
+    distance of anomaly to the centroid, in a similar fashion to the
+    support vector machine, but in the embedding space after feeding
+    towards several layers of GCN.
 
     See :cite:`wang2021one` for details.
 

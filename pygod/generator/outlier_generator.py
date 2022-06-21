@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from .utility import check_parameter
+from pygod.utils.utility import check_parameter
 
 
 def gen_structure_outliers(data, m, n, random_state=None):
@@ -47,16 +47,16 @@ def gen_structure_outliers(data, m, n, random_state=None):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(m, int):
-        check_parameter(m, low=1, high= data.num_nodes, param_name='m')
+        check_parameter(m, low=0, high=data.num_nodes, param_name='m')
     else:
         raise ValueError("m should be int, got %s" % m)
 
     if isinstance(n, int):
-        check_parameter(n, low=1, high=data.num_nodes, param_name='n')
+        check_parameter(n, low=0, high=data.num_nodes, param_name='n')
     else:
         raise ValueError("n should be int, got %s" % n)
 
-    check_parameter(m*n, low=1, high=data.num_nodes, param_name='m*n')
+    check_parameter(m * n, low=0, high=data.num_nodes, param_name='m*n')
 
     if random_state:
         np.random.seed(random_state)
@@ -83,8 +83,8 @@ def gen_structure_outliers(data, m, n, random_state=None):
     return data, y_outlier
 
 
-def gen_attribute_outliers(data, n, k, random_state=None):
-    """Generating attribute outliers according to paper
+def gen_contextual_outliers(data, n, k, random_state=None):
+    """Generating contextual outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
     We randomly select n nodes as the attribute perturbation candidates.
@@ -106,7 +106,7 @@ def gen_attribute_outliers(data, n, k, random_state=None):
     Returns
     -------
     data : PyTorch Geometric Data instance (torch_geometric.data.Data)
-        The attribute outlier graph with modified node attributes.
+        The contextual outlier graph with modified node attributes.
     y_outlier : torch.Tensor
         The outlier label tensor where 1 represents outliers and 0 represents
         regular nodes.
@@ -116,12 +116,12 @@ def gen_attribute_outliers(data, n, k, random_state=None):
         raise TypeError("data should be torch_geometric.data.Data")
 
     if isinstance(n, int):
-        check_parameter(n, low=1, high=data.num_nodes, param_name='n')
+        check_parameter(n, low=0, high=data.num_nodes, param_name='n')
     else:
         raise ValueError("n should be int, got %s" % n)
 
     if isinstance(k, int):
-        check_parameter(k, low=1, high=data.num_nodes-n, param_name='k')
+        check_parameter(k, low=0, high=data.num_nodes - n, param_name='k')
     else:
         raise ValueError("k should be int, got %s" % k)
 

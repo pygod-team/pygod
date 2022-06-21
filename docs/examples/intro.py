@@ -25,16 +25,16 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 
 #######################################################################
 # Because there is no ground truth label of outliers in Cora, we follow
-# the method used by DOMINANT to inject 100 attribute outliers and 100
+# the method used by DOMINANT to inject 100 contextual outliers and 100
 # structure outliers into the graph. **Note**: If your dataset already
 # contains the outliers you want to detect, you don't need to inject
 # more outliers.
 
 
 import torch
-from pygod.utils import gen_attribute_outliers, gen_structure_outliers
+from pygod.generator import contextual, gen_structure_outliers
 
-data, ya = gen_attribute_outliers(data, n=100, k=50)
+data, ya = contextual(data, n=100, k=50)
 data, ys = gen_structure_outliers(data, m=10, n=10)
 data.y = torch.logical_or(ys, ya).int()
 
@@ -103,19 +103,7 @@ print(confidence)
 # To evaluate the performance outlier detector:
 
 
-from pygod.utils.metric import \
-    eval_roc_auc, \
-    eval_recall_at_k, \
-    eval_precision_at_k
-
-k = 200
+from pygod.metrics import eval_roc_auc
 
 auc_score = eval_roc_auc(data.y.numpy(), outlier_scores)
-recall_at_k = eval_recall_at_k(data.y.numpy(), outlier_scores,
-                               k=k, threshold=model.threshold_)
-precision_at_k = eval_precision_at_k(data.y.numpy(), outlier_scores,
-                                     k=k, threshold=model.threshold_)
-
 print('AUC Score:', auc_score)
-print(f'Recall@{k}:', recall_at_k)
-print(f'Precision@{k}:', precision_at_k)

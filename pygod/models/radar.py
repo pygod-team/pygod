@@ -1,90 +1,73 @@
 # -*- coding: utf-8 -*-
-""" Multilayer Perceptron Autoencoder
+""" Residual Analysis for Anomaly Detection in Attributed Networks
 """
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
 import torch
-import numpy as np
+import warnings
+from torch import nn
+from pygod.metrics import *
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch_geometric.utils import to_dense_adj
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
-from .basic_nn import MLP
 from ..utils import validate_device
-from ..metrics import eval_roc_auc
-from ..utils.dataset import PlainDataset
 
 
-class MLPAE(BaseDetector):
+class Radar(BaseDetector):
     """
-    Vanila Multilayer Perceptron Autoencoder.
+    Radar (Residual Analysis for Anomaly Detection in Attributed
+    Networks) is an anomaly detector with residual analysis. This
+    model is transductive only.
 
-    See :cite:`yuan2021higher` for details.
+    See :cite:`li2017radar` for details.
 
     Parameters
     ----------
-    hid_dim :  int, optional
-        Hidden dimension of model. Default: ``0``.
-    num_layers : int, optional
-        Total number of layers in autoencoders. Default: ``4``.
-    dropout : float, optional
-        Dropout rate. Default: ``0.``.
+    gamma : float, optional
+        Loss balance weight for attribute and structure.
+        Default: ``1.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Default: ``0.``.
-    act : callable activation function or None, optional
-        Activation function if not None.
-        Default: ``torch.nn.functional.relu``.
+        Weight decay (alpha and beta in the original paper).
+        Default: ``0.01``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
         function. Default: ``0.1``.
-    lr : float, optional
-        Learning rate. Default: ``0.004``.
     epoch : int, optional
         Maximum number of training epoch. Default: ``5``.
-    gpu : int
-        GPU Index, -1 for using CPU. Default: ``0``.
-    batch_size : int, optional
-        Minibatch size, 0 for full batch training. Default: ``0``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
 
     Examples
     --------
-    >>> from pygod.models import MLPAE
-    >>> model = MLPAE()
+    >>> from pygod.models import Radar
+    >>> model = Radar()
     >>> model.fit(data) # PyG graph data object
-    >>> prediction = model.predict(data)
+    >>> prediction = model.predict(None)
     """
+
     def __init__(self,
-                 hid_dim=64,
-                 num_layers=4,
-                 dropout=0.3,
-                 weight_decay=0.,
-                 act=F.relu,
-                 contamination=0.1,
-                 lr=5e-3,
-                 epoch=5,
+                 gamma=1.,
+                 weight_decay=0.01,
+                 lr=0.004,
+                 epoch=100,
                  gpu=0,
-                 batch_size=0,
+                 contamination=0.1,
                  verbose=False):
-        super(MLPAE, self).__init__(contamination=contamination)
+        super(Radar, self).__init__(contamination=contamination)
 
         # model param
-        self.hid_dim = hid_dim
-        self.num_layers = num_layers
-        self.dropout = dropout
+        self.gamma = gamma
         self.weight_decay = weight_decay
-        self.act = act
 
         # training param
         self.lr = lr
         self.epoch = epoch
         self.device = validate_device(gpu)
-        self.batch_size = batch_size
 
         # other param
         self.verbose = verbose
@@ -108,41 +91,27 @@ class MLPAE(BaseDetector):
         self : object
             Fitted estimator.
         """
-        full_x = self.process_graph(G)
-        dataset = PlainDataset(full_x)
-        if self.batch_size == 0:
-            self.batch_size = G.x.shape[0]
-        loader = DataLoader(dataset, batch_size=self.batch_size)
+        G.s = to_dense_adj(G.edge_index)[0]
+        x, s, l, w_init, r_init = self.process_graph(G)
 
-        self.model = MLP(in_channels=G.x.shape[1],
-                         hidden_channels=self.hid_dim,
-                         out_channels=G.x.shape[1],
-                         num_layers=self.num_layers,
-                         dropout=self.dropout,
-                         act=self.act).to(self.device)
-
+        self.model = Radar_Base(w_init, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
-        self.model.train()
-        decision_scores = np.zeros(full_x.shape[0])
         for epoch in range(self.epoch):
-            epoch_loss = 0
-            for x, node_idx in loader:
-                x_ = self.model(x)
-                score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-                decision_scores[node_idx] = score.detach().cpu().numpy()
-                loss = torch.mean(score)
-                epoch_loss += loss.item() * x.shape[0]
+            x_, r = self.model(x)
+            loss = self._loss(x, x_, r, l)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            decision_scores = torch.sum(torch.pow(r, 2), dim=1).detach() \
+                .cpu().numpy()
 
             if self.verbose:
                 print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
+                      .format(epoch, loss.item()), end='')
                 if y_true is not None:
                     auc = eval_roc_auc(y_true, decision_scores)
                     print(" | AUC {:.4f}".format(auc), end='')
@@ -168,16 +137,13 @@ class MLPAE(BaseDetector):
             The anomaly score of shape :math:`N`.
         """
         check_is_fitted(self, ['model'])
-        full_x = self.process_graph(G)
-        dataset = PlainDataset(full_x)
-        loader = DataLoader(dataset, batch_size=self.batch_size)
 
-        self.model.eval()
-        outlier_scores = np.zeros(full_x.shape[0])
-        for x, node_idx in loader:
-            x_ = self.model(x)
-            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-            outlier_scores[node_idx] = score.detach().cpu().numpy()
+        if G is not None:
+            warnings.warn('The model is transductive only. '
+                          'Training data is used to predict')
+
+        outlier_scores = self.decision_scores_
+
         return outlier_scores
 
     def process_graph(self, G):
@@ -196,4 +162,31 @@ class MLPAE(BaseDetector):
             Attribute (feature) of nodes.
         """
         x = G.x.to(self.device)
-        return x
+        s = G.s.to(self.device)
+
+        s = torch.max(s, s.T)
+        l = self._comp_laplacian(s)
+
+        w_init = torch.eye(x.shape[0]).to(self.device)
+        r_init = torch.inverse((1 + self.weight_decay) *
+            torch.eye(x.shape[0]).to(self.device) + self.gamma * l) @ x
+
+        return x, s, l, w_init, r_init
+
+    def _loss(self, x, x_, r, l):
+        return torch.norm(x - x_ - r, 2) + \
+               self.gamma * torch.trace(r.T @ l @ r)
+
+    def _comp_laplacian(self, adj):
+        d = torch.diag(torch.sum(adj, dim=1))
+        return d - adj
+
+
+class Radar_Base(nn.Module):
+    def __init__(self, w, r):
+        super(Radar_Base, self).__init__()
+        self.w = nn.Parameter(w)
+        self.r = nn.Parameter(r)
+
+    def forward(self, x):
+        return self.w @ x, self.r

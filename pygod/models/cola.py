@@ -19,8 +19,8 @@ from torch_cluster import random_walk
 
 from . import BaseDetector
 from .basic_nn import Vanilla_GCN as GCN
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -36,10 +36,11 @@ def generate_rw_subgraph(pyg_graph, nb_nodes, subgraph_size):
 
 class CoLA(BaseDetector):
     """
-    CoLA (Anomaly Detection on Attributed Networks via
-    Contrastive Self-Supervised Learning)
-    CoLA is a contrastive self-supervised learning-based method
-    for graph anomaly detection. (beta)
+    CoLA (Anomaly Detection on Attributed Networks via Contrastive
+    Self-Supervised Learning) is a contrastive self-supervised learning
+    based method for graph anomaly detection. (beta)
+
+    See :cite:`liu2021anomaly` for details.
 
     Parameters
     ----------

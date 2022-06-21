@@ -14,18 +14,18 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class AdONE(BaseDetector):
     """
-    AdONE (Adversarial Outlier Aware Attributed Network Embedding)
-    AdONE consist of an attribute autoencoder and a structure
+    AdONE (Adversarial Outlier Aware Attributed Network
+    Embedding) consists of an attribute autoencoder and a structure
     autoencoder. It estimates five loss to optimize the model,
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and an
-    alignment loss. It calculates three outlier score, and averages
+    alignment loss. It calculates three outlier scores, and averages
     them as an overall score.
 
     See :cite:`bandyopadhyay2020outlier` for details.
@@ -175,7 +175,7 @@ class AdONE(BaseDetector):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                x, s, edge_index = self.process_graph(G)
+                x, s, edge_index = self.process_graph(sampled_data)
                 x_, s_, h_a, h_s, dna, dns, dis_a, dis_s \
                     = self.model(x, s, edge_index)
                 score, loss = self.loss_func(x[:batch_size],
@@ -276,10 +276,8 @@ class AdONE(BaseDetector):
         edge_index : torch.Tensor
             Edge list of the graph.
         """
-        edge_index = G.edge_index
-
-        s = to_dense_adj(edge_index)[0].to(self.device)
-        edge_index = edge_index.to(self.device)
+        s = G.s.to(self.device)
+        edge_index = G.edge_index.to(self.device)
         x = G.x.to(self.device)
 
         return x, s, edge_index

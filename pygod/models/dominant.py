@@ -13,18 +13,18 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import GCN
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class DOMINANT(BaseDetector):
     """
-    DOMINANT (Deep Anomaly Detection on Attributed Networks)
-    DOMINANT is an anomaly detector consisting of a shared graph
-    convolutional encoder, a structure reconstruction decoder, and an
-    attribute reconstruction decoder. The reconstruction mean square
-    error of the decoders are defined as structure anomaly score and
-    attribute anomaly score, respectively.
+    DOMINANT (Deep Anomaly Detection on Attributed Networks) is an
+    anomaly detector consisting of a shared graph convolutional
+    encoder, a structure reconstruction decoder, and an attribute
+    reconstruction decoder. The reconstruction mean square error of the
+    decoders are defined as structure anomaly score and attribute
+    anomaly score, respectively.
 
     See :cite:`ding2019deep` for details.
 
@@ -44,8 +44,8 @@ class DOMINANT(BaseDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        Loss balance weight for attribute and structure.
-        Default: ``0.5``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
@@ -79,7 +79,7 @@ class DOMINANT(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.8,
+                 alpha=None,
                  contamination=0.1,
                  lr=5e-3,
                  epoch=5,
@@ -128,6 +128,12 @@ class DOMINANT(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = to_dense_adj(G.edge_index)[0]
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,

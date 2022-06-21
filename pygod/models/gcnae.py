@@ -12,13 +12,13 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import GCN
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class GCNAE(BaseDetector):
     """
-    Vanila Graph Convolutional Networks Autoencoder
+    Vanila Graph Convolutional Networks Autoencoder.
 
     See :cite:`yuan2021higher` for details.
 
@@ -141,7 +141,9 @@ class GCNAE(BaseDetector):
                 x, edge_index = self.process_graph(sampled_data)
 
                 x_ = self.model(x, edge_index)
-                score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+                score = torch.mean(F.mse_loss(x_[:batch_size],
+                                              x[:batch_size],
+                                              reduction='none'), dim=1)
                 decision_scores[node_idx[:batch_size]] = score.detach()\
                                                               .cpu().numpy()
                 loss = torch.mean(score)

@@ -14,19 +14,18 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import MLP
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class DONE(BaseDetector):
     """
-    DONE (Deep Outlier Aware Attributed Network Embedding)
-    DONE consist of an attribute autoencoder and a structure
-    autoencoder. It estimates five loss to optimize the model,
-    including an attribute proximity loss, an attribute homophily loss,
-    a structure proximity loss, a structure homophily loss, and a
-    combination loss. It calculates three outlier score, and averages
-    them as an overall score.
+    DONE (Deep Outlier Aware Attributed Network Embedding) consists of
+    an attribute autoencoder and a structure autoencoder. It estimates
+    five losses to optimize the model, including an attribute proximity
+    loss, an attribute homophily loss, a structure proximity loss, a
+    structure homophily loss, and a combination loss. It calculates
+    three outlier scores, and averages them as an overall scores.
 
     See :cite:`bandyopadhyay2020outlier` for details.
 
@@ -175,7 +174,7 @@ class DONE(BaseDetector):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                x, s, edge_index = self.process_graph(G)
+                x, s, edge_index = self.process_graph(sampled_data)
 
                 x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
                 score, loss = self.loss_func(x[:batch_size],

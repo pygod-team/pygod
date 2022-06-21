@@ -20,25 +20,23 @@ from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
 from .basic_nn import GCN
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class GUIDE(BaseDetector):
     """
     GUIDE (Higher-order Structure based Anomaly Detection on Attributed
-    Networks)
-    GUIDE is an anomaly detector consisting of an attribute graph
+    Networks) is an anomaly detector consisting of an attribute graph
     convolutional autoencoder, and a structure graph attentive
-    autoencoder (not same as the graph attention networks). Instead of
-    adjacency matrix, node motif degree (graphlet degree is used in
-    this implementation by default) is used as input of
+    autoencoder (not the same as the graph attention networks). Instead
+    of the adjacency matrix, node motif degree is used as input of
     structure autoencoder. The reconstruction mean square error of the
     autoencoders are defined as structure anomaly score and attribute
     anomaly score, respectively.
 
-    Note: The calculation of node motif degree in preprocesing has high
-    time complexity. It may take longer than you expect.
+    Note: The calculation of node motif degree in preprocessing has
+    high time complexity. It may take longer than you expect.
 
     See :cite:`yuan2021higher` for details.
 
@@ -58,8 +56,8 @@ class GUIDE(BaseDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     alpha : float, optional
-        Loss balance weight for attribute and structure.
-        Default: ``0.5``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
@@ -103,7 +101,7 @@ class GUIDE(BaseDetector):
                  dropout=0.3,
                  weight_decay=0.,
                  act=F.relu,
-                 alpha=0.1,
+                 alpha=None,
                  contamination=0.1,
                  lr=0.001,
                  epoch=10,
@@ -165,6 +163,12 @@ class GUIDE(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = self._get_nmf(G, self.cache_dir)
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,
@@ -190,7 +194,7 @@ class GUIDE(BaseDetector):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                x, s, edge_index = self.process_graph(G)
+                x, s, edge_index = self.process_graph(sampled_data)
 
                 x_, s_ = self.model(x, s, edge_index)
                 score = self.loss_func(x[:batch_size],

@@ -14,22 +14,23 @@ from torch_geometric.loader import NeighborLoader
 from sklearn.utils.validation import check_is_fitted
 
 from . import BaseDetector
-from ..utils.utility import validate_device
-from ..utils.metric import eval_roc_auc
+from ..utils import validate_device
+from ..metrics import eval_roc_auc
 
 
 class AnomalyDAE(BaseDetector):
     """
-    AnomalyDAE (Dual autoencoder for anomaly detection on attributed networks):
-    AnomalyDAE is an anomaly detector that. consists of a structure autoencoder 
-    and an attribute autoencoder to learn both node embedding and attribute 
-    embedding jointly in latent space. The structural autoencoer uses Graph Attention
-    layers. The reconstruction mean square error of the decoders are defined 
-    as structure anamoly score and attribute anomaly score, respectively, 
+    AnomalyDAE (Dual autoencoder for anomaly detection on attributed
+    networks) is an anomaly detector that consists of a structure
+    autoencoder and an attribute autoencoder to learn both node
+    embedding and attribute embedding jointly in latent space. The
+    structural autoencoder uses Graph Attention layers. The
+    reconstruction mean square error of the decoders are defined as
+    structure anomaly score and attribute anomaly score, respectively,
     with two additional penalties on the reconstructed adj matrix and 
     node attributes (force entries to be nonzero).
 
-    See: cite 'fan2020anomalydae' for details.
+    See :cite:`fan2020anomalydae` for details.
 
     Parameters
     ----------
@@ -46,8 +47,8 @@ class AnomalyDAE(BaseDetector):
         Activation function if not None.
         Defaults: ``torch.nn.functional.relu``.
     alpha : float, optional
-        loss balance weight for attribute and structure.
-        Defaults: ``0.5``.
+        Loss balance weight for attribute and structure. ``None`` for
+        balancing by standard deviation. Default: ``None``.
     theta: float, optional
          greater than 1, impose penalty to the reconstruction error of
          the non-zero elements in the adjacency matrix
@@ -89,7 +90,7 @@ class AnomalyDAE(BaseDetector):
                  dropout=0.2,
                  weight_decay=1e-5,
                  act=F.relu,
-                 alpha=0.5,
+                 alpha=None,
                  theta=1.01,
                  eta=1.01,
                  contamination=0.1,
@@ -142,6 +143,12 @@ class AnomalyDAE(BaseDetector):
         """
         G.node_idx = torch.arange(G.x.shape[0])
         G.s = to_dense_adj(G.edge_index)[0]
+
+        # automated balancing by std
+        if self.alpha is None:
+            self.alpha = torch.std(G.s).detach() / \
+                         (torch.std(G.x).detach() + torch.std(G.s).detach())
+
         if self.batch_size == 0:
             self.batch_size = G.x.shape[0]
         loader = NeighborLoader(G,

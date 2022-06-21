@@ -7,24 +7,24 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.models import DONE
+from pygod.models import ANOMALOUS
 from pygod.metrics import eval_roc_auc
 
 seed_everything(42)
 
 
-class TestDONE(unittest.TestCase):
+class TestAnomalous(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.60
+        self.roc_floor = 0.50
 
         test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
         self.data = test_graph
 
-        self.model = DONE()
+        self.model = ANOMALOUS()
         self.model.fit(self.data)
 
     def test_parameters(self):
