@@ -14,7 +14,7 @@ def main(args):
         model = init_model(args)
         data = torch.load('data/' + args.dataset + '.pt')
 
-        if args.model == 'iforest' or args.model == 'lof':
+        if args.model == 'if' or args.model == 'lof':
             model.fit(data.x)
             score = model.decision_function(data.x)
         else:

@@ -113,16 +113,11 @@ class SCAN(BaseDetector):
                     nomembers.append(n)
 
         for k, v in clusters.items():
-            print(v)
             decision_scores[v] = 1
 
-        if self.verbose:
-            print("Epoch {:04d}: Loss {:.4f}"
-                  .format(epoch, loss.item()), end='')
-            if y_true is not None:
-                auc = eval_roc_auc(y_true, decision_scores)
-                print(" | AUC {:.4f}".format(auc), end='')
-            print()
+        if self.verbose and y_true is not None:
+            auc = eval_roc_auc(y_true, decision_scores)
+            print("AUC {:.4f}".format(auc))
 
         self.decision_scores_ = decision_scores
         self._process_decision_scores()

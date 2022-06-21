@@ -131,7 +131,7 @@ def init_model(args):
                      batch_size=batch_size)
     elif model_name == 'lof':
         return LOF()
-    elif model_name == 'iforest':
+    elif model_name == 'if':
         return IsolationForest()
     elif model_name == 'radar':
         return Radar(lr=choice(lr), gpu=gpu)

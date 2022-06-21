@@ -7,10 +7,13 @@
 from __future__ import division
 from __future__ import print_function
 
+import os
+import requests
 import warnings
 import torch
 import numpy as np
 import numbers
+import shutil
 
 MAX_INT = np.iinfo(np.int32).max
 MIN_INT = -1 * MAX_INT
@@ -125,3 +128,28 @@ def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
                 param=param, low=low, high=high, param_name=param_name))
     else:
         return True
+
+
+def load_data(name, cache_dir=None):
+
+    if cache_dir is None:
+        cache_dir = os.path.join(os.path.expanduser('~'), '.pygod/data')
+    file_path = os.path.join(cache_dir, name+'.pt')
+    zip_path = os.path.join(cache_dir, name+'.pt.zip')
+
+    if os.path.exists(file_path):
+        data = torch.load(file_path)
+    else:
+        url = "https://github.com/pygod-team/data/raw/main/" + name + ".pt.zip"
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        r = requests.get(url, stream=True)
+        if r.status_code != 200:
+            raise RuntimeError("Failed downloading url %s" % url)
+        with open(zip_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+        shutil.unpack_archive(zip_path, cache_dir)
+        data = torch.load(file_path)
+    return data

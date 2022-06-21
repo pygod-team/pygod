@@ -1,7 +1,7 @@
 Generator
 =================
 
-.. autoclass:: pygod.generator.gen_attribute_outliers
+.. autoclass:: pygod.generator.gen_contextual_outliers
     :members:
     :undoc-members:
 

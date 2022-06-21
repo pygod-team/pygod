@@ -25,16 +25,16 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 
 #######################################################################
 # Because there is no ground truth label of outliers in Cora, we follow
-# the method used by DOMINANT to inject 100 attribute outliers and 100
+# the method used by DOMINANT to inject 100 contextual outliers and 100
 # structure outliers into the graph. **Note**: If your dataset already
 # contains the outliers you want to detect, you don't need to inject
 # more outliers.
 
 
 import torch
-from pygod.generator import gen_attribute_outliers, gen_structure_outliers
+from pygod.generator import contextual, gen_structure_outliers
 
-data, ya = gen_attribute_outliers(data, n=100, k=50)
+data, ya = contextual(data, n=100, k=50)
 data, ys = gen_structure_outliers(data, m=10, n=10)
 data.y = torch.logical_or(ys, ya).int()
 

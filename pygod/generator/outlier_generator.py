@@ -83,8 +83,8 @@ def gen_structure_outliers(data, m, n, random_state=None):
     return data, y_outlier
 
 
-def gen_attribute_outliers(data, n, k, random_state=None):
-    """Generating attribute outliers according to paper
+def gen_contextual_outliers(data, n, k, random_state=None):
+    """Generating contextual outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
     We randomly select n nodes as the attribute perturbation candidates.
@@ -106,7 +106,7 @@ def gen_attribute_outliers(data, n, k, random_state=None):
     Returns
     -------
     data : PyTorch Geometric Data instance (torch_geometric.data.Data)
-        The attribute outlier graph with modified node attributes.
+        The contextual outlier graph with modified node attributes.
     y_outlier : torch.Tensor
         The outlier label tensor where 1 represents outliers and 0 represents
         regular nodes.

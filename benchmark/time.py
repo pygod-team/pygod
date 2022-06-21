@@ -1,6 +1,5 @@
 import os
 import time
-import tqdm
 import torch
 import shutil
 import argparse
@@ -13,17 +12,17 @@ from torch_geometric.utils import remove_isolated_nodes
 
 
 def main(args):
-    for epoch in tqdm.tqdm([10, 100, 200, 300, 400]):
+    for epoch in [10, 100, 200, 300, 400]:
         args.epoch = epoch
         model = init_model(args)
-        data = torch.load('data/' + args.dataset + '.pt')
+        data = torch.load('data/gen_time.pt')
 
         data.edge_index, _, mask = \
             remove_isolated_nodes(data.edge_index, num_nodes=data.num_nodes)
         data.x = data.x[mask]
 
         start_time = time.time()
-        if args.model == 'iforest' or args.model == 'lof':
+        if args.model == 'if' or args.model == 'lof':
             model.fit(data.x)
             t = time.time() - start_time
             score = model.decision_function(data.x)
@@ -42,7 +41,7 @@ def main(args):
             warnings.warn('contains NaN, skip one trial.')
             continue
 
-        print('Epoch {}: AUC: {:.4f}, Time: {:.1f}s.'.format(epoch, auc, t))
+        print('Epoch {}: AUC: {:.4f}, Time: {:.4f}s.'.format(epoch, auc, t))
 
 
 if __name__ == '__main__':
@@ -51,8 +50,6 @@ if __name__ == '__main__':
                         help="see docs for complete model list")
     parser.add_argument("--gpu", type=int, default=0,
                         help="GPU Index. Default: -1, using CPU.")
-    parser.add_argument("--dataset", type=str, default='syn',
-                        help="dataset")
     args = parser.parse_args()
 
     seed_everything(0)
