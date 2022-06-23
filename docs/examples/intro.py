@@ -47,6 +47,7 @@ data.y = torch.logical_or(ys, ya).int()
 from pygod.utils import load_data
 
 data = load_data('inj_cora')
+data.y = data.y.bool()
 
 #######################################################################
 # Initialization
