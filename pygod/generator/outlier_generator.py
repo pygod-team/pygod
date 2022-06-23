@@ -23,6 +23,7 @@ def gen_structural_outliers(data, m, n, random_state=None):
     fully connected, and then all the m nodes in the clique are regarded as
     outliers. We iteratively repeat this process until a number of n
     cliques are generated and the total number of structural outliers is m×n.
+
     Parameters
     ----------
     data : PyTorch Geometric Data instance (torch_geometric.data.Data)
@@ -92,6 +93,7 @@ def gen_contextual_outliers(data, n, k, random_state=None):
     and select the node j whose attributes deviate the most from node i
     among the k nodes by maximizing the Euclidean distance ||xi − xj ||2.
     Afterwards, we then change the attributes xi of node i to xj.
+
     Parameters
     ----------
     data : PyTorch Geometric Data instance (torch_geometric.data.Data)

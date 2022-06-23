@@ -134,6 +134,17 @@ def load_data(name, cache_dir=None):
     """
     Data loading function. See `data repository
     <https://github.com/pygod-team/data>`_ for supported datasets.
+    For injected/generated datasets, the labels meanings are as follows.
+
+    - 0: inlier
+    - 1: contextual outlier only
+    - 2: structural outlier only
+    - 3: both contextual outlier and structural outlier
+
+    Examples to convert the labels are as follows:
+    >>> y = data.y.bool()    # binary labels (inlier/outlier)
+    >>> yc = data.y >> 0 & 1 # contextual outliers
+    >>> ys = data.y >> 1 & 1 # structural outliers
 
     Parameters
     ----------
