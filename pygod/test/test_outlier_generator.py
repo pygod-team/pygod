@@ -11,7 +11,7 @@ import copy as cp
 import torch
 from torch_geometric.seed import seed_everything
 from pygod.generator import gen_contextual_outliers
-from pygod.generator import gen_structure_outliers
+from pygod.generator import gen_structural_outliers
 
 seed_everything(42)
 
@@ -29,9 +29,9 @@ class TestData(unittest.TestCase):
 
     def test_structure_outliers(self):
         test_data = cp.deepcopy(self.data)
-        test_data, y_outlier = gen_structure_outliers(data=test_data,
-                                                      m=self.m_structure,
-                                                      n=self.n_structure)
+        test_data, y_outlier = gen_structural_outliers(data=test_data,
+                                                       m=self.m_structure,
+                                                       n=self.n_structure)
 
         assert_equal(self.data.x.numpy(), test_data.x.numpy())
         assert (self.data.num_nodes == y_outlier.shape[0])
@@ -56,16 +56,16 @@ class TestData(unittest.TestCase):
 
     def test_structure_outliers2(self):
         test_data, y_outlier = \
-            gen_structure_outliers(data=cp.deepcopy(self.data),
-                                   m=self.m_structure,
-                                   n=self.n_structure,
-                                   random_state=self.random_state)
+            gen_structural_outliers(data=cp.deepcopy(self.data),
+                                    m=self.m_structure,
+                                    n=self.n_structure,
+                                    random_state=self.random_state)
 
         test_data2, y_outlier2 = \
-            gen_structure_outliers(data=cp.deepcopy(self.data),
-                                   m=self.m_structure,
-                                   n=self.n_structure,
-                                   random_state=self.random_state)
+            gen_structural_outliers(data=cp.deepcopy(self.data),
+                                    m=self.m_structure,
+                                    n=self.n_structure,
+                                    random_state=self.random_state)
 
         assert_equal(test_data.x.numpy(), test_data2.x.numpy())
         assert_equal(test_data.edge_index.numpy(),
@@ -94,14 +94,14 @@ class TestData(unittest.TestCase):
         test_data = cp.deepcopy(self.data)
 
         with assert_raises(ValueError):
-            gen_structure_outliers(data=test_data,
-                                   m='not int',
-                                   n=self.n_structure)
+            gen_structural_outliers(data=test_data,
+                                    m='not int',
+                                    n=self.n_structure)
 
         with assert_raises(ValueError):
-            gen_structure_outliers(data=test_data,
-                                   m=self.m_structure,
-                                   n='not int')
+            gen_structural_outliers(data=test_data,
+                                    m=self.m_structure,
+                                    n='not int')
 
     def test_attribute_outliers3(self):
         test_data = cp.deepcopy(self.data)

@@ -15,7 +15,7 @@ from torch_geometric.data import Data
 from pygod.utils.utility import check_parameter
 
 
-def gen_structure_outliers(data, m, n, random_state=None):
+def gen_structural_outliers(data, m, n, random_state=None):
     """Generating structural outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.

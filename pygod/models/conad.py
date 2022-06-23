@@ -73,7 +73,7 @@ class CONAD(BaseDetector):
         For densely connected nodes, the number of
         edges to add. Default: ``50``.
     k : int, optional
-        same as ``k`` in ``pygod.generator.gen_attribute_outliers``.
+        same as ``k`` in ``pygod.generator.gen_contextual_outliers``.
         Default: ``50``.
     f : int, optional
         For disproportionate nodes, the scale factor applied
