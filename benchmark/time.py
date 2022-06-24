@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 from utils import init_model
 from pygod.metrics import eval_roc_auc
-from torch_geometric import seed_everything
 from torch_geometric.utils import remove_isolated_nodes
 
 
@@ -47,10 +46,12 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="dominant",
-                        help="see docs for complete model list")
+                        help="supported model: [lof, if, mlpae, scan, radar, "
+                             "anomalous, gcnae, dominant, done, adone, "
+                             "anomalydae, gaan, guide, conad]. "
+                             "Default: dominant")
     parser.add_argument("--gpu", type=int, default=0,
                         help="GPU Index. Default: -1, using CPU.")
     args = parser.parse_args()
 
-    seed_everything(0)
     main(args)
