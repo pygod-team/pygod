@@ -77,20 +77,20 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 
 **Citing PyGOD**\ :
 
-Our `PyGOD benchmark paper <https://arxiv.org/abs/2204.12095>`_ is available on arxiv.
+Our `PyGOD benchmark paper <https://arxiv.org/abs/2206.10071>`_ is available on arxiv.
 If you use PyGOD in a scientific publication, we would appreciate
 citations to the following paper::
 
     @article{liu2022benchmarking,
       author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
       title   = {Benchmarking Node Outlier Detection on Graphs},
-      journal = {arXiv preprint arXiv:2204.12095},
+      journal = {arXiv preprint arXiv:2206.10071},
       year    = {2022},
     }
 
 or::
 
-    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2204.12095.
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2206.10071.
 
 
 
@@ -191,16 +191,18 @@ Unsupervised/SSL     GNN+AE               CONAD               2022   Yes        
 
 **(ii) Utility functions** :
 
-===================  ======================  ==================================  ======================================================================================================================================
-Type                 Name                    Function                            Documentation
-===================  ======================  ==================================  ======================================================================================================================================
-Metric               eval_precision_at_k     Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_precision_at_k>`_
-Metric               eval_recall_at_k        Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_recall_at_k>`_
-Metric               eval_roc_auc            Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_roc_auc>`_
-Metric               eval_average_precision  Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.metric.eval_average_precision>`_
-Data                 gen_structure_outliers  Generating structural outliers      `gen_structure_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_structure_outliers>`_
-Data                 gen_attribute_outliers  Generating attribute outliers       `gen_attribute_outliers <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.outlier_generator.gen_attribute_outliers>`_
-===================  ======================  ==================================  ======================================================================================================================================
+===================  =======================  ==================================  ======================================================================================================================================
+Type                 Name                     Function                            Documentation
+===================  =======================  ==================================  ======================================================================================================================================
+Metric               eval_precision_at_k      Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_precision_at_k>`_
+Metric               eval_recall_at_k         Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_recall_at_k>`_
+Metric               eval_roc_auc             Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_roc_auc>`_
+Metric               eval_average_precision   Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_average_precision>`_
+Metric               eval_ndcg                Calculating NDCG                    `eval_ndcg <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_ndcg>`_
+Generator            gen_structural_outliers  Generating structural outliers      `gen_structural_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_structural_outlierss>`_
+Generator            gen_contextual_outliers  Generating attribute outliers       `gen_contextual_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_contextual_outliers>`_
+Loader               load_data                Loading PyGOD built-in datasets     `load_data <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.load_data>`_
+===================  =======================  ==================================  ======================================================================================================================================
 
 
 ----

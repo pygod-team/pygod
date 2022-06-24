@@ -5,6 +5,6 @@ Generator
     :members:
     :undoc-members:
 
-.. autoclass:: pygod.generator.gen_structure_outliers
+.. autoclass:: pygod.generator.gen_structural_outliers
     :members:
     :undoc-members:

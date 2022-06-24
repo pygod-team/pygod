@@ -21,8 +21,9 @@ from ..utils import validate_device
 class SCAN(BaseDetector):
     """
     SCAN (Structural Clustering Algorithm for Networks) is a clustering
-    algorithm. Note: This model will output detected clusters instead
-    of "outliers" descibed in the original paper.
+    algorithm, which only takes the graph structure without the node
+    features as the input. Note: This model will output detected
+    clusters instead of "outliers" descibed in the original paper.
 
     See :cite:`xu2007scan` for details.
 

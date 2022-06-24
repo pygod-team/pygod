@@ -66,23 +66,23 @@ class GUIDE(BaseDetector):
         Learning rate. Default: ``0.004``.
     epoch : int, optional
         Maximum number of training epoch. Default: ``10``.
-    gpu : int
+    gpu : int, optional
         GPU Index, -1 for using CPU. Default: ``0``.
     batch_size : int, optional
         Minibatch size, 0 for full batch training. Default: ``0``.
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
-    graphlet_size : int
+    graphlet_size : int, optional
         The maximum graphlet size used to compute structure input.
         Default: ``4``.
-    selected_motif : bool
+    selected_motif : bool, optional
         Use selected motifs which are defined in the original paper.
         Default: ``True``.
-    cache_dir : str
+    cache_dir : str, option
         The directory for the node motif degree caching.
         Default: ``None``.
-    verbose : bool
+    verbose : bool, optional
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
 

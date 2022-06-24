@@ -6,3 +6,4 @@ API Reference
     pygod.models
     pygod.generator
     pygod.metrics
+    pygod.utils

@@ -1,7 +1,0 @@
-v<0.1.0>, <04/01/2022> -- Initial release.
-v<0.1.1>, <04/04/2022> -- Improvements on stability.
-v<0.2.0>, <04/14/2022> -- Support mini-batch and sampling.
-v<0.2.0>, <04/23/2022> -- Unify the default device choice with robust check.
-v<0.2.0>, <04/23/2022> -- Add CoLA, ANEMONE, CONAD.
-
-

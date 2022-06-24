@@ -131,6 +131,39 @@ def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
 
 
 def load_data(name, cache_dir=None):
+    """
+    Data loading function. See `data repository
+    <https://github.com/pygod-team/data>`_ for supported datasets.
+    For injected/generated datasets, the labels meanings are as follows.
+
+    - 0: inlier
+    - 1: contextual outlier only
+    - 2: structural outlier only
+    - 3: both contextual outlier and structural outlier
+
+    Examples to convert the labels are as follows:
+    >>> y = data.y.bool()    # binary labels (inlier/outlier)
+    >>> yc = data.y >> 0 & 1 # contextual outliers
+    >>> ys = data.y >> 1 & 1 # structural outliers
+
+    Parameters
+    ----------
+    name : str
+        The name of the dataset.
+    cache_dir : str, optional
+        The directory for dataset caching.
+        Default: ``None``.
+
+    Returns
+    -------
+    data : torch_geometric.data.Data
+        The outlier dataset.
+
+    Examples
+    --------
+    >>> from pygod.utils import load_data
+    >>> data = load_data(name='weibo') # in PyG format
+    """
 
     if cache_dir is None:
         cache_dir = os.path.join(os.path.expanduser('~'), '.pygod/data')

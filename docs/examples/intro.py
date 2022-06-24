@@ -32,11 +32,22 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 
 
 import torch
-from pygod.generator import contextual, gen_structure_outliers
+from pygod.generator import gen_contextual_outliers, gen_structural_outliers
 
-data, ya = contextual(data, n=100, k=50)
-data, ys = gen_structure_outliers(data, m=10, n=10)
+data, ya = gen_contextual_outliers(data, n=100, k=50)
+data, ys = gen_structural_outliers(data, m=10, n=10)
 data.y = torch.logical_or(ys, ya).int()
+
+
+#######################################################################
+# **New feature for PyGOD 0.3.0: we now provide built-in datasets!**
+# See [data repository](https://github.com/pygod-team/data) for more
+# details.
+
+from pygod.utils import load_data
+
+data = load_data('inj_cora')
+data.y = data.y.bool()
 
 #######################################################################
 # Initialization

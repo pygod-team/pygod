@@ -4,7 +4,6 @@ import argparse
 import warnings
 from pygod.metrics import *
 from utils import init_model
-from torch_geometric import seed_everything
 
 
 def main(args):
@@ -47,16 +46,16 @@ if __name__ == '__main__':
     parser.add_argument("--model", type=str, default="dominant",
                         help="supported model: [lof, if, mlpae, scan, radar, "
                              "anomalous, gcnae, dominant, done, adone, "
-                             "anomalydae, gaan, guide, conad]")
+                             "anomalydae, gaan, guide, conad]. "
+                             "Default: dominant")
     parser.add_argument("--gpu", type=int, default=0,
                         help="GPU Index. Default: -1, using CPU.")
     parser.add_argument("--dataset", type=str, default='inj_cora',
                         help="supported dataset: [inj_cora, inj_amazon, "
-                             "inj_flickr, weibo, reddit]")
+                             "inj_flickr, weibo, reddit]. Default: inj_cora")
     args = parser.parse_args()
 
     # global setting
-    seed_everything(0)
     num_trial = 20
 
     main(args)
