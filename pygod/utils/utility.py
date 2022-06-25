@@ -141,11 +141,6 @@ def load_data(name, cache_dir=None):
     - 2: structural outlier only
     - 3: both contextual outlier and structural outlier
 
-    Examples to convert the labels are as follows:
-    >>> y = data.y.bool()    # binary labels (inlier/outlier)
-    >>> yc = data.y >> 0 & 1 # contextual outliers
-    >>> ys = data.y >> 1 & 1 # structural outliers
-
     Parameters
     ----------
     name : str
@@ -163,6 +158,9 @@ def load_data(name, cache_dir=None):
     --------
     >>> from pygod.utils import load_data
     >>> data = load_data(name='weibo') # in PyG format
+    >>> y = data.y.bool()    # binary labels (inlier/outlier)
+    >>> yc = data.y >> 0 & 1 # contextual outliers
+    >>> ys = data.y >> 1 & 1 # structural outliers
     """
 
     if cache_dir is None:
