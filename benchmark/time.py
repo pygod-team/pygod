@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from utils import init_model
 from pygod.metrics import eval_roc_auc
+from pygod.utils import load_data
 from torch_geometric.utils import remove_isolated_nodes
 
 
@@ -14,7 +15,7 @@ def main(args):
     for epoch in [10, 100, 200, 300, 400]:
         args.epoch = epoch
         model = init_model(args)
-        data = torch.load('data/gen_time.pt')
+        data = load_data(args.dataset)
 
         data.edge_index, _, mask = \
             remove_isolated_nodes(data.edge_index, num_nodes=data.num_nodes)
@@ -52,6 +53,9 @@ if __name__ == '__main__':
                              "Default: dominant")
     parser.add_argument("--gpu", type=int, default=0,
                         help="GPU Index. Default: -1, using CPU.")
+    parser.add_argument("--dataset", type=str, default='inj_cora',
+                        help="supported dataset: [inj_cora, inj_amazon, "
+                             "inj_flickr]. Default: inj_cora.")
     args = parser.parse_args()
 
     main(args)
