@@ -53,6 +53,9 @@ if __name__ == '__main__':
                              "Default: dominant")
     parser.add_argument("--gpu", type=int, default=0,
                         help="GPU Index. Default: -1, using CPU.")
+    parser.add_argument("--dataset", type=str, default='inj_cora',
+                        help="supported dataset: [inj_cora, inj_amazon, "
+                             "inj_flickr]. Default: inj_cora.")
     args = parser.parse_args()
 
     main(args)
