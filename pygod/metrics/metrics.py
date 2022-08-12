@@ -126,7 +126,7 @@ def eval_ndcg(labels, pred):
     Returns
     -------
     ndcg : float
-        Average precision score.
+        NDCG score.
     """
 
     labels = np.array(labels)
