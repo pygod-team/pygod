@@ -69,7 +69,7 @@ See examples below for detecting outliers with PyGOD in 5 lines!
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
-    outlier_scores = model.decision_scores # raw outlier scores on the input data
+    outlier_scores = model.decision_scores_ # raw outlier scores on the input data
 
     # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
@@ -141,7 +141,7 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-* **fit(X)**\ : Fit detector.
+* **fit(G)**\ : Fit detector.
 * **decision_function(G)**\ : Predict raw anomaly score of PyG data G using the fitted detector.
 
 Key Attributes of a fitted model:
