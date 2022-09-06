@@ -141,7 +141,7 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-* **fit(X)**\ : Fit detector.
+* **fit(G)**\ : Fit detector.
 * **decision_function(G)**\ : Predict raw anomaly score of PyG data G using the fitted detector.
 
 Key Attributes of a fitted model:

@@ -15,7 +15,7 @@ from torch_geometric.data import Data
 from pygod.utils.utility import check_parameter
 
 
-def gen_structural_outliers(data, m, n, random_state=None):
+def gen_structural_outliers(data, m, n, p=0, random_state=None):
     """Generating structural outliers according to paper
     "Deep Anomaly Detection on Attributed Networks"
     <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
@@ -32,6 +32,8 @@ def gen_structural_outliers(data, m, n, random_state=None):
         Number nodes in the outlier cliques.
     n : int
         Number of outlier cliques.
+    p : int, optional
+        Probability of edge drop in cliques. Default: ``0``.
     random_state : int, optional
         The seed to control the randomness, Default: ``None``.
 
@@ -75,11 +77,17 @@ def gen_structural_outliers(data, m, n, random_state=None):
                     new_edges.append(
                         torch.tensor([[node1, node2]], dtype=torch.long))
 
+    new_edges = torch.cat(new_edges)
+
+    # drop edges with probability p
+    if p != 0:
+        indices = torch.randperm(len(new_edges))[:int((1-p) * len(new_edges))]
+        new_edges = new_edges[indices]
+
     y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)
     y_outlier[outlier_idx] = 1
 
-    data.edge_index = torch.cat([data.edge_index, torch.cat(new_edges).T],
-                                dim=1)
+    data.edge_index = torch.cat([data.edge_index, new_edges.T], dim=1)
 
     return data, y_outlier
 

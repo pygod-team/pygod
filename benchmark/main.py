@@ -53,7 +53,8 @@ if __name__ == '__main__':
                         help="GPU Index. Default: -1, using CPU.")
     parser.add_argument("--dataset", type=str, default='inj_cora',
                         help="supported dataset: [inj_cora, inj_amazon, "
-                             "inj_flickr, weibo, reddit]. Default: inj_cora")
+                             "inj_flickr, weibo, reddit, disney, books, "
+                             "enron]. Default: inj_cora")
     args = parser.parse_args()
 
     # global setting

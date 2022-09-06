@@ -18,7 +18,7 @@ optional arguments:
                      conad]. Default: dominant
   --gpu GPU          GPU Index. Default: -1, using CPU.
   --dataset DATASET  supported dataset: [inj_cora, inj_amazon, inj_flickr,
-                     weibo, reddit]. Default: inj_cora
+                     weibo, reddit, disney, books, enron]. Default: inj_cora
 ```
 
 To obtain the result of different types of outliers, run:
@@ -50,7 +50,7 @@ optional arguments:
   --gpu GPU      GPU Index. Default: -1, using CPU.
 ```
 
-For the GPU memory consumption experiments, we use pytorch_memlab to measure the peak of the active bytes. See [pytorch_memlab](https://github.com/Stonesjtu/pytorch_memlab) for more details.
+For DGraph, we are not able to load the dataset automatically, because of the authors' restrictions. To reproduce the results, the dataset is publicly available [here](https://dgraph.xinye.com/dataset), and we detect the outliers on the whole graph and evaluate only on the test set. As for the GPU memory consumption experiments, we use pytorch_memlab to measure the peak of the active bytes. See [pytorch_memlab](https://github.com/Stonesjtu/pytorch_memlab) for more details.
 
 ## Citing us
 
