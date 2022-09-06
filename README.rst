@@ -72,7 +72,7 @@ See examples below for detecting outliers with PyGOD in 5 lines!
     outlier_scores = model.decision_scores_ # raw outlier scores on the input data
 
     # predict on the new data in the inductive setting
-    outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
+    outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data
 
 
 **Citing PyGOD**\ :
@@ -99,6 +99,15 @@ or::
 Installation
 ^^^^^^^^^^^^
 
+**Note on PyG and PyTorch Installation**\ :
+PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
+To streamline the installation, PyGOD does **NOT** install these libraries for you.
+Please install them from the above links for running PyGOD:
+
+* torch>=1.10
+* pytorch_geometric>=2.0.3
+* networkx>=2.6.3
+
 It is recommended to use **pip** or **conda** (wip) for installation.
 Please make sure **the latest version** is installed, as PyGOD is updated frequently:
 
@@ -123,15 +132,6 @@ Alternatively, you could clone and run setup.py file:
 * scipy>=1.5.2
 * setuptools>=50.3.1.post20201107
 
-
-**Note on PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
-To streamline the installation, PyGOD does **NOT** install these libraries for you.
-Please install them from the above links for running PyGOD:
-
-* torch>=1.10
-* pytorch_geometric>=2.0.3
-* networkx>=2.6.3
 
 ----
 
