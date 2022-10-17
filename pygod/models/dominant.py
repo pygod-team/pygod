@@ -33,8 +33,8 @@ class DOMINANT(BaseDetector):
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``0``.
     num_layers : int, optional
-        Total number of layers in model. A half (ceil) of the layers
-        are for the encoder, the other half (floor) of the layers are
+        Total number of layers in model. A half (floor) of the layers
+        are for the encoder, the other half (ceil) of the layers are
         for decoders. Default: ``4``.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
@@ -275,8 +275,8 @@ class DOMINANT_Base(nn.Module):
         super(DOMINANT_Base, self).__init__()
 
         # split the number of layers for the encoder and decoders
-        decoder_layers = int(num_layers / 2)
-        encoder_layers = num_layers - decoder_layers
+        encoder_layers = int(num_layers / 2)
+        decoder_layers = num_layers - encoder_layers
 
         self.shared_encoder = GCN(in_channels=in_dim,
                                   hidden_channels=hid_dim,

@@ -77,19 +77,25 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 
 **Citing PyGOD**\ :
 
-Our `PyGOD benchmark paper <https://arxiv.org/abs/2206.10071>`_ is available on arxiv.
-If you use PyGOD in a scientific publication, we would appreciate
-citations to the following paper::
+Our `software paper <https://arxiv.org/abs/2204.12095>`_ and `benchmark paper <https://arxiv.org/abs/2206.10071>`_ are available on arxiv.
+If you use PyGOD in a scientific publication, we would appreciate citations to the following papers::
 
-    @article{liu2022benchmarking,
+    @article{liu2022pygod,
+      title={PyGOD: A Python Library for Graph Outlier Detection},
+      author={Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      journal={arXiv preprint arXiv:2204.12095},
+      year={2022}
+    }
+    @article{liu2022bond,
       author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-      title   = {Benchmarking Node Outlier Detection on Graphs},
+      title   = {BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs},
       journal = {arXiv preprint arXiv:2206.10071},
       year    = {2022},
     }
 
 or::
 
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K. and Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
     Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2206.10071.
 
 
