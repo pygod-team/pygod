@@ -59,7 +59,7 @@ Our [paper](https://arxiv.org/abs/2206.10071) is available on arxiv. If you use 
 ```
 @article{liu2022benchmarking,
   author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-  title   = {Benchmarking Node Outlier Detection on Graphs},
+  title   = {BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs},
   journal = {arXiv preprint arXiv:2206.10071},
   year    = {2022},
 }
@@ -68,5 +68,5 @@ Our [paper](https://arxiv.org/abs/2206.10071) is available on arxiv. If you use 
 or:
 
 ```
-Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Benchmarking Node Outlier Detection on Graphs. arXiv preprint arXiv:2206.10071.
+Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs. arXiv preprint arXiv:2206.10071.
 ```
