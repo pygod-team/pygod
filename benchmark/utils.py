@@ -9,7 +9,7 @@ def init_model(args):
     lr = [0.1, 0.05, 0.01]
     weight_decay = 0.01
 
-    if args.dataset == 'inj_flickr':
+    if args.dataset == 'inj_flickr' or args.dataset == 'dgraph':
         # sampling and minibatch training on large dataset flickr
         batch_size = 64
         num_neigh = 3
@@ -28,10 +28,12 @@ def init_model(args):
     if args.dataset == 'reddit':
         # for the low feature dimension dataset
         hid_dim = [32, 48, 64]
+    elif args.dataset in ['enron', 'disney', 'dgraph', 'books']:
+        hid_dim = [8, 12, 16]
     else:
         hid_dim = [32, 64, 128, 256]
 
-    if args.dataset[:3] == 'inj':
+    if args.dataset[:3] == 'inj' or args.dataset[:3] == 'gen':
         # auto balancing on injected dataset
         alpha = [None]
     else:
