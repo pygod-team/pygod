@@ -57,7 +57,7 @@ For DGraph, we are not able to load the dataset automatically, because of the au
 Our [paper](https://arxiv.org/abs/2206.10071) is available on arxiv. If you use PyGOD in a scientific publication, we would appreciate citations to the following paper:
 
 ```
-@article{liu2022benchmarking,
+@article{liu2022bond,
   author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
   title   = {BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs},
   journal = {arXiv preprint arXiv:2206.10071},
