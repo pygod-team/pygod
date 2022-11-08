@@ -1,6 +1,6 @@
 # PyGOD Benchmark
 
-Official implementation of paper [Benchmarking Node Outlier Detection on Graphs](https://arxiv.org/abs/2206.10071). Our data is publicly available in the [data repository](https://github.com/pygod-team/data). **Please star, watch, and fork us for the active updates!**
+Official implementation of paper [BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs](https://arxiv.org/abs/2206.10071). Our datasets are publicly available in the [data repository](https://github.com/pygod-team/data). **Please star, watch, and fork us for the active updates!**
 
 ## Usage
 
