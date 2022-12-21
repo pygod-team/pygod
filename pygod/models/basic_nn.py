@@ -205,6 +205,9 @@ class GCN(torch.nn.Module):
         else:
             self.out_channels = hidden_channels
 
+        assert self.num_layers > 0
+        assert self.num_layers >= 2 or out_channels is None
+
         self.convs = ModuleList()
         self.convs.append(
             self.init_conv(in_channels, hidden_channels, **kwargs))
@@ -215,7 +218,7 @@ class GCN(torch.nn.Module):
             self._is_conv_to_out = True
             self.convs.append(
                 self.init_conv(hidden_channels, out_channels, **kwargs))
-        else:
+        elif self.num_layers > 1:
             self.convs.append(
                 self.init_conv(hidden_channels, hidden_channels, **kwargs))
 
