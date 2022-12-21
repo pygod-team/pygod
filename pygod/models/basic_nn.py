@@ -206,7 +206,6 @@ class GCN(torch.nn.Module):
             self.out_channels = hidden_channels
 
         assert self.num_layers > 0
-        assert self.num_layers >= 2 or out_channels is None
 
         self.convs = ModuleList()
         self.convs.append(
