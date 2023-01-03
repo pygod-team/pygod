@@ -127,7 +127,7 @@ class BaseDetector(object):
 
         check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
         pred_score = self.decision_function(G)
-        prediction = (pred_score > self.threshold_).astype('int').ravel()
+        prediction = (pred_score > self.threshold_).astype(int).ravel()
 
         if return_confidence:
             confidence = self.predict_confidence(G)
