@@ -127,7 +127,7 @@ class BaseDetector(object):
 
         check_is_fitted(self, ['decision_scores_', 'threshold_', 'labels_'])
         pred_score = self.decision_function(G)
-        prediction = (pred_score > self.threshold_).astype('int').ravel()
+        prediction = (pred_score > self.threshold_).astype(int).ravel()
 
         if return_confidence:
             confidence = self.predict_confidence(G)
@@ -238,7 +238,7 @@ class BaseDetector(object):
 
         # Transform the outlier probability into a confidence value
         confidence = np.vectorize(
-            lambda p: 1 - binom.cdf(n - np.int(n * self.contamination), n, p))(
+            lambda p: 1 - binom.cdf(n - int(n * self.contamination), n, p))(
             posterior_prob)
         prediction = (test_scores > self.threshold_).astype('int').ravel()
         np.place(confidence, prediction == 0, 1 - confidence[prediction == 0])
