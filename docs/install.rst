@@ -21,7 +21,7 @@ Alternatively, you could clone and run setup.py file:
 
 **Required Dependencies**\ :
 
-* Python 3.6 +
+* Python 3.7+
 * numpy>=1.19.4
 * scikit-learn>=0.22.1
 * scipy>=1.5.2
