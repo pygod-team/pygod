@@ -310,6 +310,7 @@ class Vanilla_GCN(torch.nn.Module):
 
         return self.act(out)
 
+
 class SAGE(torch.nn.Module):
     """"
     Part of the code from the SAGE example in PyG

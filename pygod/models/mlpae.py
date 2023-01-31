@@ -5,19 +5,13 @@
 # License: BSD 2 clause
 
 import torch
-import numpy as np
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from sklearn.utils.validation import check_is_fitted
 
-from . import BaseDetector
-from .basic_nn import MLP
-from ..utils import validate_device
-from ..metrics import eval_roc_auc
-from ..utils.dataset import PlainDataset
+from . import DeepDetector
+from torch_geometric.nn import MLP
 
 
-class MLPAE(BaseDetector):
+class MLPAE(DeepDetector):
     """
     Vanila Multilayer Perceptron Autoencoder.
 
@@ -59,7 +53,9 @@ class MLPAE(BaseDetector):
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)
     """
+
     def __init__(self,
+                 in_dim=None,
                  hid_dim=64,
                  num_layers=4,
                  dropout=0.3,
@@ -70,117 +66,116 @@ class MLPAE(BaseDetector):
                  epoch=5,
                  gpu=0,
                  batch_size=0,
-                 verbose=False):
-        super(MLPAE, self).__init__(contamination=contamination)
+                 num_neigh=0,
+                 verbose=False,
+                 **kwargs):
 
-        # model param
-        self.hid_dim = hid_dim
-        self.num_layers = num_layers
-        self.dropout = dropout
-        self.weight_decay = weight_decay
-        self.act = act
+        super(MLPAE, self).__init__(in_dim=in_dim,
+                                    hid_dim=hid_dim,
+                                    num_layers=num_layers,
+                                    dropout=dropout,
+                                    weight_decay=weight_decay,
+                                    act=act,
+                                    contamination=contamination,
+                                    lr=lr,
+                                    epoch=epoch,
+                                    gpu=gpu,
+                                    batch_size=batch_size,
+                                    num_neigh=num_neigh,
+                                    verbose=verbose,
+                                    **kwargs)
 
-        # training param
-        self.lr = lr
-        self.epoch = epoch
-        self.device = validate_device(gpu)
-        self.batch_size = batch_size
+    # def fit(self, G, y_true=None):
+    #     """
+    #     Fit detector with input data.
+    #
+    #     Parameters
+    #     ----------
+    #     G : torch_geometric.data.Data
+    #         The input data.
+    #     y_true : numpy.ndarray, optional
+    #         The optional outlier ground truth labels used to monitor
+    #         the training progress. They are not used to optimize the
+    #         unsupervised model. Default: ``None``.
+    #
+    #     Returns
+    #     -------
+    #     self : object
+    #         Fitted estimator.
+    #     """
+    #     full_x = self.process_graph(G)
+    #     dataset = PlainDataset(full_x)
+    #     if self.batch_size == 0:
+    #         self.batch_size = G.x.shape[0]
+    #     loader = DataLoader(dataset, batch_size=self.batch_size)
+    #
+    #     self.model = MLP(in_channels=G.x.shape[1],
+    #                      hidden_channels=self.hid_dim,
+    #                      out_channels=G.x.shape[1],
+    #                      num_layers=self.num_layers,
+    #                      dropout=self.dropout,
+    #                      act=self.act).to(self.device)
+    #
+    #     optimizer = torch.optim.Adam(self.model.parameters(),
+    #                                  lr=self.lr,
+    #                                  weight_decay=self.weight_decay)
+    #
+    #     self.model.train()
+    #     decision_scores = np.zeros(full_x.shape[0])
+    #     for epoch in range(self.epoch):
+    #         epoch_loss = 0
+    #         for x, node_idx in loader:
+    #             x_ = self.model(x)
+    #             score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+    #             decision_scores[node_idx] = score.detach().cpu().numpy()
+    #             loss = torch.mean(score)
+    #             epoch_loss += loss.item() * x.shape[0]
+    #
+    #             optimizer.zero_grad()
+    #             loss.backward()
+    #             optimizer.step()
+    #
+    #         if self.verbose:
+    #             print("Epoch {:04d}: Loss {:.4f}"
+    #                   .format(epoch, epoch_loss / G.x.shape[0]), end='')
+    #             if y_true is not None:
+    #                 auc = eval_roc_auc(y_true, decision_scores)
+    #                 print(" | AUC {:.4f}".format(auc), end='')
+    #             print()
+    #
+    #     self.decision_scores_ = decision_scores
+    #     self._process_decision_scores()
+    #     return self
+    #
+    # def decision_function(self, G):
+    #     """
+    #     Predict raw anomaly score using the fitted detector. Outliers
+    #     are assigned with larger anomaly scores.
+    #
+    #     Parameters
+    #     ----------
+    #     G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+    #         The input data.
+    #
+    #     Returns
+    #     -------
+    #     outlier_scores : numpy.ndarray
+    #         The anomaly score of shape :math:`N`.
+    #     """
+    #     check_is_fitted(self, ['model'])
+    #     full_x = self.process_graph(G)
+    #     dataset = PlainDataset(full_x)
+    #     loader = DataLoader(dataset, batch_size=self.batch_size)
+    #
+    #     self.model.eval()
+    #     outlier_scores = np.zeros(full_x.shape[0])
+    #     for x, node_idx in loader:
+    #         x_ = self.model(x)
+    #         score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
+    #         outlier_scores[node_idx] = score.detach().cpu().numpy()
+    #     return outlier_scores
 
-        # other param
-        self.verbose = verbose
-        self.model = None
-
-    def fit(self, G, y_true=None):
-        """
-        Fit detector with input data.
-
-        Parameters
-        ----------
-        G : torch_geometric.data.Data
-            The input data.
-        y_true : numpy.ndarray, optional
-            The optional outlier ground truth labels used to monitor
-            the training progress. They are not used to optimize the
-            unsupervised model. Default: ``None``.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        full_x = self.process_graph(G)
-        dataset = PlainDataset(full_x)
-        if self.batch_size == 0:
-            self.batch_size = G.x.shape[0]
-        loader = DataLoader(dataset, batch_size=self.batch_size)
-
-        self.model = MLP(in_channels=G.x.shape[1],
-                         hidden_channels=self.hid_dim,
-                         out_channels=G.x.shape[1],
-                         num_layers=self.num_layers,
-                         dropout=self.dropout,
-                         act=self.act).to(self.device)
-
-        optimizer = torch.optim.Adam(self.model.parameters(),
-                                     lr=self.lr,
-                                     weight_decay=self.weight_decay)
-
-        self.model.train()
-        decision_scores = np.zeros(full_x.shape[0])
-        for epoch in range(self.epoch):
-            epoch_loss = 0
-            for x, node_idx in loader:
-                x_ = self.model(x)
-                score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-                decision_scores[node_idx] = score.detach().cpu().numpy()
-                loss = torch.mean(score)
-                epoch_loss += loss.item() * x.shape[0]
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            if self.verbose:
-                print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
-                if y_true is not None:
-                    auc = eval_roc_auc(y_true, decision_scores)
-                    print(" | AUC {:.4f}".format(auc), end='')
-                print()
-
-        self.decision_scores_ = decision_scores
-        self._process_decision_scores()
-        return self
-
-    def decision_function(self, G):
-        """
-        Predict raw anomaly score using the fitted detector. Outliers
-        are assigned with larger anomaly scores.
-
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        outlier_scores : numpy.ndarray
-            The anomaly score of shape :math:`N`.
-        """
-        check_is_fitted(self, ['model'])
-        full_x = self.process_graph(G)
-        dataset = PlainDataset(full_x)
-        loader = DataLoader(dataset, batch_size=self.batch_size)
-
-        self.model.eval()
-        outlier_scores = np.zeros(full_x.shape[0])
-        for x, node_idx in loader:
-            x_ = self.model(x)
-            score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-            outlier_scores[node_idx] = score.detach().cpu().numpy()
-        return outlier_scores
-
-    def process_graph(self, G):
+    def _process_graph(self, G):
         """
         Process the raw PyG data object into a tuple of sub data
         objects needed for the model.
@@ -189,11 +184,28 @@ class MLPAE(BaseDetector):
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
-
-        Returns
-        -------
-        x : torch.Tensor
-            Attribute (feature) of nodes.
         """
-        x = G.x.to(self.device)
-        return x
+        pass
+
+    def _init_nn(self, **kwargs):
+        self.model = MLP(in_channels=self.in_dim,
+                         hidden_channels=self.hid_dim,
+                         out_channels=self.in_dim,
+                         num_layers=self.num_layers,
+                         dropout=self.dropout,
+                         act=self.act,
+                         **kwargs).to(self.device)
+
+    def _forward_nn(self, data):
+        batch_size = data.batch_size
+
+        x = data.x.to(self.device)
+
+        x_ = self.model(x)
+        scores = torch.mean(F.mse_loss(x[:batch_size],
+                                       x_[:batch_size],
+                                       reduction='none'), dim=1)
+
+        loss = torch.mean(scores)
+
+        return loss, scores.detach().cpu().numpy()

@@ -1,4 +1,5 @@
 from .base import BaseDetector
+from .base import DeepDetector
 from .adone import AdONE
 from .anomalydae import AnomalyDAE
 from .dominant import DOMINANT
@@ -16,3 +17,7 @@ from .radar import Radar
 from .anomalous import ANOMALOUS
 from .scan import SCAN
 from .dominant_scale import DOMINANT_S
+
+__all__ = ['AdONE', 'AnomalyDAE', 'DOMINANT', 'DONE', 'GAAN', 'GCNAE',
+           'GUIDE', 'MLPAE', 'OCGNN', 'ONE', 'CONAD', 'CoLA', 'SCAN',
+           'Radar', 'ANOMALOUS', 'ANEMONE', 'DOMINANT_S']

@@ -8,12 +8,15 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+from importlib import import_module
+
 import requests
 import warnings
 import torch
-import numpy as np
 import numbers
 import shutil
+
+from ..metrics import *
 
 MAX_INT = np.iinfo(np.int32).max
 MIN_INT = -1 * MAX_INT
@@ -184,3 +187,47 @@ def load_data(name, cache_dir=None):
         shutil.unpack_archive(zip_path, cache_dir)
         data = torch.load(file_path)
     return data
+
+
+def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
+    if verbose > 0:
+        if train:
+            print("Epoch {:04d}: ".format(epoch), end='')
+        else:
+            print("Test: ", end='')
+
+        print("Loss {:.4f}".format(loss), end='')
+
+        if verbose > 1:
+            if target is not None:
+                auc = eval_roc_auc(target, pred)
+                print(" | AUC {:.4f}".format(auc), end='')
+
+            if verbose > 2:
+                if target is not None:
+                    pos_size = target.nonzero().size(0)
+                    rec = eval_recall_at_k(target, pred, pos_size)
+                    pre = eval_precision_at_k(target, pred, pos_size)
+                    ap = eval_average_precision(target, pred)
+                    ndcg = eval_ndcg(target, pred)
+
+                    print(" | Recall {:.4f} | Precision {:.4f} "
+                          "| AP {:.4f} | NDCG {:.4f}"
+                          .format(rec, pre, ap, ndcg), end='')
+
+            if time is not None:
+                print(" | Time {:.2f}".format(time), end='')
+
+        print()
+
+
+def init_model(name, **kwargs):
+    module = import_module('pygod.models')
+    assert name in module.__all__, "Model {} not found".format(name)
+    return getattr(module, name)(**kwargs)
+
+
+def init_nn(name, **kwargs):
+    module = import_module('pygod.nn')
+    assert name in module.__all__, "Model {} not found".format(name)
+    return getattr(module, name)(**kwargs)

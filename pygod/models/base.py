@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Base class for all outlier detector models
-"""
-# Author: Yue Zhao <zhaoy@cmu.edu>
+"""Base classes for all outlier detector"""
+# Author: Yue Zhao <zhaoy@cmu.edu>, Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
 import warnings
@@ -9,13 +8,18 @@ from collections import defaultdict
 
 from inspect import signature
 
+import time
+import torch
 import numpy as np
 from numpy import percentile
 from scipy.special import erf
 from scipy.stats import binom
+from abc import ABC, abstractmethod
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
+from torch_geometric.loader import NeighborLoader
+
+from ..utils import logger, validate_device
 
 
 class BaseDetector(object):
@@ -56,13 +60,17 @@ class BaseDetector(object):
         self.contamination = contamination
         self.decision_scores_ = None
 
-    def fit(self, G):
-        """Fit detector. y is ignored in unsupervised methods.
+    def fit(self, G, y_true=None):
+        """Fit detector.
 
         Parameters
         ----------
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input graph.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
 
         Returns
         -------
@@ -72,8 +80,8 @@ class BaseDetector(object):
         pass
 
     def decision_function(self, G):
-        """Predict raw anomaly scores of PyG Graph G using the fitted detector.
-        The anomaly score of an input sample is computed based on the fitted
+        """Predict raw outlier scores of PyG Graph G using the fitted detector.
+        The outlier score of an input sample is computed based on the fitted
         detector. For consistency, outliers are assigned with
         higher anomaly scores.
 
@@ -84,8 +92,8 @@ class BaseDetector(object):
 
         Returns
         -------
-        anomaly_scores : numpy array of shape (n_samples,)
-            The anomaly score of The input graph..
+        outlier_scores : numpy.ndarray
+            The outlier score of shape :math:`N`.
         """
         pass
 
@@ -245,27 +253,6 @@ class BaseDetector(object):
 
         return confidence
 
-    def _set_n_classes(self, y):
-        """Set the number of classes if `y` is presented, which is not
-        expected. It could be useful for multi-class outlier detection.
-
-        Parameters
-        ----------
-        y : numpy array of shape (n_samples,)
-            Ground truth.
-        Returns
-        -------
-        self
-        """
-
-        self._classes = 2  # default as binary classification
-        if y is not None:
-            check_classification_targets(y)
-            self._classes = len(np.unique(y))
-            warnings.warn(
-                "y should not be presented in unsupervised learning.")
-        return self
-
     def _process_decision_scores(self):
         """Internal function to calculate key attributes:
         - threshold_: used to decide the binary label
@@ -410,7 +397,6 @@ class BaseDetector(object):
 
 
 def _pprint(params, offset=0, printer=repr):
-    # noinspection PyPep8
     """Pretty print the dictionary 'params'
     See https://scikit-learn.org/stable/modules/generated/sklearn.base
     .BaseEstimator.html
@@ -457,3 +443,213 @@ def _pprint(params, offset=0, printer=repr):
     # Strip trailing space to avoid nightmare in doctests
     lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
     return lines
+
+
+class DeepDetector(BaseDetector, ABC):
+    """
+    Abstract class for deep outlier detection algorithms.
+
+    Parameters
+    ----------
+    hid_dim :  int, optional
+        Hidden dimension of model. Default: ``0``.
+    num_layers : int, optional
+        Total number of layers in model. A half (floor) of the layers
+        are for the encoder, the other half (ceil) of the layers are
+        for decoders. Default: ``4``.
+    dropout : float, optional
+        Dropout rate. Default: ``0.``.
+    weight_decay : float, optional
+        Weight decay (L2 penalty). Default: ``0.``.
+    act : callable activation function or None, optional
+        Activation function if not None.
+        Default: ``torch.nn.functional.relu``.
+    contamination : float, optional
+        Valid in (0., 0.5). The proportion of outliers in the data set.
+        Used when fitting to define the threshold on the decision
+        function. Default: ``0.1``.
+    lr : float, optional
+        Learning rate. Default: ``0.004``.
+    epoch : int, optional
+        Maximum number of training epoch. Default: ``5``.
+    gpu : int
+        GPU Index, -1 for using CPU. Default: ``0``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
+    verbose : bool
+        Verbosity mode. Turn on to print out log information.
+        Default: ``False``.
+    """
+
+    def __init__(self,
+                 in_dim=None,
+                 hid_dim=64,
+                 num_layers=4,
+                 dropout=0.3,
+                 weight_decay=0.,
+                 act=torch.relu,
+                 contamination=0.1,
+                 lr=5e-3,
+                 epoch=5,
+                 gpu=-1,
+                 batch_size=0,
+                 num_neigh=-1,
+                 verbose=False,
+                 **kwargs):
+        super(DeepDetector, self).__init__(contamination=contamination)
+
+        # model param
+        self.in_dim = in_dim
+        self.hid_dim = hid_dim
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.weight_decay = weight_decay
+        self.act = act
+
+        # training param
+        self.lr = lr
+        self.epoch = epoch
+        self.device = validate_device(gpu)
+        self.batch_size = batch_size
+        if type(num_neigh) is int:
+            self.num_neigh = [num_neigh] * self.num_layers
+        elif type(num_neigh) is list:
+            if len(num_neigh) != self.num_layers:
+                raise ValueError('Number of neighbors should have the '
+                                 'same length as hidden layers dimension or'
+                                 'the number of layers.')
+            self.num_neigh = num_neigh
+        else:
+            raise ValueError('Number of neighbors must be int or list of int')
+
+        # other param
+        self.verbose = verbose
+        self.model = None
+        self.is_fitted = False
+        self.kwargs = kwargs
+
+    def fit(self, G, y_true=None):
+        """
+        Fit detector with input data.
+
+        Parameters
+        ----------
+        G : torch_geometric.data.Data
+            The input data.
+        y_true : numpy.ndarray, optional
+            The optional outlier ground truth labels used to monitor
+            the training progress. They are not used to optimize the
+            unsupervised model. Default: ``None``.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        if self.in_dim is None:
+            self.in_dim = G.x.shape[1]
+        self._process_graph(G)
+        G.node_idx = torch.arange(G.x.shape[0])
+        if self.batch_size == 0:
+            self.batch_size = G.x.shape[0]
+        loader = NeighborLoader(G,
+                                self.num_neigh,
+                                batch_size=self.batch_size)
+
+        self._init_nn(**self.kwargs)
+        optimizer = torch.optim.Adam(self.model.parameters(),
+                                     lr=self.lr,
+                                     weight_decay=self.weight_decay)
+
+        self.model.train()
+        self.decision_scores_ = np.zeros(G.x.shape[0])
+        for epoch in range(self.epoch):
+            start_time = time.time()
+            epoch_loss = 0
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.node_idx
+
+                loss, scores = self._forward_nn(sampled_data)
+                epoch_loss += loss.item() * batch_size
+                self.decision_scores_[node_idx[:batch_size]] = scores
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+            logger(epoch=epoch,
+                   loss=epoch_loss / G.x.shape[0],
+                   pred=self.decision_scores_,
+                   target=y_true,
+                   time=time.time() - start_time,
+                   verbose=self.verbose,
+                   train=True)
+
+        self._process_decision_scores()
+        self.is_fitted = True
+        return self
+
+    def decision_function(self, G):
+        """
+        Predict raw anomaly score using the fitted detector. Outliers
+        are assigned with larger anomaly scores.
+
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
+
+        Returns
+        -------
+        outlier_scores : numpy.ndarray
+            The anomaly score of shape :math:`N`.
+        """
+        assert self.is_fitted, 'Detector is not fitted yet.'
+        self._process_graph(G)
+        loader = NeighborLoader(G,
+                                self.num_neigh,
+                                batch_size=self.batch_size)
+
+        self.model.eval()
+        outlier_scores = np.zeros(G.x.shape[0])
+        for sampled_data in loader:
+            loss, score = self._forward_nn(sampled_data)
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.node_idx
+
+            outlier_scores[node_idx[:batch_size]] = score
+        return outlier_scores
+
+    @abstractmethod
+    def _init_nn(self):
+        pass
+
+    @abstractmethod
+    def _forward_nn(self, G):
+        pass
+
+    @abstractmethod
+    def _process_graph(self, G):
+        """
+        Process the raw PyG data object into a tuple of sub data
+        objects needed for the model.
+
+        Parameters
+        ----------
+        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
+            The input data.
+
+        Returns
+        -------
+        x : torch.Tensor
+            Attribute (feature) of nodes.
+        s : torch.Tensor
+            Adjacency matrix of the graph.
+        edge_index : torch.Tensor
+            Edge list of the graph.
+        """
+        pass

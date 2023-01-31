@@ -50,7 +50,7 @@ This exciting yet challenging field has many key applications, e.g., detecting
 suspicious activities in social networks :cite:`dou2020enhancing`  and security systems :cite:`cai2021structural`.
 
 PyGOD includes more than **10** latest graph-based detection algorithms,
-such as Dominant (SDM'19) and GUIDE (BigData'21).
+such as DOMINANT (SDM'19) and GUIDE (BigData'21).
 For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting anomalies with PyGOD in 5 lines!
