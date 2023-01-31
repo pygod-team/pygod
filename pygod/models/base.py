@@ -451,6 +451,7 @@ class DeepDetector(BaseDetector, ABC):
 
     Parameters
     ----------
+    TODO: update the docstring
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``0``.
     num_layers : int, optional
@@ -479,6 +480,10 @@ class DeepDetector(BaseDetector, ABC):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
+    scalable : bool, optional
+        Whether using the scalable version of the model
+        TODO: add more info about the scalable version
+        Default: ``False``.
     verbose : bool
         Verbosity mode. Turn on to print out log information.
         Default: ``False``.
@@ -497,6 +502,7 @@ class DeepDetector(BaseDetector, ABC):
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
+                 scalable = False,
                  verbose=False,
                  **kwargs):
         super(DeepDetector, self).__init__(contamination=contamination)
@@ -508,6 +514,7 @@ class DeepDetector(BaseDetector, ABC):
         self.dropout = dropout
         self.weight_decay = weight_decay
         self.act = act
+        self.scalable = scalable
 
         # training param
         self.lr = lr
@@ -572,7 +579,6 @@ class DeepDetector(BaseDetector, ABC):
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-
                 loss, scores = self._forward_nn(sampled_data)
                 epoch_loss += loss.item() * batch_size
                 self.decision_scores_[node_idx[:batch_size]] = scores

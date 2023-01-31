@@ -16,8 +16,7 @@ from .anemone import ANEMONE
 from .radar import Radar
 from .anomalous import ANOMALOUS
 from .scan import SCAN
-from .dominant_scale import DOMINANT_S
 
 __all__ = ['AdONE', 'AnomalyDAE', 'DOMINANT', 'DONE', 'GAAN', 'GCNAE',
            'GUIDE', 'MLPAE', 'OCGNN', 'ONE', 'CONAD', 'CoLA', 'SCAN',
-           'Radar', 'ANOMALOUS', 'ANEMONE', 'DOMINANT_S']
+           'Radar', 'ANOMALOUS', 'ANEMONE']

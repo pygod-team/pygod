@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GCN
+from torch_geometric.nn import GCN, GraphSAGE
 
 from .functional import double_mse_loss
 
@@ -19,6 +19,7 @@ class DOMINANTBase(nn.Module):
 
        Parameters
        ----------
+       TODO: update the docstring here
        hid_dim :  int, optional
            Hidden dimension of model. Default: ``0``.
        num_layers : int, optional
@@ -61,16 +62,19 @@ class DOMINANTBase(nn.Module):
                  dropout,
                  act,
                  sigmoid_s=False,
+                 scalable=False,
                  **kwargs):
         super(DOMINANTBase, self).__init__()
 
         self.sigmoid_s = sigmoid_s
+        self.scalable = scalable
 
         # split the number of layers for the encoder and decoders
         assert num_layers >= 2, \
             "Number of layers must be greater than or equal to 2."
         encoder_layers = math.floor(num_layers / 2)
         decoder_layers = math.ceil(num_layers / 2)
+
 
         self.shared_encoder = GCN(in_channels=in_dim,
                                   hidden_channels=hid_dim,
@@ -103,10 +107,16 @@ class DOMINANTBase(nn.Module):
         h = self.shared_encoder(x, edge_index)
         # decode feature matrix
         x_ = self.attr_decoder(h, edge_index)
-        # decode adjacency matrix
-        h_ = self.struct_decoder(h, edge_index)
-        s_ = h_ @ h_.T
-        # return reconstructed matrices
-        if self.sigmoid_s:
-            s_ = torch.sigmoid(s_)
+
+        if not self.scalable:
+            # decode adjacency matrix, which is used by the vanilla DOMINANT
+            h_ = self.struct_decoder(h, edge_index)
+            s_ = h_ @ h_.T
+            # return reconstructed matrices
+            if self.sigmoid_s:
+                s_ = torch.sigmoid(s_)
+        else:
+            # decode the center node structural embedding, which is more scalable
+            s_ = self.struct_decoder(h, edge_index)
+
         return x_, s_

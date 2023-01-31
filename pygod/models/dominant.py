@@ -4,11 +4,13 @@
 # License: BSD 2 clause
 
 import time
+import copy as cp
 import torch
 import numpy as np
 import torch.nn.functional as F
 from torch_geometric.utils import to_dense_adj
 from torch_geometric.loader import NeighborLoader
+from torch_geometric.transforms import AddLaplacianEigenvectorPE, AddRandomWalkPE
 from sklearn.utils.validation import check_is_fitted
 
 from .base import DeepDetector
@@ -242,8 +244,9 @@ class DOMINANT(DeepDetector):
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
-                 verbose=False,
                  weight=0.5,
+                 scalable=False,
+                 verbose=False,
                  **kwargs):
         self.weight = weight
         super(DOMINANT, self).__init__(in_dim=in_dim,
@@ -258,6 +261,7 @@ class DOMINANT(DeepDetector):
                                        gpu=gpu,
                                        batch_size=batch_size,
                                        num_neigh=num_neigh,
+                                       scalable=scalable,
                                        verbose=verbose,
                                        **kwargs)
 
@@ -271,7 +275,16 @@ class DOMINANT(DeepDetector):
         G : PyTorch Geometric Data instance (torch_geometric.data.Data)
             The input data.
         """
-        G.s = to_dense_adj(G.edge_index)[0]
+
+        if not self.scalable:
+            G.s = to_dense_adj(G.edge_index)[0]
+        else:
+            #TODO: the current performance is not optimal
+            # Try to reduce the output dimension
+            transform = AddLaplacianEigenvectorPE(k=self.in_dim)
+            # transform = AddRandomWalkPE(walk_length=self.in_dim)
+            out = transform(cp.copy(G))
+            G.s = out.laplacian_eigenvector_pe
 
     def _init_nn(self, **kwargs):
         self.model = DOMINANTBase(in_dim=self.in_dim,
@@ -279,22 +292,33 @@ class DOMINANT(DeepDetector):
                                   num_layers=self.num_layers,
                                   dropout=self.dropout,
                                   act=self.act,
+                                  scalable=self.scalable,
                                   **kwargs).to(self.device)
 
     def _forward_nn(self, data):
         batch_size = data.batch_size
+        node_idx = data.node_idx
 
+        #TODO: the current version is not fully scalable
+        # need to replace GCN with GraphSAGE
+        # for the de facto mini-batch aggregation
         x = data.x.to(self.device)
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
         x_, s_ = self.model(x, edge_index)
-        scores = self.model.loss_func(x[:batch_size],
-                                      x_[:batch_size],
-                                      s[:batch_size],
-                                      s_[:batch_size],
-                                      self.weight)
-
+        if not self.scalable:
+            scores = self.model.loss_func(x[:batch_size],
+                                          x_[:batch_size],
+                                          s[:batch_size, node_idx],
+                                          s_[:batch_size],
+                                          self.weight)
+        else:
+            scores = self.model.loss_func(x[:batch_size],
+                                          x_[:batch_size],
+                                          s[:batch_size],
+                                          s_[:batch_size],
+                                          self.weight)
         loss = torch.mean(scores)
 
         return loss, scores.detach().cpu().numpy()

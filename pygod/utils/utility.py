@@ -199,6 +199,7 @@ def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
         print("Loss {:.4f}".format(loss), end='')
 
         if verbose > 1:
+            #TODO: verbose usage is inconsistent with its type
             if target is not None:
                 auc = eval_roc_auc(target, pred)
                 print(" | AUC {:.4f}".format(auc), end='')
