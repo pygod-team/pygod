@@ -151,9 +151,9 @@ Metric               eval_precision_at_k      Calculating Precision@k           
 Metric               eval_recall_at_k         Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_recall_at_k>`_
 Metric               eval_roc_auc             Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_roc_auc>`_
 Metric               eval_average_precision   Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_average_precision>`_
-Metric               eval_ndcg                Calculating NDCG                    `eval_ndcg <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_ndcg>`_
-Generator            gen_structural_outliers  Generating structural outliers      `gen_structural_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_attribute_outlierss>`_
-Generator            gen_contextual_outliers  Generating attribute outliers       `gen_contextual_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_contextual_outliers>`_
+Metric               eval_f1                  Calculating F1 score                `eval_f1 <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_f1>`_
+Generator            gen_structural_outliers  Generating structural outliers      `gen_structural_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_structural_outlierss>`_
+Generator            gen_contextual_outliers  Generating contextual outliers      `gen_contextual_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_contextual_outliers>`_
 Loader               load_data                Loading PyGOD built-in datasets     `load_data <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.load_data>`_
 ===================  =======================  ==================================  ======================================================================================================================================
 

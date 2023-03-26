@@ -75,7 +75,6 @@ class DOMINANTBase(nn.Module):
         encoder_layers = math.floor(num_layers / 2)
         decoder_layers = math.ceil(num_layers / 2)
 
-
         self.shared_encoder = GCN(in_channels=in_dim,
                                   hidden_channels=hid_dim,
                                   num_layers=encoder_layers,

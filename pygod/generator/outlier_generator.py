@@ -3,26 +3,22 @@
 This file including functions to generate different types of outliers given
 the input dataset for benchmarking
 """
-# Author: Yingtong Dou <ytongdou@gmail.com>
+# Author: Yingtong Dou <ytongdou@gmail.com>, Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
-import math
-import random
 
-import numpy as np
 import torch
 from torch_geometric.data import Data
 
-from pygod.utils.utility import check_parameter
+from ..utils.utility import check_parameter
 
 
-def gen_structural_outliers(data, m, n, p=0, random_state=None):
-    """Generating structural outliers according to paper
-    "Deep Anomaly Detection on Attributed Networks"
-    <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
-    We randomly select m nodes from the network and then make those nodes
-    fully connected, and then all the m nodes in the clique are regarded as
-    outliers. We iteratively repeat this process until a number of n
-    cliques are generated and the total number of structural outliers is m×n.
+def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
+    """Generating structural outliers according to paper :cite:`ding2019deep`.
+    We randomly select ``m`` nodes from the network and then make those nodes
+    fully connected, and then all the ``m`` nodes in the clique are regarded as
+    outliers. We iteratively repeat this process until a number of ``n``
+    cliques are generated and the total number of structural outliers is
+    ``m * n``.
 
     Parameters
     ----------
@@ -34,7 +30,9 @@ def gen_structural_outliers(data, m, n, p=0, random_state=None):
         Number of outlier cliques.
     p : int, optional
         Probability of edge drop in cliques. Default: ``0``.
-    random_state : int, optional
+    directed : bool, optional
+        Whether the edges added are directed. Default: ``False``.
+    seed : int, optional
         The seed to control the randomness, Default: ``None``.
 
     Returns
@@ -61,21 +59,16 @@ def gen_structural_outliers(data, m, n, p=0, random_state=None):
 
     check_parameter(m * n, low=0, high=data.num_nodes, param_name='m*n')
 
-    if random_state:
-        np.random.seed(random_state)
+    if seed:
+        torch.manual_seed(seed)
 
     new_edges = []
 
-    outlier_idx = np.random.choice(data.num_nodes, size=m * n, replace=False)
+    outlier_idx = torch.multinomial(torch.range(data.num_nodes), size=m * n)
 
     # connect all m nodes in each clique
-    for i in range(0, n):
-        for j in range(m * i, m * (i + 1)):
-            for k in range(m * i, m * (i + 1)):
-                if j != k:
-                    node1, node2 = outlier_idx[j], outlier_idx[k]
-                    new_edges.append(
-                        torch.tensor([[node1, node2]], dtype=torch.long))
+    for i in range(n):
+        new_edges.append(torch.combinations(outlier_idx[m * i: m * (i + 1)]))
 
     new_edges = torch.cat(new_edges)
 
@@ -87,20 +80,23 @@ def gen_structural_outliers(data, m, n, p=0, random_state=None):
     y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)
     y_outlier[outlier_idx] = 1
 
+    if directed:
+        new_edges = torch.cat([new_edges, new_edges.flip(1)], dim=0)
+
     data.edge_index = torch.cat([data.edge_index, new_edges.T], dim=1)
 
     return data, y_outlier
 
 
-def gen_contextual_outliers(data, n, k, random_state=None):
-    """Generating contextual outliers according to paper
-    "Deep Anomaly Detection on Attributed Networks"
-    <https://epubs.siam.org/doi/abs/10.1137/1.9781611975673.67>.
-    We randomly select n nodes as the attribute perturbation candidates.
-    For each selected node i, we randomly pick another k nodes from the data
-    and select the node j whose attributes deviate the most from node i
-    among the k nodes by maximizing the Euclidean distance ||xi − xj ||2.
-    Afterwards, we then change the attributes xi of node i to xj.
+def gen_contextual_outliers(data, n, k, seed=None):
+    """Generating contextual outliers according to paper :cite:`ding2019deep`.
+    We randomly select ``n`` nodes as the attribute perturbation candidates.
+    For each selected node :math:`i`, we randomly pick another ``k`` nodes
+    from the data and select the node :math:`j` whose attributes :math:`x_j`
+    deviate the most from node :math:`i`'s attribute :math:`x_i` among ``k``
+    nodes by maximizing the Euclidean distance :math:` \| x_i − x_j \|_2`.
+    Afterwards, we then substitute the attributes :math:`x_i` of node
+    :math:`i` to :math:`x_j`.
 
     Parameters
     ----------
@@ -110,7 +106,7 @@ def gen_contextual_outliers(data, n, k, random_state=None):
         Number of nodes converting to outliers.
     k : int
         Number of candidate nodes for each outlier node.
-    random_state : int, optional
+    seed : int, optional
         The seed to control the randomness, Default: ``None``.
 
     Returns
@@ -135,14 +131,14 @@ def gen_contextual_outliers(data, n, k, random_state=None):
     else:
         raise ValueError("k should be int, got %s" % k)
 
-    if random_state:
-        np.random.seed(random_state)
+    if seed:
+        torch.manual_seed(seed)
 
-    node_set = set(range(data.num_nodes))
-
-    outlier_idx = np.random.choice(list(node_set), size=n, replace=False)
-    candidate_set = node_set.difference(set(outlier_idx))
-    candidate_idx = np.random.choice(list(candidate_set), size=n * k)
+    # the first n nodes are selected as outliers, and the rest are candidates
+    selected_idx = torch.multinomial(torch.range(data.num_nodes),
+                                     size=n * (k + 1))
+    outlier_idx = selected_idx[:n]
+    candidate_idx = selected_idx[n:]
 
     for i, idx in enumerate(outlier_idx):
         cur_candidates = candidate_idx[k * i: k * (i + 1)]

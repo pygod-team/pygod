@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Metrics used to evaluate the anomaly detection performance
+Metrics used to evaluate the outlier detection performance
 """
 # Author: Yingtong Dou <ytongdou@gmail.com>, Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
-import numpy as np
-from sklearn.metrics import roc_auc_score, average_precision_score, ndcg_score
+from sklearn.metrics import (
+    roc_auc_score,
+    average_precision_score,
+    recall_score,
+    precision_score,
+    f1_score
+)
 
 
 def eval_roc_auc(labels, pred):
@@ -15,10 +20,10 @@ def eval_roc_auc(labels, pred):
 
     Parameters
     ----------
-    labels : numpy.ndarray
+    labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.ndarray
+    pred : torch.Tensor
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -27,24 +32,24 @@ def eval_roc_auc(labels, pred):
         Average ROC-AUC score across different labels.
     """
 
-    # outlier detection is a binary classification problem
     roc_auc = roc_auc_score(y_true=labels, y_score=pred)
     return roc_auc
 
 
-def eval_recall_at_k(labels, pred, k):
+def eval_recall_at_k(labels, pred, k=None):
     """
     Recall score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
-    labels : numpy.ndarray
+    labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.ndarray
+    pred : torch.Tensor
         Outlier scores in shape of ``(N, )``.
-    k : int
-        The number of instances to evaluate.
+    k : int, optional
+        The number of instances to evaluate. ``None`` for
+        recall. Default: ``None``.
 
     Returns
     -------
@@ -52,27 +57,27 @@ def eval_recall_at_k(labels, pred, k):
         Recall for top k instances with the highest outlier scores.
     """
 
-    N = len(pred)
-    labels = np.array(labels)
-    pred = np.array(pred)
-    recall_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / sum(labels)
-
+    if k is None:
+        recall_at_k = recall_score(y_true=labels, y_score=pred)
+    else:
+        recall_at_k = sum(labels[pred.topk(k).indices]) / sum(labels)
     return recall_at_k
 
 
-def eval_precision_at_k(labels, pred, k):
+def eval_precision_at_k(labels, pred, k=None):
     """
     Precision score for top k instances with the highest outlier scores.
 
     Parameters
     ----------
-    labels : numpy.ndarray
+    labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.ndarray
+    pred : torch.Tensor
         Outlier scores in shape of ``(N, )``.
-    k : int
-        The number of instances to evaluate.
+    k : int, optional
+        The number of instances to evaluate. ``None`` for
+        precision. Default: ``None``.
 
     Returns
     -------
@@ -80,11 +85,10 @@ def eval_precision_at_k(labels, pred, k):
         Precision for top k instances with the highest outlier scores.
     """
 
-    N = len(pred)
-    labels = np.array(labels)
-    pred = np.array(pred)
-    precision_at_k = sum(labels[pred.argpartition(N - k)[-k:]]) / k
-
+    if k is None:
+        precision_at_k = precision_score(y_true=labels, y_score=pred)
+    else:
+        precision_at_k = sum(labels[pred.topk(k).indices]) / k
     return precision_at_k
 
 
@@ -94,10 +98,10 @@ def eval_average_precision(labels, pred):
 
     Parameters
     ----------
-    labels : numpy.ndarray
+    labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.ndarray
+    pred : torch.Tensor
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -106,30 +110,27 @@ def eval_average_precision(labels, pred):
         Average precision score.
     """
 
-    # outlier detection is a binary classification problem
     ap = average_precision_score(y_true=labels, y_score=pred)
     return ap
 
 
-def eval_ndcg(labels, pred):
+def eval_f1(labels, pred):
     """
-    Normalized discounted cumulative gain for ranking.
+    F1 score for binary classification.
 
     Parameters
     ----------
-    labels : numpy.ndarray
+    labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : numpy.ndarray
+    pred : torch.Tensor
         Outlier scores in shape of ``(N, )``.
 
     Returns
     -------
-    ndcg : float
-        NDCG score.
+    f1 : float
+        F1 score.
     """
 
-    if labels.dtype == bool:
-        labels = labels.astype(int)
-    ndcg = ndcg_score(y_true=[labels], y_score=[pred])
-    return ndcg
+    f1 = f1_score(y_true=[labels], y_score=[pred])
+    return f1

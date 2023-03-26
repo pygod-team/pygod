@@ -1,7 +1,7 @@
 Contribute to PyGOD
 ===================
 
-This guide will tell how to contribute to pyGOD at the beginning stage.
+This guide will tell how to contribute to PyGOD at the beginning stage.
 This guide may change subject to the development process.
 
 
@@ -45,9 +45,9 @@ Development Environment
 
 To prevent the problems induced by inconsistent versions of dependencies, following requirements are suggested.
 
-- python>=3.6
-- torch>=1.10.1
-- torch_geometry>=2.0.3
+- python>=3.9
+- torch>=2.0.0
+- torch_geometry>=2.3.0
 
 Please follow the `installation guide <https://docs.pygod.org/en/latest/install.html>`_ for more details.
 

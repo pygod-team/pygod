@@ -5,7 +5,7 @@ Metrics
     :members:
     :undoc-members:
 
-.. autoclass:: pygod.metrics.eval_ndcg
+.. autoclass:: pygod.metrics.eval_f1
     :members:
     :undoc-members:
 

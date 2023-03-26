@@ -1,7 +1,7 @@
 Core Team
 =========
 
-Let us add more information later.
+PyGOD is a great team effort by researchers from UIC, IIT, BUAA, ASU, and CMU. Our core team members include:
 
 `Kay Liu (UIC) <https://kayzliu.com/>`_
 

@@ -10,16 +10,17 @@ from __future__ import print_function
 import os
 from importlib import import_module
 
+import torch
+import shutil
+import numbers
 import requests
 import warnings
-import torch
-import numbers
-import shutil
+import numpy as np
 
 from ..metrics import *
 
 MAX_INT = np.iinfo(np.int32).max
-MIN_INT = -1 * MAX_INT
+MIN_INT = np.iinfo(np.int32).min
 
 
 def validate_device(gpu_id):
@@ -82,14 +83,14 @@ def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
     """
 
     # param, low and high should all be numerical
-    if not isinstance(param, (numbers.Integral, np.integer, float)):
+    if not isinstance(param, (numbers.Integral, int, float)):
         raise TypeError('{param_name} is set to {param} Not numerical'.format(
             param=param, param_name=param_name))
 
-    if not isinstance(low, (numbers.Integral, np.integer, float)):
+    if not isinstance(low, (numbers.Integral, int, float)):
         raise TypeError('low is set to {low}. Not numerical'.format(low=low))
 
-    if not isinstance(high, (numbers.Integral, np.integer, float)):
+    if not isinstance(high, (numbers.Integral, int, float)):
         raise TypeError('high is set to {high}. Not numerical'.format(
             high=high))
 
@@ -190,6 +191,9 @@ def load_data(name, cache_dir=None):
 
 
 def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
+    """
+    Logger for training and testing
+    """
     if verbose > 0:
         if train:
             print("Epoch {:04d}: ".format(epoch), end='')
@@ -210,11 +214,11 @@ def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
                     rec = eval_recall_at_k(target, pred, pos_size)
                     pre = eval_precision_at_k(target, pred, pos_size)
                     ap = eval_average_precision(target, pred)
-                    ndcg = eval_ndcg(target, pred)
+                    f1 = eval_f1(target, pred)
 
                     print(" | Recall {:.4f} | Precision {:.4f} "
-                          "| AP {:.4f} | NDCG {:.4f}"
-                          .format(rec, pre, ap, ndcg), end='')
+                          "| AP {:.4f} | F1 {:.4f}"
+                          .format(rec, pre, ap, f1), end='')
 
             if time is not None:
                 print(" | Time {:.2f}".format(time), end='')
@@ -223,12 +227,18 @@ def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
 
 
 def init_model(name, **kwargs):
+    """
+    Model initialization function.
+    """
     module = import_module('pygod.models')
     assert name in module.__all__, "Model {} not found".format(name)
     return getattr(module, name)(**kwargs)
 
 
 def init_nn(name, **kwargs):
+    """
+    Neural network initialization function.
+    """
     module = import_module('pygod.nn')
     assert name in module.__all__, "Model {} not found".format(name)
     return getattr(module, name)(**kwargs)
