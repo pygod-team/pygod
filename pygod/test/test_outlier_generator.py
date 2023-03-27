@@ -14,8 +14,8 @@ class TestData(unittest.TestCase):
     def setUp(self):
         self.m_structure = 5
         self.n_structure = 5
-        self.n_context = 25
-        self.k_context = 25
+        self.n_context = 5
+        self.k_context = 5
         self.seed = 42
 
         test_graph = torch.load('pygod/test/test_graph.pt')

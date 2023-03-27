@@ -22,7 +22,7 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
 
     Parameters
     ----------
-    data : PyTorch Geometric Data instance (torch_geometric.data.Data)
+    data : torch_geometric.data.Data
         The input data.
     m : int
         Number nodes in the outlier cliques.
@@ -64,7 +64,7 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
 
     new_edges = []
 
-    outlier_idx = torch.multinomial(torch.range(data.num_nodes), size=m * n)
+    outlier_idx = torch.randperm(data.num_nodes)[:m * n]
 
     # connect all m nodes in each clique
     for i in range(n):
@@ -80,7 +80,7 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
     y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)
     y_outlier[outlier_idx] = 1
 
-    if directed:
+    if not directed:
         new_edges = torch.cat([new_edges, new_edges.flip(1)], dim=0)
 
     data.edge_index = torch.cat([data.edge_index, new_edges.T], dim=1)
@@ -94,13 +94,13 @@ def gen_contextual_outliers(data, n, k, seed=None):
     For each selected node :math:`i`, we randomly pick another ``k`` nodes
     from the data and select the node :math:`j` whose attributes :math:`x_j`
     deviate the most from node :math:`i`'s attribute :math:`x_i` among ``k``
-    nodes by maximizing the Euclidean distance :math:` \| x_i − x_j \|_2`.
+    nodes by maximizing the Euclidean distance :math:`\| x_i − x_j \|`.
     Afterwards, we then substitute the attributes :math:`x_i` of node
     :math:`i` to :math:`x_j`.
 
     Parameters
     ----------
-    data : PyTorch Geometric Data instance (torch_geometric.data.Data)
+    data : torch_geometric.data.Data
         The input data.
     n : int
         Number of nodes converting to outliers.
@@ -134,20 +134,15 @@ def gen_contextual_outliers(data, n, k, seed=None):
     if seed:
         torch.manual_seed(seed)
 
-    # the first n nodes are selected as outliers, and the rest are candidates
-    selected_idx = torch.multinomial(torch.range(data.num_nodes),
-                                     size=n * (k + 1))
-    outlier_idx = selected_idx[:n]
-    candidate_idx = selected_idx[n:]
+    outlier_idx = torch.randperm(data.num_nodes)[:n]
 
     for i, idx in enumerate(outlier_idx):
-        cur_candidates = candidate_idx[k * i: k * (i + 1)]
-
-        euclidean_dist = torch.cdist(data.x[idx].unsqueeze(0), data.x[list(
-            cur_candidates)])
-        max_dist_idx = torch.argmax(euclidean_dist)
-        max_dist_node = list(cur_candidates)[max_dist_idx]
-
+        candidate_idx = torch.randperm(data.num_nodes)[:k]
+        euclidean_dist = torch.cdist(data.x[idx].unsqueeze(0), data.x[
+            candidate_idx])
+        print(euclidean_dist)
+        max_dist_idx = torch.argmax(euclidean_dist, dim=1)
+        max_dist_node = candidate_idx[max_dist_idx]
         data.x[idx] = data.x[max_dist_node]
 
     y_outlier = torch.zeros(data.x.shape[0], dtype=torch.long)

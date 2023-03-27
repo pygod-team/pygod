@@ -20,15 +20,15 @@ import sys
 from os.path import dirname, abspath
 
 sys.path.insert(0, abspath('..'))
-suod_dir = dirname(dirname(abspath(__file__)))
+root_dir = dirname(dirname(abspath(__file__)))
 
-version_path = os.path.join(suod_dir, 'pygod', 'version.py')
+version_path = os.path.join(root_dir, 'pygod', 'version.py')
 exec(open(version_path).read())
 
 # -- Project information -----------------------------------------------------
 
 project = 'PyGOD'
-copyright = '2022, PyGOD Team'
+copyright = '2023, PyGOD Team'
 author = 'PyGOD Team'
 
 # The short X.Y version
@@ -47,7 +47,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
-    'sphinx.ext.imgmath',
+    "sphinx.ext.mathjax",
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
     'sphinx.ext.napoleon',

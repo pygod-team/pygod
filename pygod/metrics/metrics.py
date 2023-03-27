@@ -8,13 +8,11 @@ Metrics used to evaluate the outlier detection performance
 from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
-    recall_score,
-    precision_score,
     f1_score
 )
 
 
-def eval_roc_auc(labels, pred):
+def eval_roc_auc(labels, scores):
     """
     ROC-AUC score for binary classification.
 
@@ -23,7 +21,7 @@ def eval_roc_auc(labels, pred):
     labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : torch.Tensor
+    scores : torch.Tensor
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -32,11 +30,11 @@ def eval_roc_auc(labels, pred):
         Average ROC-AUC score across different labels.
     """
 
-    roc_auc = roc_auc_score(y_true=labels, y_score=pred)
+    roc_auc = roc_auc_score(y_true=labels, y_score=scores)
     return roc_auc
 
 
-def eval_recall_at_k(labels, pred, k=None):
+def eval_recall_at_k(labels, scores, k=None):
     """
     Recall score for top k instances with the highest outlier scores.
 
@@ -45,7 +43,7 @@ def eval_recall_at_k(labels, pred, k=None):
     labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : torch.Tensor
+    scores : torch.Tensor
         Outlier scores in shape of ``(N, )``.
     k : int, optional
         The number of instances to evaluate. ``None`` for
@@ -58,13 +56,12 @@ def eval_recall_at_k(labels, pred, k=None):
     """
 
     if k is None:
-        recall_at_k = recall_score(y_true=labels, y_score=pred)
-    else:
-        recall_at_k = sum(labels[pred.topk(k).indices]) / sum(labels)
+        k = sum(labels)
+    recall_at_k = sum(labels[scores.topk(k).indices]) / sum(labels)
     return recall_at_k
 
 
-def eval_precision_at_k(labels, pred, k=None):
+def eval_precision_at_k(labels, scores, k=None):
     """
     Precision score for top k instances with the highest outlier scores.
 
@@ -73,7 +70,7 @@ def eval_precision_at_k(labels, pred, k=None):
     labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : torch.Tensor
+    scores : torch.Tensor
         Outlier scores in shape of ``(N, )``.
     k : int, optional
         The number of instances to evaluate. ``None`` for
@@ -86,13 +83,12 @@ def eval_precision_at_k(labels, pred, k=None):
     """
 
     if k is None:
-        precision_at_k = precision_score(y_true=labels, y_score=pred)
-    else:
-        precision_at_k = sum(labels[pred.topk(k).indices]) / k
+        k = sum(labels)
+    precision_at_k = sum(labels[scores.topk(k).indices]) / k
     return precision_at_k
 
 
-def eval_average_precision(labels, pred):
+def eval_average_precision(labels, scores):
     """
     Average precision score for binary classification.
 
@@ -101,7 +97,7 @@ def eval_average_precision(labels, pred):
     labels : torch.Tensor
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
-    pred : torch.Tensor
+    scores : torch.Tensor
         Outlier scores in shape of ``(N, )``.
 
     Returns
@@ -110,7 +106,7 @@ def eval_average_precision(labels, pred):
         Average precision score.
     """
 
-    ap = average_precision_score(y_true=labels, y_score=pred)
+    ap = average_precision_score(y_true=labels, y_score=scores)
     return ap
 
 
@@ -124,7 +120,7 @@ def eval_f1(labels, pred):
         Labels in shape of ``(N, )``, where 1 represents outliers,
         0 represents normal instances.
     pred : torch.Tensor
-        Outlier scores in shape of ``(N, )``.
+        Outlier prediction in shape of ``(N, )``.
 
     Returns
     -------
@@ -132,5 +128,5 @@ def eval_f1(labels, pred):
         F1 score.
     """
 
-    f1 = f1_score(y_true=[labels], y_score=[pred])
+    f1 = f1_score(y_true=labels, y_pred=pred)
     return f1
