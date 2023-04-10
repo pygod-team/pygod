@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch_geometric.utils import to_dense_adj
 from sklearn.utils.validation import check_is_fitted
 
-from . import BaseDetector
+from . import Detector
 from ..utils import validate_device
 
 

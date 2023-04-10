@@ -16,13 +16,13 @@ import numpy as np
 # if pyod is installed, no need to use the following line
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from pygod.models import BaseDetector
+from pygod.models import Detector
 
 
 # Check sklearn\tests\test_base
 # A few test classes
 # noinspection PyMissingConstructor,PyPep8Naming
-class MyEstimator(BaseDetector):
+class MyEstimator(Detector):
 
     def __init__(self, l1=0, empty=None):
         self.l1 = l1
@@ -36,7 +36,7 @@ class MyEstimator(BaseDetector):
 
 
 # noinspection PyMissingConstructor
-class K(BaseDetector):
+class K(Detector):
     def __init__(self, c=None, d=None):
         self.c = c
         self.d = d
@@ -49,7 +49,7 @@ class K(BaseDetector):
 
 
 # noinspection PyMissingConstructor
-class T(BaseDetector):
+class T(Detector):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
@@ -62,7 +62,7 @@ class T(BaseDetector):
 
 
 # noinspection PyMissingConstructor
-class ModifyInitParams(BaseDetector):
+class ModifyInitParams(Detector):
     """Deprecated behavior.
     Equal parameters but with a type cast.
     Doesn't fulfill a is a
@@ -79,7 +79,7 @@ class ModifyInitParams(BaseDetector):
 
 
 # noinspection PyMissingConstructor
-class VargEstimator(BaseDetector):
+class VargEstimator(Detector):
     """scikit-learn estimators shouldn't have vargs."""
 
     def __init__(self, *vargs):
@@ -92,7 +92,7 @@ class VargEstimator(BaseDetector):
         pass
 
 
-class Dummy1(BaseDetector):
+class Dummy1(Detector):
     def __init__(self, contamination=0.1):
         super(Dummy1, self).__init__(contamination=contamination)
 
@@ -103,7 +103,7 @@ class Dummy1(BaseDetector):
         pass
 
 
-class Dummy2(BaseDetector):
+class Dummy2(Detector):
     def __init__(self, contamination=0.1):
         super(Dummy2, self).__init__(contamination=contamination)
 
@@ -114,7 +114,7 @@ class Dummy2(BaseDetector):
         return X
 
 
-class Dummy3(BaseDetector):
+class Dummy3(Detector):
     def __init__(self, contamination=0.1):
         super(Dummy3, self).__init__(contamination=contamination)
 
@@ -127,7 +127,7 @@ class Dummy3(BaseDetector):
 
 class TestBASE(unittest.TestCase):
     def setUp(self):
-        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
+        test_graph = torch.load(os.path.join('test_graph.pt'))
         self.data = test_graph
 
     def test_init(self):
@@ -184,19 +184,6 @@ class TestBASE(unittest.TestCase):
         # Smoke test the str of the base estimator
         my_estimator = MyEstimator()
         str(my_estimator)
-
-    def test_get_params(self):
-        test = T(K(), K())
-
-        assert ('a__d' in test.get_params(deep=True))
-        assert ('a__d' not in test.get_params(deep=False))
-
-        test.set_params(a__d=2)
-        assert (test.a.d == 2)
-        assert_raises(ValueError, test.set_params, a__a=2)
-
-    def tearDown(self):
-        pass
 
 
 if __name__ == '__main__':

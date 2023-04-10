@@ -203,7 +203,6 @@ def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
         print("Loss {:.4f}".format(loss), end='')
 
         if verbose > 1:
-            #TODO: verbose usage is inconsistent with its type
             if target is not None:
                 auc = eval_roc_auc(target, pred)
                 print(" | AUC {:.4f}".format(auc), end='')
@@ -242,3 +241,70 @@ def init_nn(name, **kwargs):
     module = import_module('pygod.nn')
     assert name in module.__all__, "Model {} not found".format(name)
     return getattr(module, name)(**kwargs)
+
+
+def pprint(params, offset=0, printer=repr):
+    """Pretty print the dictionary 'params'
+
+    Parameters
+    ----------
+    params : dict
+        The dictionary to pretty print
+    offset : int, optional
+        The offset at the beginning of each line.
+    printer : callable, optional
+        The function to convert entries to strings, typically
+        the builtin str or repr.
+    """
+
+    params_list = list()
+    this_line_length = offset
+    line_sep = ',\n' + (1 + offset) * ' '
+    for i, (k, v) in enumerate(sorted(params.items())):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr = '%s=%s' % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr = '%s=%s' % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+        if i > 0:
+            if this_line_length + len(this_repr) >= 75 or '\n' in this_repr:
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(', ')
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    lines = ''.join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    return lines
+
+
+def is_fitted(detector, attributes=None):
+    """
+    Check if the detector is fitted.
+
+    Parameters
+    ----------
+    detector : pygod.models.Detector
+        The detector to check.
+    attributes : list, optional
+        The attributes to check.
+        Default: ``None``.
+
+    Returns
+    -------
+    is_fitted : bool
+        Whether the detector is fitted.
+    """
+    if attributes is None:
+        attributes = ['model_']
+    assert all(hasattr(detector, attr) for attr in attributes), \
+        "The detector is not fitted yet"

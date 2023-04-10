@@ -3,7 +3,7 @@ import torch
 
 def double_mse_loss(x, x_, s, s_, weight=0.5):
     """
-    Mean square error reconstruction loss for feature and structure.
+    Mean squared error reconstruction loss for feature and structure.
 
     Parameters
     ----------
@@ -20,7 +20,7 @@ def double_mse_loss(x, x_, s, s_, weight=0.5):
 
     Returns
     -------
-    scores : numpy.ndarray
+    score : torch.tensor
         Outlier scores of shape :math:`N` with gradients.
     """
 
@@ -28,12 +28,12 @@ def double_mse_loss(x, x_, s, s_, weight=0.5):
 
     # attribute reconstruction loss
     diff_attribute = torch.pow(x - x_, 2)
-    attribute_errors = torch.sqrt(torch.sum(diff_attribute, 1))
+    attribute_error = torch.sqrt(torch.sum(diff_attribute, 1))
 
     # structure reconstruction loss
     diff_structure = torch.pow(s - s_, 2)
-    structure_errors = torch.sqrt(torch.sum(diff_structure, 1))
+    structure_error = torch.sqrt(torch.sum(diff_structure, 1))
 
-    scores = weight * attribute_errors + (1 - weight) * structure_errors
+    score = weight * attribute_error + (1 - weight) * structure_error
 
-    return scores
+    return score

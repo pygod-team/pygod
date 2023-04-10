@@ -5,10 +5,14 @@
 # License: BSD 2 clause
 
 import torch
+import warnings
 import torch.nn.functional as F
+from torch_geometric.nn import MLP
+from torch_geometric.utils import to_dense_adj
 
 from . import DeepDetector
-from torch_geometric.nn import MLP
+
+from ..nn.decoder import DotProductDecoder
 
 
 class MLPAE(DeepDetector):
@@ -20,58 +24,70 @@ class MLPAE(DeepDetector):
     Parameters
     ----------
     hid_dim :  int, optional
-        Hidden dimension of model. Default: ``0``.
+        Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
-        Total number of layers in autoencoders. Default: ``4``.
+        Total number of layers in model. Default: ``2``.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
         Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
-        Default: ``torch.nn.functional.relu``.
+        Default: ``torch.relu``.
     contamination : float, optional
-        Valid in (0., 0.5). The proportion of outliers in the data set.
-        Used when fitting to define the threshold on the decision
-        function. Default: ``0.1``.
+        The amount of contamination of the dataset in (0., 0.5], i.e.,
+        the proportion of outliers in the dataset. Used when fitting to
+        define the threshold on the decision function. Default: ``0.1``.
     lr : float, optional
         Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Default: ``5``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Default: ``0``.
+        GPU Index, -1 for using CPU. Default: ``-1``.
     batch_size : int, optional
         Minibatch size, 0 for full batch training. Default: ``0``.
-    verbose : bool
-        Verbosity mode. Turn on to print out log information.
-        Default: ``False``.
+    num_neigh : int, optional
+        Number of neighbors in sampling, -1 for all neighbors.
+        Default: ``-1``.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
+    **kwargs : optional
+        Additional keyword arguments for model initialization.
 
     Examples
     --------
     >>> from pygod.models import MLPAE
     >>> model = MLPAE()
-    >>> model.fit(data) # PyG graph data object
+    >>> model.fit(data)
     >>> prediction = model.predict(data)
     """
 
     def __init__(self,
-                 in_dim=None,
                  hid_dim=64,
                  num_layers=4,
-                 dropout=0.3,
+                 dropout=0.,
                  weight_decay=0.,
                  act=F.relu,
+                 recon_s=False,
+                 sigmoid_s=False,
                  contamination=0.1,
-                 lr=5e-3,
-                 epoch=5,
-                 gpu=0,
+                 lr=4e-3,
+                 epoch=100,
+                 gpu=-1,
                  batch_size=0,
                  num_neigh=0,
                  verbose=False,
                  **kwargs):
 
-        super(MLPAE, self).__init__(in_dim=in_dim,
-                                    hid_dim=hid_dim,
+        if num_neigh > 0:
+            warnings.warn('MLPAE does not use neighbor information.')
+            num_neigh = 0
+
+        self.recon_s = recon_s
+        self.sigmoid_s = sigmoid_s
+
+        super(MLPAE, self).__init__(hid_dim=hid_dim,
                                     num_layers=num_layers,
                                     dropout=dropout,
                                     weight_decay=weight_decay,
@@ -85,127 +101,43 @@ class MLPAE(DeepDetector):
                                     verbose=verbose,
                                     **kwargs)
 
-    # def fit(self, G, y_true=None):
-    #     """
-    #     Fit detector with input data.
-    #
-    #     Parameters
-    #     ----------
-    #     G : torch_geometric.data.Data
-    #         The input data.
-    #     y_true : numpy.ndarray, optional
-    #         The optional outlier ground truth labels used to monitor
-    #         the training progress. They are not used to optimize the
-    #         unsupervised model. Default: ``None``.
-    #
-    #     Returns
-    #     -------
-    #     self : object
-    #         Fitted estimator.
-    #     """
-    #     full_x = self.process_graph(G)
-    #     dataset = PlainDataset(full_x)
-    #     if self.batch_size == 0:
-    #         self.batch_size = G.x.shape[0]
-    #     loader = DataLoader(dataset, batch_size=self.batch_size)
-    #
-    #     self.model = MLP(in_channels=G.x.shape[1],
-    #                      hidden_channels=self.hid_dim,
-    #                      out_channels=G.x.shape[1],
-    #                      num_layers=self.num_layers,
-    #                      dropout=self.dropout,
-    #                      act=self.act).to(self.device)
-    #
-    #     optimizer = torch.optim.Adam(self.model.parameters(),
-    #                                  lr=self.lr,
-    #                                  weight_decay=self.weight_decay)
-    #
-    #     self.model.train()
-    #     decision_scores = np.zeros(full_x.shape[0])
-    #     for epoch in range(self.epoch):
-    #         epoch_loss = 0
-    #         for x, node_idx in loader:
-    #             x_ = self.model(x)
-    #             score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-    #             decision_scores[node_idx] = score.detach().cpu().numpy()
-    #             loss = torch.mean(score)
-    #             epoch_loss += loss.item() * x.shape[0]
-    #
-    #             optimizer.zero_grad()
-    #             loss.backward()
-    #             optimizer.step()
-    #
-    #         if self.verbose:
-    #             print("Epoch {:04d}: Loss {:.4f}"
-    #                   .format(epoch, epoch_loss / G.x.shape[0]), end='')
-    #             if y_true is not None:
-    #                 auc = eval_roc_auc(y_true, decision_scores)
-    #                 print(" | AUC {:.4f}".format(auc), end='')
-    #             print()
-    #
-    #     self.decision_scores_ = decision_scores
-    #     self._process_decision_scores()
-    #     return self
-    #
-    # def decision_function(self, G):
-    #     """
-    #     Predict raw anomaly score using the fitted detector. Outliers
-    #     are assigned with larger anomaly scores.
-    #
-    #     Parameters
-    #     ----------
-    #     G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-    #         The input data.
-    #
-    #     Returns
-    #     -------
-    #     outlier_scores : numpy.ndarray
-    #         The anomaly score of shape :math:`N`.
-    #     """
-    #     check_is_fitted(self, ['model'])
-    #     full_x = self.process_graph(G)
-    #     dataset = PlainDataset(full_x)
-    #     loader = DataLoader(dataset, batch_size=self.batch_size)
-    #
-    #     self.model.eval()
-    #     outlier_scores = np.zeros(full_x.shape[0])
-    #     for x, node_idx in loader:
-    #         x_ = self.model(x)
-    #         score = torch.mean(F.mse_loss(x_, x, reduction='none'), dim=1)
-    #         outlier_scores[node_idx] = score.detach().cpu().numpy()
-    #     return outlier_scores
+    def process_graph(self, data):
 
-    def _process_graph(self, G):
-        """
-        Process the raw PyG data object into a tuple of sub data
-        objects needed for the model.
+        if self.recon_s:
+            data.s = to_dense_adj(data.edge_index)[0]
 
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-        """
-        pass
+    def init_nn(self, **kwargs):
 
-    def _init_nn(self, **kwargs):
-        self.model = MLP(in_channels=self.in_dim,
-                         hidden_channels=self.hid_dim,
-                         out_channels=self.in_dim,
-                         num_layers=self.num_layers,
-                         dropout=self.dropout,
-                         act=self.act,
-                         **kwargs).to(self.device)
+        if self.recon_s:
+            model = DotProductDecoder(in_dim=self.in_dim,
+                                      hid_dim=self.hid_dim,
+                                      num_layers=self.num_layers,
+                                      dropout=self.dropout,
+                                      act=self.act,
+                                      sigmoid_s=self.sigmoid_s,
+                                      backbone=MLP,
+                                      **kwargs).to(self.device)
+        else:
+            model = MLP(in_channels=self.in_dim,
+                        hidden_channels=self.hid_dim,
+                        out_channels=self.in_dim,
+                        num_layers=self.num_layers,
+                        dropout=self.dropout,
+                        act=self.act,
+                        **kwargs).to(self.device)
+        return model
 
-    def _forward_nn(self, data):
-        batch_size = data.batch_size
+    def forward_nn(self, data):
 
+        node_idx = data.node_idx
         x = data.x.to(self.device)
+        if self.recon_s:
+            s = data.s.to(self.device)[:, node_idx],
 
-        x_ = self.model(x)
-        scores = torch.mean(F.mse_loss(x[:batch_size],
-                                       x_[:batch_size],
-                                       reduction='none'), dim=1)
+        h = self.model(x, None)
+        score = torch.mean(F.mse_loss((s if self.recon_s else x), h,
+                                      reduction='none'), dim=1)
 
-        loss = torch.mean(scores)
+        loss = torch.mean(score)
 
-        return loss, scores.detach().cpu().numpy()
+        return loss, score.detach().cpu()

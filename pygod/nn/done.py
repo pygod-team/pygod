@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 from torch_geometric.nn import MLP
@@ -6,46 +7,109 @@ from .conv import NeighDiff
 
 
 class DONEBase(nn.Module):
+    """
+    DONE (Deep Outlier Aware Attributed Network Embedding) consists of
+    an attribute autoencoder and a structure autoencoder. It estimates
+    five losses to optimize the model, including an attribute proximity
+    loss, an attribute homophily loss, a structure proximity loss, a
+    structure homophily loss, and a combination loss. It calculates
+    three outlier scores, and averages them as an overall scores.
+
+    See :cite:`bandyopadhyay2020outlier` for details.
+
+    Parameters
+    ----------
+    x_dim : int
+        Input dimension of node features.
+    s_dim : int
+        Input dimension of node structures, i.e., number of nodes.
+    hid_dim :  int, optional
+        Hidden dimension of model. Default: ``64``.
+    num_layers : int, optional
+        Total number of layers in model. Default: ``4``.
+    dropout : float, optional
+        Dropout rate. Default: ``0.``.
+    act : str or Callable, optional
+        Activation function if not None.
+        Default: ``torch.nn.functional.relu``.
+    w1 : float, optional
+        Loss balancing weight for structure proximity.
+        Default: ``0.2``.
+    w2 : float, optional
+        Loss balancing weight for structure homophily.
+        Default: ``0.2``.
+    w3 : float, optional
+        Loss balancing weight for attribute proximity.
+        Default: ``0.2``.
+    w4 : float, optional
+        Loss balancing weight for attribute proximity.
+        Default: ``0.2``.
+    w5 : float, optional
+        Loss balancing weight for combination.
+        Default: ``0.2``.
+    **kwargs (optional):
+        Additional arguments of the underlying
+        :class:`torch_geometric.nn.MLP`.
+    """
+
     def __init__(self,
                  x_dim,
                  s_dim,
-                 hid_dim,
-                 num_layers,
-                 dropout,
-                 act):
+                 hid_dim=64,
+                 num_layers=4,
+                 dropout=0.,
+                 act=torch.nn.functional.relu,
+                 w1=0.2,
+                 w2=0.2,
+                 w3=0.2,
+                 w4=0.2,
+                 w5=0.2,
+                 **kwargs):
         super(DONEBase, self).__init__()
 
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
+        self.w4 = w4
+        self.w5 = w5
+
         # split the number of layers for the encoder and decoders
-        decoder_layers = int(num_layers / 2)
-        encoder_layers = num_layers - decoder_layers
+        assert num_layers >= 2, \
+            "Number of layers must be greater than or equal to 2."
+        encoder_layers = math.floor(num_layers / 2)
+        decoder_layers = math.ceil(num_layers / 2)
 
         self.attr_encoder = MLP(in_channels=x_dim,
                                 hidden_channels=hid_dim,
                                 out_channels=hid_dim,
                                 num_layers=encoder_layers,
                                 dropout=dropout,
-                                act=act)
+                                act=act,
+                                **kwargs)
 
         self.attr_decoder = MLP(in_channels=hid_dim,
                                 hidden_channels=hid_dim,
                                 out_channels=x_dim,
                                 num_layers=decoder_layers,
                                 dropout=dropout,
-                                act=act)
+                                act=act,
+                                **kwargs)
 
         self.struct_encoder = MLP(in_channels=s_dim,
                                   hidden_channels=hid_dim,
                                   out_channels=hid_dim,
                                   num_layers=encoder_layers,
                                   dropout=dropout,
-                                  act=act)
+                                  act=act,
+                                  **kwargs)
 
         self.struct_decoder = MLP(in_channels=hid_dim,
                                   hidden_channels=hid_dim,
                                   out_channels=s_dim,
                                   num_layers=decoder_layers,
                                   dropout=dropout,
-                                  act=act)
+                                  act=act,
+                                  **kwargs)
 
         self.neigh_diff = NeighDiff()
 

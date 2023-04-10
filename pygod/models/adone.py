@@ -12,13 +12,13 @@ from torch_geometric.utils import to_dense_adj
 from torch_geometric.loader import NeighborLoader
 from sklearn.utils.validation import check_is_fitted
 
-from . import BaseDetector
+from . import Detector
 from .basic_nn import MLP
 from ..utils import validate_device
 from ..metrics import eval_roc_auc
 
 
-class AdONE(BaseDetector):
+class AdONE(Detector):
     """
     AdONE (Adversarial Outlier Aware Attributed Network
     Embedding) consists of an attribute autoencoder and a structure

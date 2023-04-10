@@ -1,6 +1,6 @@
 """
 Model Example
-================
+=============
 
 In this introductory tutorial, you will learn the basic workflow of
 PyGOD with a model example of DOMINANT. This tutorial assumes that

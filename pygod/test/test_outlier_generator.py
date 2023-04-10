@@ -110,8 +110,22 @@ class TestData(unittest.TestCase):
                                     n=self.n_context,
                                     k='not int')
 
-    def tearDown(self):
-        pass
+    def test_data_type(self):
+        with assert_raises(TypeError):
+            gen_structural_outliers(data='not Data')
+        with assert_raises(TypeError):
+            gen_contextual_outliers(data='not Data')
+
+    def test_structural_outliers4(self):
+        test_data = cp.deepcopy(self.data)
+        test_data, y_outlier = gen_structural_outliers(data=test_data,
+                                                       m=self.m_structure,
+                                                       n=self.n_structure,
+                                                       p=0.2)
+
+        assert (test_data.num_edges <
+                self.m_structure * (self.m_structure - 1) * self.n_structure
+                + self.data.num_edges)
 
 
 if __name__ == '__main__':
