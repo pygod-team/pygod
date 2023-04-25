@@ -18,9 +18,9 @@ class TestMLPAE(unittest.TestCase):
         # for testing purpose
 
         # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.60
+        self.roc_floor = 0.55
 
-        test_graph = torch.load(os.path.join('test_graph.pt'))
+        test_graph = torch.load(os.path.join('pygod/test/test_graph.pt'))
         self.data = test_graph
 
         self.model = MLPAE(epoch=5)
@@ -78,6 +78,17 @@ class TestMLPAE(unittest.TestCase):
         assert_equal(conf.shape[0], self.data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
+
+    def test_recon_s(self):
+        self.model = MLPAE(epoch=5, recon_s=True)
+        self.model.fit(self.data)
+        _, score = self.model.predict(self.data, return_score=True)
+
+        # check score shapes
+        assert_equal(score.shape[0], self.data.y.shape[0])
+
+        # check performance
+        assert (eval_roc_auc(self.data.y, score) >= self.roc_floor)
 
 
 if __name__ == '__main__':

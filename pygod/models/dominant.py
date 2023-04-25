@@ -5,7 +5,6 @@
 
 import torch
 from torch_geometric.nn import GCN
-from torch_geometric.utils import to_dense_adj
 
 from .base import DeepDetector
 from ..nn import DOMINANTBase
@@ -32,7 +31,7 @@ class DOMINANT(DeepDetector):
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
         Weight decay (L2 penalty). Default: ``0.``.
-    act : str or Callable, optional
+    act : Callable, optional
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     sigmoid_s : bool, optional
@@ -92,8 +91,6 @@ class DOMINANT(DeepDetector):
                  verbose=0,
                  **kwargs):
 
-        self.weight = weight
-        self.sigmoid_s = sigmoid_s
         super(DOMINANT, self).__init__(hid_dim=hid_dim,
                                        num_layers=num_layers,
                                        dropout=dropout,
@@ -109,12 +106,13 @@ class DOMINANT(DeepDetector):
                                        verbose=verbose,
                                        **kwargs)
 
+        self.weight = weight
+        self.sigmoid_s = sigmoid_s
+
     def process_graph(self, data):
+        DOMINANTBase.process_graph(data)
 
-        data.s = to_dense_adj(data.edge_index)[0]
-
-    def init_nn(self, **kwargs):
-
+    def init_model(self, **kwargs):
         return DOMINANTBase(in_dim=self.in_dim,
                             hid_dim=self.hid_dim,
                             num_layers=self.num_layers,
@@ -124,8 +122,7 @@ class DOMINANT(DeepDetector):
                             backbone=self.backbone,
                             **kwargs).to(self.device)
 
-    def forward_nn(self, data):
-
+    def forward_model(self, data):
         batch_size = data.batch_size
         node_idx = data.node_idx
 

@@ -2,9 +2,10 @@ import math
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GCN
+from torch_geometric.utils import to_dense_adj
 
 from .decoder import DotProductDecoder
-from .functional import double_mse_loss
+from .functional import double_recon_loss
 
 
 class DOMINANTBase(nn.Module):
@@ -87,17 +88,22 @@ class DOMINANTBase(nn.Module):
                                                 backbone=backbone,
                                                 **kwargs)
 
-        self.loss_func = double_mse_loss
+        self.loss_func = double_recon_loss
+        self.emb = None
 
     def forward(self, x, edge_index):
 
         # encode feature matrix
-        h = self.shared_encoder(x, edge_index)
+        self.emb = self.shared_encoder(x, edge_index)
 
         # reconstruct feature matrix
-        x_ = self.attr_decoder(h, edge_index)
+        x_ = self.attr_decoder(self.emb, edge_index)
 
         # decode adjacency matrix
-        s_ = self.struct_decoder(h, edge_index)
+        s_ = self.struct_decoder(self.emb, edge_index)
 
         return x_, s_
+
+    @staticmethod
+    def process_graph(data):
+        data.s = to_dense_adj(data.edge_index)[0]

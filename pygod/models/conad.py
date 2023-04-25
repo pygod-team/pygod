@@ -5,21 +5,15 @@ with Data Augmentation (CONAD)"""
 # License: BSD 2 clause
 
 import torch
-import numpy as np
-import torch.nn as nn
 from copy import deepcopy
-import torch.nn.functional as F
-from torch_geometric.loader import NeighborLoader
-from torch_geometric.utils import to_dense_adj, dense_to_sparse
-from sklearn.utils.validation import check_is_fitted
+from torch_geometric.nn import GCN
+from torch_geometric.utils import dense_to_sparse
 
-from . import BaseDetector
-from .basic_nn import GCN
-from ..metrics import eval_roc_auc
-from ..utils import validate_device
+from . import DeepDetector
+from ..nn import DOMINANTBase
 
 
-class CONAD(BaseDetector):
+class CONAD(DeepDetector):
     """
     CONAD (Contrastive Attributed Network Anomaly Detection) is an
     anomaly detector consisting of a shared graph
@@ -93,179 +87,99 @@ class CONAD(BaseDetector):
     def __init__(self,
                  hid_dim=64,
                  num_layers=4,
-                 dropout=0.3,
+                 dropout=0.,
                  weight_decay=0.,
-                 act=F.relu,
-                 alpha=None,
-                 eta=.5,
+                 act=torch.nn.functional.relu,
+                 sigmoid_s=False,
+                 backbone=GCN,
                  contamination=0.1,
-                 lr=5e-3,
-                 epoch=5,
-                 gpu=0,
+                 lr=4e-3,
+                 epoch=100,
+                 gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
+                 weight=0.5,
+                 eta=.5,
                  margin=.5,
                  r=.2,
                  m=50,
                  k=50,
                  f=10,
-                 verbose=False):
-        super(CONAD, self).__init__(contamination=contamination)
+                 verbose=0,
+                 **kwargs):
+
+        super(CONAD, self).__init__(hid_dim=hid_dim,
+                                    num_layers=num_layers,
+                                    dropout=dropout,
+                                    weight_decay=weight_decay,
+                                    act=act,
+                                    backbone=backbone,
+                                    contamination=contamination,
+                                    lr=lr,
+                                    epoch=epoch,
+                                    gpu=gpu,
+                                    batch_size=batch_size,
+                                    num_neigh=num_neigh,
+                                    verbose=verbose,
+                                    **kwargs)
 
         # model param
-        self.hid_dim = hid_dim
-        self.num_layers = num_layers
-        self.dropout = dropout
-        self.weight_decay = weight_decay
-        self.act = act
-        self.alpha = alpha
+        self.weight = weight
+        self.sigmoid_s = sigmoid_s
         self.eta = eta
 
-        # training param
-        self.lr = lr
-        self.epoch = epoch
-        self.device = validate_device(gpu)
-        self.batch_size = batch_size
-        self.num_neigh = num_neigh
-
-        self.margin_loss_func = torch.nn.MarginRankingLoss(margin=margin)
         # other param
-        self.verbose = verbose
         self.r = r
         self.m = m
         self.k = k
         self.f = f
-        self.model = None
 
-    def fit(self, G, y_true=None):
-        """
-        Fit detector with input data.
+        self.margin_loss_func = torch.nn.MarginRankingLoss(margin=margin)
 
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-        y_true : numpy.ndarray, optional
-            The optional outlier ground truth labels used to monitor
-            the training progress. They are not used to optimize the
-            unsupervised model. Default: ``None``.
+    def process_graph(self, data):
+        DOMINANTBase.process_graph(data)
 
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        G.node_idx = torch.arange(G.x.shape[0])
+    def init_model(self, **kwargs):
+        return DOMINANTBase(in_dim=self.in_dim,
+                            hid_dim=self.hid_dim,
+                            num_layers=self.num_layers,
+                            dropout=self.dropout,
+                            act=self.act,
+                            sigmoid_s=self.sigmoid_s,
+                            backbone=self.backbone,
+                            **kwargs).to(self.device)
 
-        # automated balancing by std
-        if self.alpha is None:
-            adj = to_dense_adj(G.edge_index)[0]
-            self.alpha = torch.std(adj).detach() / \
-                         (torch.std(G.x).detach() + torch.std(adj).detach())
-            adj = None
+    def forward_model(self, data):
+        batch_size = data.batch_size
+        node_idx = data.node_idx
 
-        if self.batch_size == 0:
-            self.batch_size = G.x.shape[0]
-        loader = NeighborLoader(G,
-                                [self.num_neigh] * self.num_layers,
-                                batch_size=self.batch_size)
+        x = data.x.to(self.device)
+        s = data.s.to(self.device)
+        edge_index = data.edge_index.to(self.device)
 
-        self.model = CONAD_Base(in_dim=G.x.shape[1],
-                                hid_dim=self.hid_dim,
-                                num_layers=self.num_layers,
-                                dropout=self.dropout,
-                                act=self.act).to(self.device)
+        if self.model.training:
+            x_aug, edge_index_aug, label_aug = \
+                self._data_augmentation(x, s)
+            _, _ = self.model(x_aug, edge_index_aug)
+            h_aug = self.model.emb
 
-        optimizer = torch.optim.Adam(self.model.parameters(),
-                                     lr=self.lr,
-                                     weight_decay=self.weight_decay)
+        x_, s_ = self.model(x, edge_index)
+        h = self.model.emb
 
-        self.model.train()
-        decision_scores = np.zeros(G.x.shape[0])
-        for epoch in range(self.epoch):
-            epoch_loss = 0
-            for sampled_data in loader:
-                batch_size = sampled_data.batch_size
-                node_idx = sampled_data.node_idx
-                x, s, edge_index = self.process_graph(sampled_data)
+        score = self.model.loss_func(x[:batch_size],
+                                     x_[:batch_size],
+                                     s[:batch_size, node_idx],
+                                     s_[:batch_size],
+                                     self.weight)
 
-                # generate augmented graph
-                x_aug, edge_index_aug, label_aug = \
-                    self._data_augmentation(x, s)
-                h_aug = self.model.embed(x_aug, edge_index_aug)
-                h = self.model.embed(x, edge_index)
+        if self.model.training:
+            margin_loss = self.margin_loss_func(h, h, h_aug) * label_aug
+            loss = self.eta * torch.mean(score) + \
+                   (1 - self.eta) * torch.mean(margin_loss)
+        else:
+            loss = torch.mean(score)
 
-                margin_loss = self.margin_loss_func(h, h, h_aug) * label_aug
-                margin_loss = torch.mean(margin_loss)
-
-                x_, s_ = self.model.reconstruct(h, edge_index)
-                score = self.loss_func(x[:batch_size],
-                                       x_[:batch_size],
-                                       s[:batch_size],
-                                       s_[:batch_size])
-                loss = self.eta * torch.mean(score) + \
-                       (1 - self.eta) * margin_loss
-
-                decision_scores[node_idx[:batch_size]] = score.detach() \
-                    .cpu().numpy()
-                epoch_loss += loss.item() * batch_size
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            if self.verbose:
-                print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, epoch_loss / G.x.shape[0]), end='')
-                if y_true is not None:
-                    auc = eval_roc_auc(y_true, decision_scores)
-                    print(" | AUC {:.4f}".format(auc), end='')
-                print()
-
-        self.decision_scores_ = decision_scores
-        self._process_decision_scores()
-        return self
-
-    def decision_function(self, G):
-        """
-        Predict raw anomaly score using the fitted detector. Outliers
-        are assigned with larger anomaly scores.
-
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        outlier_scores : numpy.ndarray
-            The anomaly score of shape :math:`N`.
-        """
-        check_is_fitted(self, ['model'])
-        G.node_idx = torch.arange(G.x.shape[0])
-        G.s = to_dense_adj(G.edge_index)[0]
-
-        loader = NeighborLoader(G,
-                                [self.num_neigh] * self.num_layers,
-                                batch_size=self.batch_size)
-
-        self.model.eval()
-        outlier_scores = np.zeros(G.x.shape[0])
-        for sampled_data in loader:
-            batch_size = sampled_data.batch_size
-            node_idx = sampled_data.node_idx
-
-            x, s, edge_index = self.process_graph(sampled_data)
-
-            x_, s_ = self.model(x, edge_index)
-            score = self.loss_func(x[:batch_size],
-                                   x_[:batch_size],
-                                   s[:batch_size],
-                                   s_[:batch_size])
-
-            outlier_scores[node_idx[:batch_size]] = score.detach() \
-                .cpu().numpy()
-        return outlier_scores
+        return loss, score.detach().cpu()
 
     def _data_augmentation(self, x, adj):
         """
@@ -328,95 +242,3 @@ class CONAD(BaseDetector):
         feat_aug = feat_aug.to(self.device)
         label_aug = label_aug.to(self.device)
         return feat_aug, edge_index_aug, label_aug
-
-    def process_graph(self, G):
-        """
-        Process the raw PyG data object into a tuple of sub data
-        objects needed for the model.
-
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        x : torch.Tensor
-            Attribute (feature) of nodes.
-        s : torch.Tensor
-            Adjacency matrix of the graph.
-        edge_index : torch.Tensor
-            Edge list of the graph.
-        """
-        s = to_dense_adj(G.edge_index)[0].to(self.device)
-        edge_index = G.edge_index.to(self.device)
-        x = G.x.to(self.device)
-
-        return x, s, edge_index
-
-    def loss_func(self, x, x_, s, s_):
-        # attribute reconstruction loss
-        diff_attribute = torch.pow(x - x_, 2)
-        attribute_errors = torch.sqrt(torch.sum(diff_attribute, 1))
-
-        # structure reconstruction loss
-        diff_structure = torch.pow(s - s_, 2)
-        structure_errors = torch.sqrt(torch.sum(diff_structure, 1))
-
-        score = self.alpha * attribute_errors \
-                + (1 - self.alpha) * structure_errors
-        return score
-
-
-class CONAD_Base(nn.Module):
-    def __init__(self,
-                 in_dim,
-                 hid_dim,
-                 num_layers,
-                 dropout,
-                 act):
-        super(CONAD_Base, self).__init__()
-
-        decoder_layers = int(num_layers / 2)
-        encoder_layers = num_layers - decoder_layers
-
-        self.shared_encoder = GCN(in_channels=in_dim,
-                                  hidden_channels=hid_dim,
-                                  num_layers=encoder_layers,
-                                  out_channels=hid_dim,
-                                  dropout=dropout,
-                                  act=act)
-
-        self.attr_decoder = GCN(in_channels=hid_dim,
-                                hidden_channels=hid_dim,
-                                num_layers=decoder_layers,
-                                out_channels=in_dim,
-                                dropout=dropout,
-                                act=act)
-
-        self.struct_decoder = GCN(in_channels=hid_dim,
-                                  hidden_channels=hid_dim,
-                                  num_layers=decoder_layers - 1,
-                                  out_channels=in_dim,
-                                  dropout=dropout,
-                                  act=act)
-
-    def embed(self, x, edge_index):
-        h = self.shared_encoder(x, edge_index)
-        return h
-
-    def reconstruct(self, h, edge_index):
-        # decode attribute matrix
-        x_ = self.attr_decoder(h, edge_index)
-        # decode structure matrix
-        h_ = self.struct_decoder(h, edge_index)
-
-        s_ = h_ @ h_.T
-        return x_, s_
-
-    def forward(self, x, edge_index):
-        # encode
-        h = self.embed(x, edge_index)
-        # reconstruct
-        x_, s_ = self.reconstruct(h, edge_index)
-        return x_, s_

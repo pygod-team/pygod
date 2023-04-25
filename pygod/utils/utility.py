@@ -190,29 +190,65 @@ def load_data(name, cache_dir=None):
     return data
 
 
-def logger(epoch, loss, pred, target=None, time=None, verbose=0, train=True):
+def logger(epoch=0,
+           loss=0,
+           score=None,
+           target=None,
+           time=None,
+           verbose=0,
+           train=True,
+           deep=True):
     """
-    Logger for training and testing
+    Logger for detectors.
+
+    Parameters
+    ----------
+    epoch : int, optional
+        The current epoch.
+    loss : float, optional
+        The current epoch loss value.
+    score : torch.Tensor, optional
+        The current outlier scores.
+    target : torch.Tensor, optional
+        The ground truth labels.
+    time : float, optional
+        The current epoch time.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
+    train : bool, optional
+        Whether the logger is used for training.
+    deep : bool, optional
+        Whether the logger is used for deep detectors.
     """
     if verbose > 0:
-        if train:
-            print("Epoch {:04d}: ".format(epoch), end='')
-        else:
-            print("Test: ", end='')
+        if deep:
+            if train:
+                print("Epoch {:04d}: ".format(epoch), end='')
+            else:
+                print("Test: ", end='')
 
-        print("Loss {:.4f}".format(loss), end='')
+            if isinstance(loss, tuple):
+                print("Loss G {:.4f} | Loss D {:.4f} | "
+                      .format(loss[0], loss[1]), end='')
+            print("Loss {:.4f} | ".format(loss), end='')
 
         if verbose > 1:
             if target is not None:
-                auc = eval_roc_auc(target, pred)
-                print(" | AUC {:.4f}".format(auc), end='')
+                auc = eval_roc_auc(target, score)
+                print("AUC {:.4f}".format(auc), end='')
 
             if verbose > 2:
                 if target is not None:
                     pos_size = target.nonzero().size(0)
-                    rec = eval_recall_at_k(target, pred, pos_size)
-                    pre = eval_precision_at_k(target, pred, pos_size)
-                    ap = eval_average_precision(target, pred)
+                    rec = eval_recall_at_k(target, score, pos_size)
+                    pre = eval_precision_at_k(target, score, pos_size)
+                    ap = eval_average_precision(target, score)
+
+                    contamination = sum(target) / len(target)
+                    threshold = np.percentile(score,
+                                              100 * (1 - contamination))
+                    pred = (score > threshold).long()
                     f1 = eval_f1(target, pred)
 
                     print(" | Recall {:.4f} | Precision {:.4f} "

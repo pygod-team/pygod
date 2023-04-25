@@ -127,13 +127,13 @@ class DONEBase(nn.Module):
         # equation 9 is based on the official implementation, and it
         # is slightly different from the paper
         dx = torch.sum(torch.pow(x - x_, 2), 1)
-        tmp = self.a3 * dx + self.a4 * dna
+        tmp = self.w3 * dx + self.w4 * dna
         oa = tmp / torch.sum(tmp)
 
         # equation 8 is based on the official implementation, and it
         # is slightly different from the paper
         ds = torch.sum(torch.pow(s - s_, 2), 1)
-        tmp = self.a1 * ds + self.a2 * dns
+        tmp = self.w1 * ds + self.w2 * dns
         os = tmp / torch.sum(tmp)
 
         # equation 10
@@ -162,5 +162,4 @@ class DONEBase(nn.Module):
                self.w2 * loss_hom_s + \
                self.w5 * loss_c
 
-        score = (oa + os + oc) / 3
-        return score, loss
+        return loss, oa, os, oc

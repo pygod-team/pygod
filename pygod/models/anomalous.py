@@ -5,19 +5,16 @@
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
+import time
 import torch
-import warnings
 from torch import nn
-from pygod.metrics import *
-import torch.nn.functional as F
 from torch_geometric.utils import to_dense_adj
-from sklearn.utils.validation import check_is_fitted
 
-from . import BaseDetector
-from ..utils import validate_device
+from . import Detector
+from ..utils import validate_device, logger
 
 
-class ANOMALOUS(BaseDetector):
+class ANOMALOUS(Detector):
     """
     ANOMALOUS (A Joint Modeling Approach for Anomaly Detection on
     Attributed Networks) is an anomaly detector with CUR decomposition
@@ -53,13 +50,14 @@ class ANOMALOUS(BaseDetector):
 
     def __init__(self,
                  gamma=1.,
-                 weight_decay=0.01,
+                 weight_decay=0.,
                  lr=0.004,
                  epoch=100,
-                 gpu=0,
+                 gpu=-1,
                  contamination=0.1,
-                 verbose=False):
-        super(ANOMALOUS, self).__init__(contamination=contamination)
+                 verbose=0):
+        super(ANOMALOUS, self).__init__(contamination=contamination,
+                                        verbose=verbose)
 
         # model param
         self.gamma = gamma
@@ -70,122 +68,66 @@ class ANOMALOUS(BaseDetector):
         self.epoch = epoch
         self.device = validate_device(gpu)
 
-        # other param
-        self.verbose = verbose
         self.model = None
 
-    def fit(self, G, y_true=None):
-        """
-        Fit detector with input data.
+    def fit(self, data, label=None):
+        data.s = to_dense_adj(data.edge_index)[0]
+        x, s, l, w_init, r_init = self.process_graph(data)
 
-        Parameters
-        ----------
-        G : torch_geometric.data.Data
-            The input data.
-        y_true : numpy.ndarray, optional
-            The optional outlier ground truth labels used to monitor
-            the training progress. They are not used to optimize the
-            unsupervised model. Default: ``None``.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        G.s = to_dense_adj(G.edge_index)[0]
-        x, s, l, w_init, r_init = self.process_graph(G)
-
-        self.model = ANOMALOUS_Base(w_init, r_init)
+        self.model = ANOMALOUSBase(w_init, r_init)
         optimizer = torch.optim.Adam(self.model.parameters(),
                                      lr=self.lr,
                                      weight_decay=self.weight_decay)
 
         for epoch in range(self.epoch):
+            start_time = time.time()
             x_, r = self.model(x)
             loss = self._loss(x, x_, r, l)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            decision_scores = torch.sum(torch.pow(r, 2), dim=1).detach() \
-                .cpu().numpy()
+            decision_score = torch.sum(torch.pow(r, 2), dim=1).detach() \
+                .cpu()
 
-            if self.verbose:
-                print("Epoch {:04d}: Loss {:.4f}"
-                      .format(epoch, loss.item()), end='')
-                if y_true is not None:
-                    auc = eval_roc_auc(y_true, decision_scores)
-                    print(" | AUC {:.4f}".format(auc), end='')
-                print()
+            logger(epoch=epoch,
+                   loss=loss.item(),
+                   score=self.decision_score_,
+                   target=label,
+                   time=time.time() - start_time,
+                   verbose=self.verbose,
+                   train=True)
 
-        self.decision_scores_ = decision_scores
-        self._process_decision_scores()
+        self.decision_score_ = decision_score
+        self._process_decision_score()
         return self
 
-    def decision_function(self, G):
-        """
-        Predict raw anomaly score using the fitted detector. Outliers
-        are assigned with larger anomaly scores.
+    def decision_function(self, data, label=None):
+        if data is not None:
+            self.fit(data, label)
+        return self.decision_score_
 
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        outlier_scores : numpy.ndarray
-            The anomaly score of shape :math:`N`.
-        """
-        check_is_fitted(self, ['model'])
-
-        if G is not None:
-            warnings.warn('The model is transductive only. '
-                          'Training data is used to predict')
-
-        outlier_scores = self.decision_scores_
-
-        return outlier_scores
-
-    def process_graph(self, G):
-        """
-        Process the raw PyG data object into a tuple of sub data
-        objects needed for the model.
-
-        Parameters
-        ----------
-        G : PyTorch Geometric Data instance (torch_geometric.data.Data)
-            The input data.
-
-        Returns
-        -------
-        x : torch.Tensor
-            Attribute (feature) of nodes.
-        """
-        x = G.x.to(self.device)
-        s = G.s.to(self.device)
+    def process_graph(self, data):
+        x = data.x
+        s = data.s
 
         s = torch.max(s, s.T)
-        l = self._comp_laplacian(s)
+        laplacian = torch.diag(torch.sum(s, dim=1)) - s
 
         w_init = torch.randn_like(x.T)
         r_init = torch.inverse((1 + self.weight_decay)
-            * torch.eye(x.shape[0]).to(self.device) + self.gamma * l) @ x
+            * torch.eye(x.shape[0]) + self.gamma * laplacian) @ x
 
-        return x, s, l, w_init, r_init
+        return x, s, laplacian, w_init, r_init
 
     def _loss(self, x, x_, r, l):
         return torch.norm(x - x_ - r, 2) + \
                self.gamma * torch.trace(r.T @ l @ r)
 
-    def _comp_laplacian(self, adj):
-        d = torch.diag(torch.sum(adj, dim=1))
-        return d - adj
 
-
-class ANOMALOUS_Base(nn.Module):
+class ANOMALOUSBase(nn.Module):
     def __init__(self, w, r):
-        super(ANOMALOUS_Base, self).__init__()
+        super(ANOMALOUSBase, self).__init__()
         self.w = nn.Parameter(w)
         self.r = nn.Parameter(r)
 

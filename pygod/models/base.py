@@ -27,6 +27,9 @@ class Detector(ABC):
         The amount of contamination of the dataset in (0., 0.5], i.e.,
         the proportion of outliers in the dataset. Used when fitting to
         define the threshold on the decision function. Default: ``0.1``.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
 
     Attributes
     ----------
@@ -47,14 +50,30 @@ class Detector(ABC):
         ``threshold_`` on ``decision_score_``.
     """
 
-    def __init__(self, contamination=0.1):
+    def __init__(self,
+                 contamination=0.1,
+                 verbose=0):
 
         if not (0. < contamination <= 0.5):
             raise ValueError("contamination must be in (0, 0.5], "
                              "got: %f" % contamination)
 
         self.contamination = contamination
+        self.verbose = verbose
         self.decision_score_ = None
+
+    @abstractmethod
+    def process_graph(self, data):
+        """
+        Data preprocessing for the input graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            The input graph.
+        """
+
+        pass
 
     @abstractmethod
     def fit(self, data, label=None):
@@ -78,7 +97,7 @@ class Detector(ABC):
         pass
 
     @abstractmethod
-    def decision_function(self, data):
+    def decision_function(self, data, label=None):
         """Predict raw outlier scores of testing data using the fitted
         detector. Outliers are assigned with higher outlier scores.
 
@@ -86,6 +105,9 @@ class Detector(ABC):
         ----------
         data : torch_geometric.data.Data
             The testing graph.
+        label : torch.Tensor, optional
+            The optional outlier ground truth labels used for testing.
+            Default: ``None``.
 
         Returns
         -------
@@ -97,7 +119,8 @@ class Detector(ABC):
 
     def predict(self,
                 data=None,
-                return_label=True,
+                label=None,
+                return_pred=True,
                 return_score=False,
                 return_prob=False,
                 prob_method='linear',
@@ -110,7 +133,10 @@ class Detector(ABC):
         data : torch_geometric.data.Data, optional
             The testing graph. If ``None``, the training data is used.
             Default: ``None``.
-        return_label : bool, optional
+        label : torch.Tensor, optional
+            The optional outlier ground truth labels used for testing.
+            Default: ``None``.
+        return_pred : bool, optional
             Whether to return the predicted binary labels. The labels
             are determined by the outlier contamination on the raw
             outlier scores. Default: ``True``.
@@ -159,9 +185,13 @@ class Detector(ABC):
         output = ()
         if data is None:
             score = self.decision_score_
+            logger(score=self.decision_score_,
+                   target=label,
+                   verbose=self.verbose,
+                   train=False)
         else:
-            score = self.decision_function(data)
-        if return_label:
+            score = self.decision_function(data, label)
+        if return_pred:
             pred = (score > self.threshold_).long()
             output += (pred,)
         if return_score:
@@ -318,7 +348,7 @@ class DeepDetector(Detector, ABC):
                  num_layers=2,
                  dropout=0.,
                  weight_decay=0.,
-                 act=torch.relu,
+                 act=torch.nn.functional.relu,
                  backbone=GIN,
                  contamination=0.1,
                  lr=4e-3,
@@ -327,9 +357,11 @@ class DeepDetector(Detector, ABC):
                  batch_size=0,
                  num_neigh=-1,
                  verbose=0,
+                 gan=False,
                  **kwargs):
 
-        super(DeepDetector, self).__init__(contamination=contamination)
+        super(DeepDetector, self).__init__(contamination=contamination,
+                                           verbose=verbose)
 
         # model param
         self.in_dim = None
@@ -358,8 +390,8 @@ class DeepDetector(Detector, ABC):
             raise ValueError('Number of neighbors must be int or list of int')
 
         # other param
-        self.verbose = verbose
         self.model = None
+        self.gan = gan
         self.kwargs = kwargs
 
     def fit(self, data, label=None):
@@ -373,30 +405,44 @@ class DeepDetector(Detector, ABC):
                                 self.num_neigh,
                                 batch_size=self.batch_size)
 
-        self.model = self.init_nn(**self.kwargs)
-        optimizer = torch.optim.Adam(self.model.parameters(),
-                                     lr=self.lr,
-                                     weight_decay=self.weight_decay)
+        self.model = self.init_model(**self.kwargs)
+        if not self.gan:
+            optimizer = torch.optim.Adam(self.model.parameters(),
+                                         lr=self.lr,
+                                         weight_decay=self.weight_decay)
+        else:
+            self.opt_g = torch.optim.Adam(self.model.generator.parameters(),
+                                          lr=self.lr,
+                                          weight_decay=self.weight_decay)
+            optimizer = torch.optim.Adam(self.model.discriminator.parameters(),
+                                         lr=self.lr,
+                                         weight_decay=self.weight_decay)
 
         self.model.train()
         self.decision_score_ = torch.zeros(data.x.shape[0])
         for epoch in range(self.epoch):
             start_time = time.time()
             epoch_loss = 0
+            if self.gan:
+                self.epoch_loss_g = 0
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.node_idx
-                loss, scores = self.forward_nn(sampled_data)
+
+                loss, score = self.forward_model(sampled_data)
                 epoch_loss += loss.item() * batch_size
-                self.decision_score_[node_idx[:batch_size]] = scores
+                self.decision_score_[node_idx[:batch_size]] = score
 
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
+            loss_value = epoch_loss / data.x.shape[0]
+            if self.gan:
+                loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
             logger(epoch=epoch,
-                   loss=epoch_loss / data.x.shape[0],
-                   pred=self.decision_score_,
+                   loss=loss_value,
+                   score=self.decision_score_,
                    target=label,
                    time=time.time() - start_time,
                    verbose=self.verbose,
@@ -405,7 +451,7 @@ class DeepDetector(Detector, ABC):
         self._process_decision_score()
         return self
 
-    def decision_function(self, data):
+    def decision_function(self, data, label=None):
 
         self.process_graph(data)
         loader = NeighborLoader(data,
@@ -413,14 +459,22 @@ class DeepDetector(Detector, ABC):
                                 batch_size=self.batch_size)
 
         self.model.eval()
-        outlier_scores = torch.zeros(data.x.shape[0])
+        outlier_score = torch.zeros(data.x.shape[0])
+        start_time = time.time()
         for sampled_data in loader:
-            loss, score = self.forward_nn(sampled_data)
+            loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
             node_idx = sampled_data.node_idx
 
-            outlier_scores[node_idx[:batch_size]] = score
-        return outlier_scores
+            outlier_score[node_idx[:batch_size]] = score
+
+        logger(loss=loss.item() / data.x.shape[0],
+               score=outlier_score,
+               target=label,
+               time=time.time() - start_time,
+               verbose=self.verbose,
+               train=False)
+        return outlier_score
 
     @property
     def emb(self):
@@ -438,7 +492,7 @@ class DeepDetector(Detector, ABC):
         return self.model.emb
 
     @abstractmethod
-    def init_nn(self):
+    def init_model(self):
         """
         Initialize the neural network detector.
 
@@ -451,7 +505,7 @@ class DeepDetector(Detector, ABC):
         pass
 
     @abstractmethod
-    def forward_nn(self, data):
+    def forward_model(self, data):
         """
         Forward pass of the neural network detector.
 
@@ -466,19 +520,6 @@ class DeepDetector(Detector, ABC):
             The loss of the current batch.
         score : torch.Tensor
             The outlier scores of the current batch.
-        """
-
-        pass
-
-    @abstractmethod
-    def process_graph(self, data):
-        """
-        Data preprocessing for the input graph.
-
-        Parameters
-        ----------
-        data : torch_geometric.data.Data
-            The input graph.
         """
 
         pass

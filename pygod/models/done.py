@@ -95,14 +95,8 @@ class DONE(DeepDetector):
                  num_neigh=-1,
                  verbose=0,
                  **kwargs):
-
-        self.w1 = w1
-        self.w2 = w2
-        self.w3 = w3
-        self.w4 = w4
-        self.w5 = w5
         super(DONE, self).__init__(hid_dim=hid_dim,
-                                   num_layers=num_layers,
+                                   num_layers=1,
                                    dropout=dropout,
                                    weight_decay=weight_decay,
                                    act=act,
@@ -115,11 +109,24 @@ class DONE(DeepDetector):
                                    verbose=verbose,
                                    **kwargs)
 
-    def process_graph(self, data):
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
+        self.w4 = w4
+        self.w5 = w5
+        self.num_layers = num_layers
 
+        self.attribute_score_ = None
+        self.structural_score_ = None
+        self.combined_score_ = None
+
+    def process_graph(self, data):
         data.s = to_dense_adj(data.edge_index)[0]
 
-    def init_nn(self, **kwargs):
+    def init_model(self, **kwargs):
+        self.attribute_score_ = torch.zeros(self.num_nodes)
+        self.structural_score_ = torch.zeros(self.num_nodes)
+        self.combined_score_ = torch.zeros(self.num_nodes)
 
         return DONEBase(x_dim=self.in_dim,
                         s_dim=self.num_nodes,
@@ -134,8 +141,7 @@ class DONE(DeepDetector):
                         w5=self.w5,
                         **kwargs).to(self.device)
 
-    def forward_nn(self, data):
-
+    def forward_model(self, data):
         batch_size = data.batch_size
         node_idx = data.node_idx
 
@@ -143,13 +149,18 @@ class DONE(DeepDetector):
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        x_, s_ = self.model(x, edge_index)
-        scores = self.model.loss_func(x[:batch_size],
-                                      x_[:batch_size],
-                                      s[:batch_size],
-                                      s_[:batch_size],
-                                      self.weight)
+        x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
+        loss, oa, os, oc = self.model.loss_func(x[:batch_size],
+                                                x_[:batch_size],
+                                                s[:batch_size],
+                                                s_[:batch_size],
+                                                h_a[:batch_size],
+                                                h_s[:batch_size],
+                                                dna[:batch_size],
+                                                dns[:batch_size])
 
-        loss = torch.mean(scores)
+        self.attribute_score_[node_idx[:batch_size]] = oa.detach().cpu()
+        self.structural_score_[node_idx[:batch_size]] = os.detach().cpu()
+        self.combined_score_[node_idx[:batch_size]] = oc.detach().cpu()
 
-        return loss, scores.detach().cpu()
+        return loss, ((oa + os + oc) / 3).detach().cpu()
