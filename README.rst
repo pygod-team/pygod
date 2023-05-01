@@ -189,8 +189,7 @@ Unsupervised         MLP+AE               AdONE               2020   Yes        
 Unsupervised         GNN+AE               AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
 Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
 Unsupervised         GNN+AE               OCGNN               2021   Yes          [#Wang2021One]_
-Unsupervised/SSL     GNN+AE               CoLA (beta)         2021   In progress  [#Liu2021Anomaly]_
-Unsupervised/SSL     GNN+AE               ANEMONE (beta)      2021   In progress  [#Jin2021ANEMONE]_
+Unsupervised/SSL     GNN+AE               CoLA                2021   Yes          [#Liu2021Anomaly]_
 Unsupervised         GNN+AE               GUIDE               2021   Yes          [#Yuan2021Higher]_
 Unsupervised/SSL     GNN+AE               CONAD               2022   Yes          [#Xu2022Contrastive]_
 ===================  ===================  ==================  =====  ===========  ========================================
@@ -283,8 +282,6 @@ Reference
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
-
-.. [#Jin2021ANEMONE] Jin, M., Liu, Y., Zheng, Y., Chi, L., Li, Y. and Pan, S., 2021. ANEMONE: Graph Anomaly Detection with Multi-Scale Contrastive Learning. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management (CIKM).
 
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
 

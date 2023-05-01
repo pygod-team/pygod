@@ -127,6 +127,9 @@ class GAAN(DeepDetector):
         GAANBase.process_graph(data)
 
     def init_model(self, **kwargs):
+        if self.save_emb:
+            self.emb = torch.zeros(self.num_nodes,
+                                   self.hid_dim).to(self.device)
         return GAANBase(in_dim=self.in_dim,
                         noise_dim=self.noise_dim,
                         hid_dim=self.hid_dim,

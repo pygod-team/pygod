@@ -1,5 +1,6 @@
 import torch
 from torch_geometric.nn import MLP
+from torch_geometric.utils import to_dense_adj
 
 from .done import DONEBase
 
@@ -45,11 +46,13 @@ class AdONEBase(torch.nn.Module):
                                  num_layers=2,
                                  dropout=dropout,
                                  act=torch.tanh)
+        self.emb = None
 
     def forward(self, x, s, edge_index):
         x_, s_, h_a, h_s, dna, dns = self.done(x, s, edge_index)
         dis_a = torch.sigmoid(self.discriminator(h_a))
         dis_s = torch.sigmoid(self.discriminator(h_s))
+        self.emb = (h_a, h_s)
 
         return x_, s_, h_a, h_s, dna, dns, dis_a, dis_s
 
@@ -94,3 +97,7 @@ class AdONEBase(torch.nn.Module):
                self.w5 * loss_alg
 
         return loss, oa, os, oc
+
+    @staticmethod
+    def process_graph(data):
+        data.s = to_dense_adj(data.edge_index)[0]

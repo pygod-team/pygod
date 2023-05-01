@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch_geometric.nn import GATConv
+from torch_geometric.utils import to_dense_adj
 
 from .functional import double_recon_loss
 
@@ -64,12 +64,13 @@ class AnomalyDAEBase(nn.Module):
         self.act = act
 
         self.loss_func = double_recon_loss
+        self.emb = None
 
     def forward(self, x, edge_index, batch_size):
         h = F.dropout(self.act(self.dense_stru(x)), self.dropout)
-        h = self.gat_layer(h, edge_index)
+        self.emb = self.gat_layer(h, edge_index)
 
-        s_ = torch.sigmoid(h @ h.T)
+        s_ = torch.sigmoid(self.emb @ self.emb.T)
 
         if batch_size < self.num_nodes:
             x = F.pad(x, (0, 0, 0, self.num_nodes - batch_size))
@@ -78,6 +79,10 @@ class AnomalyDAEBase(nn.Module):
         x = F.dropout(x, self.dropout)
         x = self.dense_attr_2(x)
         x = F.dropout(x, self.dropout)
-        x_ = h @ x.T
+        x_ = self.emb @ x.T
 
         return x_, s_
+
+    @staticmethod
+    def process_graph(data):
+        data.s = to_dense_adj(data.edge_index)[0]

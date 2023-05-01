@@ -338,6 +338,10 @@ class DeepDetector(Detector, ABC):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
+    gan : bool, optional
+        Whether using adversarial training. Default: ``False``.
+    save_emb : bool, optional
+        Whether to save the embedding. Default: ``False``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -358,6 +362,7 @@ class DeepDetector(Detector, ABC):
                  num_neigh=-1,
                  verbose=0,
                  gan=False,
+                 save_emb=False,
                  **kwargs):
 
         super(DeepDetector, self).__init__(contamination=contamination,
@@ -372,12 +377,14 @@ class DeepDetector(Detector, ABC):
         self.weight_decay = weight_decay
         self.act = act
         self.backbone = backbone
+        self.kwargs = kwargs
 
         # training param
         self.lr = lr
         self.epoch = epoch
         self.device = validate_device(gpu)
         self.batch_size = batch_size
+        self.gan = gan
         if type(num_neigh) is int:
             self.num_neigh = [num_neigh] * self.num_layers
         elif type(num_neigh) is list:
@@ -391,8 +398,9 @@ class DeepDetector(Detector, ABC):
 
         # other param
         self.model = None
-        self.gan = gan
-        self.kwargs = kwargs
+        self.save_emb = save_emb
+        if self.save_emb:
+            self.emb = None
 
     def fit(self, data, label=None):
 
@@ -431,6 +439,14 @@ class DeepDetector(Detector, ABC):
 
                 loss, score = self.forward_model(sampled_data)
                 epoch_loss += loss.item() * batch_size
+                if type(self.emb) == tuple:
+                    self.emb[0][node_idx[:batch_size]] = \
+                        self.model.emb[0][:batch_size]
+                    self.emb[1][node_idx[:batch_size]] = \
+                        self.model.emb[1][:batch_size]
+                else:
+                    self.emb[node_idx[:batch_size]] = \
+                        self.model.emb[:batch_size]
                 self.decision_score_[node_idx[:batch_size]] = score
 
                 optimizer.zero_grad()
@@ -460,11 +476,13 @@ class DeepDetector(Detector, ABC):
 
         self.model.eval()
         outlier_score = torch.zeros(data.x.shape[0])
+        emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
         for sampled_data in loader:
             loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
             node_idx = sampled_data.node_idx
+            emb[node_idx[:batch_size]] = self.model.emb[:batch_size]
 
             outlier_score[node_idx[:batch_size]] = score
 
@@ -475,6 +493,88 @@ class DeepDetector(Detector, ABC):
                verbose=self.verbose,
                train=False)
         return outlier_score
+
+    def predict(self,
+                data=None,
+                label=None,
+                return_pred=True,
+                return_score=False,
+                return_prob=False,
+                prob_method='linear',
+                return_conf=False,
+                return_emb=False):
+        """Prediction for testing data using the fitted detector.
+        Return predicted labels by default.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data, optional
+            The testing graph. If ``None``, the training data is used.
+            Default: ``None``.
+        label : torch.Tensor, optional
+            The optional outlier ground truth labels used for testing.
+            Default: ``None``.
+        return_pred : bool, optional
+            Whether to return the predicted binary labels. The labels
+            are determined by the outlier contamination on the raw
+            outlier scores. Default: ``True``.
+        return_score : bool, optional
+            Whether to return the raw outlier scores.
+            Default: ``False``.
+        return_prob : bool, optional
+            Whether to return the outlier probabilities.
+            Default: ``False``.
+        prob_method : str, optional
+            The method to convert the outlier scores to probabilities.
+            Two approaches are possible:
+
+            1. ``'linear'``: simply use min-max conversion to linearly
+            transform the outlier scores into the range of
+            [0,1]. The model must be fitted first.
+
+            2. ``'unify'``: use unifying scores,
+            see :cite:`kriegel2011interpreting`.
+
+            Default: ``'linear'``.
+        return_conf : boolean, optional
+            Whether to return the model's confidence in making the same
+            prediction under slightly different training sets.
+            See :cite:`perini2020quantifying`. Default: ``False``.
+        return_emb : bool, optional
+            Whether to return the learned node representations.
+            Default: ``False``.
+
+        Returns
+        -------
+        pred : torch.Tensor
+            The predicted binary outlier labels of shape :math:`N`.
+            0 stands for inliers and 1 for outliers.
+            Only available when ``return_label=True``.
+        score : torch.Tensor
+            The raw outlier scores of shape :math:`N`.
+            Only available when ``return_score=True``.
+        prob : torch.Tensor
+            The outlier probabilities of shape :math:`N`.
+            Only available when ``return_prob=True``.
+        conf : torch.Tensor
+            The prediction confidence of shape :math:`N`.
+            Only available when ``return_conf=True``.
+        """
+
+        output = super(DeepDetector, self).predict(data,
+                                                   label,
+                                                   return_pred,
+                                                   return_score,
+                                                   return_prob,
+                                                   prob_method,
+                                                   return_conf)
+        if return_emb:
+            if type(output) == tuple:
+                output += (self.emb,)
+            else:
+                output = (output, self.emb)
+
+        return output
 
     @property
     def emb(self):
@@ -487,9 +587,9 @@ class DeepDetector(Detector, ABC):
             The learned node hidden embeddings of shape
             :math:`N \\times` ``hid_dim``.
         """
-
+        assert self.save_emb, 'embedding is not saved.'
         is_fitted(self, ['decision_score_', 'threshold_', 'label_'])
-        return self.model.emb
+        return self.emb
 
     @abstractmethod
     def init_model(self):

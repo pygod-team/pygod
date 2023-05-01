@@ -1,10 +1,10 @@
 from .base import Detector
 from .base import DeepDetector
+
 from .adone import AdONE
-# from .anemone import ANEMONE
 from .anomalous import ANOMALOUS
 from .anomalydae import AnomalyDAE
-# from .cola import CoLA
+from .cola import CoLA
 from .conad import CONAD
 from .dominant import DOMINANT
 from .done import DONE
@@ -15,9 +15,9 @@ from .ocgnn import OCGNN
 from .one import ONE
 from .radar import Radar
 from .scan import SCAN
-#
-# __all__ = [
-#     "Detector", "DeepDetector", "AdONE", "AnomalyDAE", "DOMINANT", "DONE",
-#     "GAAN", "GAE", "GUIDE", "OCGNN", "ONE", "CONAD", "CoLA",
-#     "ANEMONE", "Radar", "ANOMALOUS", "SCAN"
-# ]
+
+__all__ = [
+    "Detector", "DeepDetector", "AdONE", "ANOMALOUS", "AnomalyDAE", "CoLA",
+    "CONAD", "DOMINANT", "DONE", "GAAN", "GAE", "GUIDE", "OCGNN", "ONE",
+    "Radar", "SCAN"
+]

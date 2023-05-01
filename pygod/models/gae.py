@@ -11,8 +11,7 @@ from torch_geometric.nn import MLP, GCN
 from torch_geometric.utils import to_dense_adj
 
 from . import DeepDetector
-
-from ..nn.decoder import DotProductDecoder
+from ..nn import GAEBase
 
 
 class GAE(DeepDetector):
@@ -118,25 +117,18 @@ class GAE(DeepDetector):
             data.s = to_dense_adj(data.edge_index)[0]
 
     def init_model(self, **kwargs):
-
-        if self.recon_s:
-            model = DotProductDecoder(in_dim=self.in_dim,
-                                      hid_dim=self.hid_dim,
-                                      num_layers=self.num_layers,
-                                      dropout=self.dropout,
-                                      act=self.act,
-                                      sigmoid_s=self.sigmoid_s,
-                                      backbone=self.backbone,
-                                      **kwargs).to(self.device)
-        else:
-            model = self.backbone(in_channels=self.in_dim,
-                                  hidden_channels=self.hid_dim,
-                                  out_channels=self.in_dim,
-                                  num_layers=self.num_layers,
-                                  dropout=self.dropout,
-                                  act=self.act,
-                                  **kwargs).to(self.device)
-        return model
+        if self.save_emb:
+            self.emb = torch.zeros(self.num_nodes,
+                                   self.hid_dim).to(self.device)
+        return GAEBase(in_dim=self.in_dim,
+                       hid_dim=self.hid_dim,
+                       num_layers=self.num_layers,
+                       dropout=self.dropout,
+                       act=self.act,
+                       recon_s=self.recon_s,
+                       sigmoid_s=self.sigmoid_s,
+                       backbone=self.backbone,
+                       **kwargs)
 
     def forward_model(self, data):
 
@@ -149,15 +141,12 @@ class GAE(DeepDetector):
         if self.recon_s:
             s = data.s.to(self.device)[:, node_idx]
 
-        if self.backbone == MLP:
-            h = self.model(x, None)
-        else:
-            h = self.model(x, edge_index)
+        h = self.model(x, edge_index)
 
         target = s[:, node_idx] if self.recon_s else x
-        score = torch.mean(F.mse_loss(target[:batch_size],
-                                      h[:batch_size],
-                                      reduction='none'), dim=1)
+        score = torch.mean(self.model.loss_func(target[:batch_size],
+                                                h[:batch_size],
+                                                reduction='none'), dim=1)
 
         loss = torch.mean(score)
 

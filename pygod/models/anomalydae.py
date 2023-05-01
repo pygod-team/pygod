@@ -122,9 +122,13 @@ class AnomalyDAE(DeepDetector):
         self.eta = eta
 
     def process_graph(self, data):
-        data.s = to_dense_adj(data.edge_index)[0]
+        AnomalyDAEBase.process_graph(data)
 
     def init_model(self, **kwargs):
+        if self.save_emb:
+            self.emb = torch.zeros(self.num_nodes,
+                                   self.hid_dim).to(self.device)
+
         return AnomalyDAEBase(in_dim=self.in_dim,
                               num_nodes=self.num_nodes,
                               emb_dim=self.emb_dim,

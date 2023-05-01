@@ -2,6 +2,7 @@ import math
 import torch
 from torch import nn
 from torch_geometric.nn import MLP
+from torch_geometric.utils import to_dense_adj
 
 from .conv import NeighDiff
 
@@ -112,6 +113,7 @@ class DONEBase(nn.Module):
                                   **kwargs)
 
         self.neigh_diff = NeighDiff()
+        self.emb = None
 
     def forward(self, x, s, edge_index):
         h_a = self.attr_encoder(x)
@@ -120,6 +122,7 @@ class DONEBase(nn.Module):
         h_s = self.struct_encoder(s)
         s_ = self.struct_decoder(h_s)
         dns = self.neigh_diff(h_s, edge_index).squeeze()
+        self.emb = (h_a, h_s)
 
         return x_, s_, h_a, h_s, dna, dns
 
@@ -163,3 +166,7 @@ class DONEBase(nn.Module):
                self.w5 * loss_c
 
         return loss, oa, os, oc
+
+    @staticmethod
+    def process_graph(data):
+        data.s = to_dense_adj(data.edge_index)[0]

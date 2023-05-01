@@ -121,12 +121,15 @@ class DONE(DeepDetector):
         self.combined_score_ = None
 
     def process_graph(self, data):
-        data.s = to_dense_adj(data.edge_index)[0]
+        DONEBase.process_graph(data)
 
     def init_model(self, **kwargs):
         self.attribute_score_ = torch.zeros(self.num_nodes)
         self.structural_score_ = torch.zeros(self.num_nodes)
         self.combined_score_ = torch.zeros(self.num_nodes)
+
+        self.emb = (torch.zeros(self.num_nodes, self.hid_dim),
+                    torch.zeros(self.num_nodes, self.hid_dim))
 
         return DONEBase(x_dim=self.in_dim,
                         s_dim=self.num_nodes,

@@ -40,8 +40,8 @@ class OCGNNBase(nn.Module):
 
     def forward(self, x, edge_index):
 
-        emb = self.gnn(x, edge_index)
-        return emb
+        self.emb = self.gnn(x, edge_index)
+        return self.emb
 
     def loss_func(self, emb):
 

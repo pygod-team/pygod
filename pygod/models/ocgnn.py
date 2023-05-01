@@ -72,6 +72,10 @@ class OCGNN(DeepDetector):
         pass
 
     def init_model(self, **kwargs):
+        if self.save_emb:
+            self.emb = torch.zeros(self.num_nodes,
+                                   self.hid_dim).to(self.device)
+
         return OCGNNBase(in_dim=self.in_dim,
                          hid_dim=self.hid_dim,
                          num_layers=self.num_layers,
