@@ -1,5 +1,5 @@
 from random import choice
-from pygod.models import *
+from pygod.detectors import *
 from pyod.models.lof import LOF
 from sklearn.ensemble import IsolationForest
 

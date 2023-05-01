@@ -37,7 +37,7 @@ class Radar(Detector):
         Default: ``0``.
     Examples
     --------
-    >>> from pygod.models import Radar
+    >>> from pygod.detectors import Radar
     >>> model = Radar()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(None)

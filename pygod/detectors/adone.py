@@ -27,7 +27,7 @@ class AdONE(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import AdONE
+    >>> from pygod.detectors import AdONE
     >>> model = AdONE()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)

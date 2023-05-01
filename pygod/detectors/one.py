@@ -22,7 +22,7 @@ class ONE(Detector):
 
     Examples
     --------
-    >>> from pygod.models import ONE
+    >>> from pygod.detectors import ONE
     >>> model = ONE()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)

@@ -8,7 +8,7 @@ from numpy.testing import assert_raises
 import torch
 from torch_geometric.seed import seed_everything
 
-from pygod.models import AnomalyDAE
+from pygod.detectors import AnomalyDAE
 from pygod.metrics import eval_roc_auc
 
 

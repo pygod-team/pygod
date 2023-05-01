@@ -61,7 +61,7 @@ class SCAN(Detector):
 
     Examples
     --------
-    >>> from pygod.models import SCAN
+    >>> from pygod.detectors import SCAN
     >>> model = SCAN()
     >>> model.fit(data)
     >>> prediction = model.predict()

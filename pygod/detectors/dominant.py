@@ -67,7 +67,7 @@ class DOMINANT(DeepDetector):
     Examples
     --------
     >>> import pygod
-    >>> model = pygod.models.DOMINANT()
+    >>> model = pygod.detectors.DOMINANT()
     >>> data = pygod.utils.load_data('inj_cora')
     >>> model.fit(data)
     >>> pred = model.predict(data)

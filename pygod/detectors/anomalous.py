@@ -42,7 +42,7 @@ class ANOMALOUS(Detector):
 
     Examples
     --------
-    >>> from pygod.models import ANOMALOUS
+    >>> from pygod.detectors import ANOMALOUS
     >>> model = ANOMALOUS()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(None)

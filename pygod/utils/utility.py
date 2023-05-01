@@ -261,11 +261,11 @@ def logger(epoch=0,
         print()
 
 
-def init_model(name, **kwargs):
+def init_detector(name, **kwargs):
     """
     Model initialization function.
     """
-    module = import_module('pygod.models')
+    module = import_module('pygod.detectors')
     assert name in module.__all__, "Model {} not found".format(name)
     return getattr(module, name)(**kwargs)
 

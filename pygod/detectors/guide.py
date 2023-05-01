@@ -78,7 +78,7 @@ class GUIDE(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import GUIDE
+    >>> from pygod.detectors import GUIDE
     >>> model = GUIDE()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)

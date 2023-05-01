@@ -69,7 +69,7 @@ class GAAN(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import GAAN
+    >>> from pygod.detectors import GAAN
     >>> model = GAAN()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(None)

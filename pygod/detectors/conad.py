@@ -78,7 +78,7 @@ class CONAD(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import CONAD
+    >>> from pygod.detectors import CONAD
     >>> model = CONAD()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)

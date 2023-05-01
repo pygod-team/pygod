@@ -16,7 +16,7 @@ import numpy as np
 # if pyod is installed, no need to use the following line
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from pygod.models import Detector
+from pygod.detectors import Detector
 
 
 # Check sklearn\tests\test_base

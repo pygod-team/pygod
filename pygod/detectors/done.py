@@ -70,7 +70,7 @@ class DONE(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import DONE
+    >>> from pygod.detectors import DONE
     >>> model = DONE()
     >>> model.fit(data)
     >>> prediction = model.predict(data)

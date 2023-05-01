@@ -25,7 +25,7 @@ class OCGNN(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import AnomalyDAE
+    >>> from pygod.detectors import AnomalyDAE
     >>> model = OCGNN()
     >>> model.fit(data) # PyG graph data object
     >>> prediction = model.predict(data)

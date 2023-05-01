@@ -55,10 +55,10 @@ data.y = data.y.bool()
 # You can use any model by simply initializing without passing any
 # arguments. Default hyperparameters are ready for you. Of course, you
 # can also customize the parameters by passing arguments. Here, we use
-# `pygod.models.DOMINANT` as an example.
+# `pygod.detectors.DOMINANT` as an example.
 
 
-from pygod.models import DOMINANT
+from pygod.detectors import DOMINANT
 
 model = DOMINANT()
 

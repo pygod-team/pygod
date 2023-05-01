@@ -65,7 +65,7 @@ class GAE(DeepDetector):
 
     Examples
     --------
-    >>> from pygod.models import GAE
+    >>> from pygod.detectors import GAE
     >>> model = GAE()
     >>> model.fit(data)
     >>> prediction = model.predict(data)
