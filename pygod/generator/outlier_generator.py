@@ -89,7 +89,7 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
 
 
 def gen_contextual_outliers(data, n, k, seed=None):
-    """Generating contextual outliers according to paper :cite:`ding2019deep`.
+    r"""Generating contextual outliers according to paper :cite:`ding2019deep`.
     We randomly select ``n`` nodes as the attribute perturbation candidates.
     For each selected node :math:`i`, we randomly pick another ``k`` nodes
     from the data and select the node :math:`j` whose attributes :math:`x_j`

@@ -6,13 +6,13 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.detectors import MLPAE
+from pygod.detectors import GAE
 from pygod.metrics import eval_roc_auc
 
 seed_everything(42)
 
 
-class TestMLPAE(unittest.TestCase):
+class TestGAE(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose
@@ -23,7 +23,7 @@ class TestMLPAE(unittest.TestCase):
         test_graph = torch.load(os.path.join('pygod/test/test_graph.pt'))
         self.data = test_graph
 
-        self.model = MLPAE(epoch=5)
+        self.model = GAE(epoch=5)
         self.model.fit(self.data)
 
     def test_parameters(self):
@@ -80,7 +80,7 @@ class TestMLPAE(unittest.TestCase):
         assert (conf.max() <= 1)
 
     def test_recon_s(self):
-        self.model = MLPAE(epoch=5, recon_s=True)
+        self.model = GAE(epoch=5, recon_s=True)
         self.model.fit(self.data)
         _, score = self.model.predict(self.data, return_score=True)
 

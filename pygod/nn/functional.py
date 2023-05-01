@@ -10,7 +10,7 @@ def double_recon_loss(x,
                       pos_weight_a=0.5,
                       pos_weight_s=0.5,
                       bce_s=False):
-    """
+    r"""
     Mean squared error reconstruction loss for feature and structure.
     :math:`\alpha \|X−X'\odot\eta\|+(1-\alpha)\|S-S'\odot\theta\|`,
     where :math:`\odot` is element-wise multiplication and :math:`\eta`
