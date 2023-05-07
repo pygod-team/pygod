@@ -437,15 +437,16 @@ class DeepDetector(Detector, ABC):
 
                 loss, score = self.forward_model(sampled_data)
                 epoch_loss += loss.item() * batch_size
-                if type(self.emb) == tuple:
-                    self.emb[0][node_idx[:batch_size]] = \
-                        self.model.emb[0][:batch_size]
-                    self.emb[1][node_idx[:batch_size]] = \
-                        self.model.emb[1][:batch_size]
-                else:
-                    self.emb[node_idx[:batch_size]] = \
-                        self.model.emb[:batch_size]
-                self.decision_score_[node_idx[:batch_size]] = score
+                if self.save_emb:
+                    if type(self.emb) == tuple:
+                        self.emb[0][node_idx[:batch_size]] = \
+                            self.model.emb[0][:batch_size]
+                        self.emb[1][node_idx[:batch_size]] = \
+                            self.model.emb[1][:batch_size]
+                    else:
+                        self.emb[node_idx[:batch_size]] = \
+                            self.model.emb[:batch_size]
+                    self.decision_score_[node_idx[:batch_size]] = score
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -558,6 +559,8 @@ class DeepDetector(Detector, ABC):
             The prediction confidence of shape :math:`N`.
             Only available when ``return_conf=True``.
         """
+        if return_emb:
+            self.save_emb = True
 
         output = super(DeepDetector, self).predict(data,
                                                    label,
