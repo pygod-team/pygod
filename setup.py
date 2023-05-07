@@ -24,7 +24,8 @@ with open(path.join(this_directory, 'requirements.txt'),
 
 setup(name='pygod',
       version=__version__,
-      description='A Python Library for Graph Outlier Detection (Anomaly Detection)',
+      description='A Python Library for Graph Outlier Detection (Anomaly '
+                  'Detection)',
       long_description=readme(),
       long_description_content_type='text/x-rst',
       author='PyGOD Team',
