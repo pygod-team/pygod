@@ -106,15 +106,14 @@ Installation
 ^^^^^^^^^^^^
 
 **Note on PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_, `PyTorch <https://pytorch.org/>`_, and `networkx <https://networkx.org/>`_.
+PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ and `PyTorch <https://pytorch.org/>`_.
 To streamline the installation, PyGOD does **NOT** install these libraries for you.
 Please install them from the above links for running PyGOD:
 
-* torch>=1.10
-* pytorch_geometric>=2.0.3
-* networkx>=2.6.3
+* torch>=2.0.0
+* pytorch_geometric>=2.3.0
 
-It is recommended to use **pip** or **conda** (wip) for installation.
+It is recommended to use **pip** for installation.
 Please make sure **the latest version** is installed, as PyGOD is updated frequently:
 
 .. code-block:: bash
@@ -132,11 +131,11 @@ Alternatively, you could clone and run setup.py file:
 
 **Required Dependencies**\ :
 
-* Python 3.7+
-* numpy>=1.19.4
-* scikit-learn>=0.22.1
-* scipy>=1.5.2
-* setuptools>=50.3.1.post20201107
+* Python 3.8+
+* numpy>=1.24.3
+* scikit-learn>=1.2.2
+* scipy>=1.10.1
+* networkx>=3.1
 
 
 ----

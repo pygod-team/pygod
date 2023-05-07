@@ -13,6 +13,7 @@ from scipy.stats import binom
 from scipy.special import erf
 
 from torch_geometric.nn import GIN
+from torch_geometric import compile
 from torch_geometric.loader import NeighborLoader
 
 from ..utils import logger, validate_device, pprint, is_fitted
@@ -363,6 +364,7 @@ class DeepDetector(Detector, ABC):
                  verbose=0,
                  gan=False,
                  save_emb=False,
+                 compile_model=False,
                  **kwargs):
 
         super(DeepDetector, self).__init__(contamination=contamination,
@@ -399,6 +401,7 @@ class DeepDetector(Detector, ABC):
         # other param
         self.model = None
         self.save_emb = save_emb
+        self.compile_model = compile_model
 
     def fit(self, data, label=None):
 
@@ -412,6 +415,8 @@ class DeepDetector(Detector, ABC):
                                 batch_size=self.batch_size)
 
         self.model = self.init_model(**self.kwargs)
+        if self.compile_model:
+            self.model = compile(self.model)
         if not self.gan:
             optimizer = torch.optim.Adam(self.model.parameters(),
                                          lr=self.lr,

@@ -2,5 +2,4 @@ numpy
 scikit-learn
 scipy
 setuptools
-requests
 networkx
