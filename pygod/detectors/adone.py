@@ -86,8 +86,9 @@ class AdONE(DeepDetector):
         self.structural_score_ = torch.zeros(self.num_nodes)
         self.combined_score_ = torch.zeros(self.num_nodes)
 
-        self.emb = (torch.zeros(self.num_nodes, self.hid_dim).to(self.device),
-                    torch.zeros(self.num_nodes, self.hid_dim).to(self.device))
+        if self.save_emb:
+            self.emb = [torch.zeros(self.num_nodes, self.hid_dim),
+                        torch.zeros(self.num_nodes, self.hid_dim)]
 
         return AdONEBase(x_dim=self.in_dim,
                          s_dim=self.num_nodes,

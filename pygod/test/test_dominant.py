@@ -6,13 +6,13 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.detectors import DOMINANT
-from pygod.metrics import eval_roc_auc
+from ..detectors import DOMINANT
+from ..metrics import eval_roc_auc
 
 seed_everything(42)
 
 
-class TestDominant(unittest.TestCase):
+class TestDOMINANT(unittest.TestCase):
     def setUp(self):
         # use the pre-defined fake graph with injected outliers
         # for testing purpose

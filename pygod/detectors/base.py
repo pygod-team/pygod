@@ -399,8 +399,6 @@ class DeepDetector(Detector, ABC):
         # other param
         self.model = None
         self.save_emb = save_emb
-        if self.save_emb:
-            self.emb = None
 
     def fit(self, data, label=None):
 

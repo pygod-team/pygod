@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-import sys
 
 import unittest
 from numpy.testing import assert_equal
@@ -12,16 +11,9 @@ from numpy.testing import assert_raises
 import torch
 import numpy as np
 
-# temporary solution for relative imports in case pyod is not installed
-# if pyod is installed, no need to use the following line
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from pygod.detectors import Detector
+from ..detectors import Detector
 
 
-# Check sklearn\tests\test_base
-# A few test classes
-# noinspection PyMissingConstructor,PyPep8Naming
 class MyEstimator(Detector):
 
     def __init__(self, l1=0, empty=None):
@@ -125,7 +117,7 @@ class Dummy3(Detector):
         self.labels_ = X
 
 
-class TestBASE(unittest.TestCase):
+class TestBase(unittest.TestCase):
     def setUp(self):
         test_graph = torch.load(os.path.join('test_graph.pt'))
         self.data = test_graph
