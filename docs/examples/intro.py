@@ -88,15 +88,15 @@ print(labels)
 # To predict raw outlier scores:
 
 
-outlier_scores = model.decision_function(data)
+score = model.decision_function(data)
 print('Raw scores:')
-print(outlier_scores)
+print(score)
 
 #######################################################################
 # To predict the probability of the outlierness:
 
 
-prob = model.predict_proba(data)
+label, prob = model.predict(data, return_prob=True)
 print('Probability:')
 print(prob)
 
@@ -104,11 +104,9 @@ print(prob)
 # To predict the labels with confidence:
 
 
-labels, confidence = model.predict(data, return_confidence=True)
-print('Labels:')
-print(labels)
+label, conf = model.predict(data, return_conf=True)
 print('Confidence:')
-print(confidence)
+print(conf)
 
 #######################################################################
 # To evaluate the performance outlier detector:
@@ -116,5 +114,5 @@ print(confidence)
 
 from pygod.metrics import eval_roc_auc
 
-auc_score = eval_roc_auc(data.y.numpy(), outlier_scores)
+auc_score = eval_roc_auc(data.y, score)
 print('AUC Score:', auc_score)
