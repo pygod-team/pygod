@@ -10,8 +10,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import os
 import sys
-import pygod
 from os.path import dirname, abspath
 
 sys.path.insert(0, abspath('..'))
@@ -22,8 +22,11 @@ root_dir = dirname(dirname(abspath(__file__)))
 project = 'PyGOD'
 copyright = '2023 PyGOD Team'
 author = 'PyGOD Team'
-version = pygod.__version__
-release = pygod.__version__
+
+version_path = os.path.join(root_dir, 'pygod', 'version.py')
+exec(open(version_path).read())
+version = __version__
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
