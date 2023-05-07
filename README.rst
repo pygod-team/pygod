@@ -177,9 +177,8 @@ PyGOD toolkit consists of two major functional groups:
 ===================  ===================  ==================  =====  ===========  ========================================
 Type                 Backbone             Abbr                Year   Sampling      Ref
 ===================  ===================  ==================  =====  ===========  ========================================
-Unsupervised         MLP+AE               MLPAE               2014   Yes          [#Sakurada2014Anomaly]_
 Unsupervised         Clustering           SCAN                2007   No           [#Xu2007Scan]_
-Unsupervised         GNN+AE               GCNAE               2016   Yes          [#Kipf2016Variational]_
+Unsupervised         GNN+AE               GAE                 2016   Yes          [#Kipf2016Variational]_
 Unsupervised         MF                   Radar               2017   No           [#Li2017Radar]_
 Unsupervised         MF                   ANOMALOUS           2018   No           [#Peng2018Anomalous]_
 Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
@@ -206,7 +205,7 @@ Metric               eval_average_precision   Calculating average precision     
 Metric               eval_f1                  Calculating F1 score                `eval_f1 <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_f1>`_
 Generator            gen_structural_outliers  Generating structural outliers      `gen_structural_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_structural_outlierss>`_
 Generator            gen_contextual_outliers  Generating contextual outliers      `gen_contextual_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_contextual_outliers>`_
-Loader               load_data                Loading PyGOD built-in datasets     `load_data <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.load_data>`_
+Dataset              load_data                Loading PyGOD built-in datasets     `load_data <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.load_data>`_
 ===================  =======================  ==================================  ======================================================================================================================================
 
 
@@ -258,8 +257,6 @@ Reference
 .. [#Cai2021Structural] Cai, L., Chen, Z., Luo, C., Gui, J., Ni, J., Li, D. and Chen, H., 2021, October. Structural temporal graph neural networks for anomaly detection in dynamic graphs. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management (CIKM).
 
 .. [#Perini2020Quantifying] Perini, L., Vercruyssen, V., Davis, J. Quantifying the confidence of anomaly detectors in their example-wise predictions. In *Joint European Conference on Machine Learning and Knowledge Discovery in Databases (ECML-PKDD)*, 2020.
-
-.. [#Sakurada2014Anomaly] Sakurada, M. and Yairi, T., 2014, December. Anomaly detection using autoencoders with nonlinear dimensionality reduction. In Proceedings of the MLSDA 2014 2nd workshop on machine learning for sensory data analysis.
 
 .. [#Xu2007Scan] Xu, X., Yuruk, N., Feng, Z. and Schweiger, T.A., 2007, August. Scan: a structural clustering algorithm for networks. In Proceedings of the 13th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD).
 

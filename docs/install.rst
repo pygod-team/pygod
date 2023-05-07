@@ -2,7 +2,7 @@ Installation
 ============
 
 
-It is recommended to use **pip** or **conda** (wip) for installation.
+It is recommended to use **pip** for installation.
 Please make sure **the latest version** is installed, as PyGOD is updated frequently:
 
 .. code-block:: bash

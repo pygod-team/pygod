@@ -71,13 +71,13 @@ See examples below for detecting anomalies with PyGOD in 5 lines!
 
 
     # train a dominant detector
-    from pygod.models import DOMINANT
+    from pygod.detectors import DOMINANT
 
     model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
     model.fit(data)  # data is a Pytorch Geometric data object
 
     # get outlier scores on the input data
-    outlier_scores = model.decision_scores_ # raw outlier scores on the input data
+    outlier_scores = model.decision_score_ # raw outlier scores on the input data
 
     # predict on the new data in the inductive setting
     outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data  # predict raw outlier scores on test
@@ -123,22 +123,20 @@ PyGOD toolkit consists of two major functional groups:
 ===================  ===================  ==================  =====  ===========  ==============================================
 Type                 Backbone             Abbr                Year   Sampling     Class
 ===================  ===================  ==================  =====  ===========  ==============================================
-Unsupervised         MLP                  MLPAE               2014   Yes          :class:`pygod.models.MLPAE`
-Unsupervised         Clustering           SCAN                2007   No           :class:`pygod.models.SCAN`
-Unsupervised         GNN                  GCNAE               2016   Yes          :class:`pygod.models.GCNAE`
-Unsupervised         MF                   Radar               2017   No           :class:`pygod.models.Radar`
-Unsupervised         MF                   ANOMALOUS           2018   No           :class:`pygod.models.ANOMALOUS`
-Unsupervised         MF                   ONE                 2019   No           :class:`pygod.models.ONE`
-Unsupervised         GNN                  DOMINANT            2019   Yes          :class:`pygod.models.DOMINANT`
-Unsupervised         MLP                  DONE                2020   Yes          :class:`pygod.models.DONE`
-Unsupervised         MLP                  AdONE               2020   Yes          :class:`pygod.models.AdONE`
-Unsupervised         GNN                  AnomalyDAE          2020   Yes          :class:`pygod.models.AnomalyDAE`
-Unsupervised         GAN                  GAAN                2020   Yes          :class:`pygod.models.GAAN`
-Unsupervised         GNN                  OCGNN               2021   Yes          :class:`pygod.models.OCGNN`
-Unsupervised/SSL     GNN                  CoLA (beta)         2021   In progress  :class:`pygod.models.CoLA`
-Unsupervised/SSL     GNN                  ANEMONE (beta)      2021   In progress  :class:`pygod.models.ANEMONE`
-Unsupervised         GNN                  GUIDE               2021   Yes          :class:`pygod.models.GUIDE`
-Unsupervised/SSL     GNN                  CONAD               2022   Yes          :class:`pygod.models.CONAD`
+Unsupervised         Clustering           SCAN                2007   No           :class:`pygod.detectors.SCAN`
+Unsupervised         GNN                  GCNAE               2016   Yes          :class:`pygod.detectors.GAE`
+Unsupervised         MF                   Radar               2017   No           :class:`pygod.detectors.Radar`
+Unsupervised         MF                   ANOMALOUS           2018   No           :class:`pygod.detectors.ANOMALOUS`
+Unsupervised         MF                   ONE                 2019   No           :class:`pygod.detectors.ONE`
+Unsupervised         GNN                  DOMINANT            2019   Yes          :class:`pygod.detectors.DOMINANT`
+Unsupervised         MLP                  DONE                2020   Yes          :class:`pygod.detectors.DONE`
+Unsupervised         MLP                  AdONE               2020   Yes          :class:`pygod.detectors.AdONE`
+Unsupervised         GNN                  AnomalyDAE          2020   Yes          :class:`pygod.detectors.AnomalyDAE`
+Unsupervised         GAN                  GAAN                2020   Yes          :class:`pygod.detectors.GAAN`
+Unsupervised         GNN                  OCGNN               2021   Yes          :class:`pygod.detectors.OCGNN`
+Unsupervised/SSL     GNN                  CoLA                2021   Yes          :class:`pygod.detectors.CoLA`
+Unsupervised         GNN                  GUIDE               2021   Yes          :class:`pygod.detectors.GUIDE`
+Unsupervised/SSL     GNN                  CONAD               2022   Yes          :class:`pygod.detectors.CONAD`
 ===================  ===================  ==================  =====  ===========  ==============================================
 
 

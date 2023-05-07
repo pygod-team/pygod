@@ -1,23 +1,20 @@
 API CheatSheet
 ==============
 
-The following APIs are applicable for all detector models for easy use.
+The following APIs are applicable for all detectors for easy use.
 
-* :func:`pygod.models.base.BaseDetector.fit`: Fit detector. y is ignored in unsupervised methods.
-* :func:`pygod.models.base.BaseDetector.decision_function`: Predict raw anomaly scores of PyG Graph G using the fitted detector
+* :func:`pygod.detectors.Detector.fit`: Fit detector. y is ignored in unsupervised methods.
+* :func:`pygod.detectors.Detector.decision_function`: Predict raw anomaly scores of PyG Graph G using the fitted detector
 
 Key Attributes of a fitted model:
 
-* :attr:`pygod.models.base.BaseDetector.decision_scores_`: The outlier scores of the training data. The higher, the more abnormal.
+* :attr:`pygod.detectors.Detector.decision_score_`: The outlier scores of the training data. The higher, the more abnormal.
   Outliers tend to have higher scores.
-* :attr:`pygod.models.base.BaseDetector.labels_`: The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+* :attr:`pygod.detectors.Detector.label_`: The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
 
 For the inductive setting:
 
-* :func:`pygod.models.base.BaseDetector.predict`: Predict if a particular sample is an outlier or not using the fitted detector.
-* :func:`pygod.models.base.BaseDetector.predict_proba`: Predict the probability of a sample being outlier using the fitted detector.
-* :func:`pygod.models.base.BaseDetector.predict_confidence`: Predict the model's sample-wise confidence (available in predict and predict_proba).
-
+* :func:`pygod.detectors.BaseDetector.predict`: Predict if a particular sample is an outlier or not using the fitted detector.
 
 **Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
 See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
@@ -27,10 +24,10 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
 
 See base class definition below:
 
-pygod.models.base module
-------------------------
+pygod.detectors.base module
+---------------------------
 
-.. automodule:: pygod.models.base
+.. automodule:: pygod.detectors.base
     :members:
     :undoc-members:
     :show-inheritance:

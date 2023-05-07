@@ -4,7 +4,7 @@ Models
 AdONE
 -----
 
-.. autoclass:: pygod.models.AdONE
+.. autoclass:: pygod.detectors.AdONE
     :members:
     :exclude-members: loss_func, process_graph
     :undoc-members:
@@ -14,7 +14,7 @@ AdONE
 ANOMALOUS
 ---------
 
-.. autoclass:: pygod.models.ANOMALOUS
+.. autoclass:: pygod.detectors.ANOMALOUS
     :members:
     :exclude-members: process_graph
     :undoc-members:
@@ -24,9 +24,9 @@ ANOMALOUS
 AnomalyDAE
 ----------
 
-.. autoclass:: pygod.models.AnomalyDAE
+.. autoclass:: pygod.detectors.AnomalyDAE
     :members:
-    :exclude-members: loss_func, process_graph
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -34,9 +34,9 @@ AnomalyDAE
 CoLA
 ----
 
-.. autoclass:: pygod.models.CoLA
+.. autoclass:: pygod.detectors.CoLA
     :members:
-    :exclude-members: loss_func, process_graph
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -44,7 +44,7 @@ CoLA
 CONAD
 -----
 
-.. autoclass:: pygod.models.CONAD
+.. autoclass:: pygod.detectors.CONAD
     :members:
     :exclude-members: cal_outlierScore, calc_lossValues, process_graph, loss_func
     :undoc-members:
@@ -54,7 +54,7 @@ CONAD
 DOMINANT
 --------
 
-.. autoclass:: pygod.models.DOMINANT
+.. autoclass:: pygod.detectors.DOMINANT
     :members:
     :exclude-members: loss_func, process_graph
     :undoc-members:
@@ -64,51 +64,39 @@ DOMINANT
 DONE
 ----
 
-.. autoclass:: pygod.models.DONE
+.. autoclass:: pygod.detectors.DONE
     :members:
-    :exclude-members: loss_func, process_graph
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
-
 
 GAAN
 ----
 
-.. autoclass:: pygod.models.GAAN
+.. autoclass:: pygod.detectors.GAAN
     :members:
-    :exclude-members: process_graph, score_function, train_model, loss_function
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
 
-GCNAE
------
+GAE
+---
 
-.. autoclass:: pygod.models.GCNAE
+.. autoclass:: pygod.detectors.GAE
     :members:
-    :exclude-members: loss_func, process_graph
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
-
 
 GUIDE
 -----
 
-.. autoclass:: pygod.models.GUIDE
+.. autoclass:: pygod.detectors.GUIDE
     :members:
-    :exclude-members: loss_func, process_graph
-    :undoc-members:
-    :show-inheritance:
-    :inherited-members:
-
-MLPAE
------
-
-.. autoclass:: pygod.models.MLPAE
-    :members:
-    :exclude-members: loss_func, process_graph
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -116,9 +104,9 @@ MLPAE
 OCGNN
 -----
 
-.. autoclass:: pygod.models.OCGNN
+.. autoclass:: pygod.detectors.OCGNN
     :members:
-    :exclude-members: anomaly_scores, get_radius, process_graph, init_center, loss_function
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -126,9 +114,9 @@ OCGNN
 ONE
 ---
 
-.. autoclass:: pygod.models.ONE
+.. autoclass:: pygod.detectors.ONE
     :members:
-    :exclude-members: cal_outlierScore, calc_lossValues, process_graph, loss_func
+    :exclude-members: process_graph
     :undoc-members:
     :show-inheritance:
     :inherited-members:
@@ -136,7 +124,7 @@ ONE
 Radar
 -----
 
-.. autoclass:: pygod.models.Radar
+.. autoclass:: pygod.detectors.Radar
     :members:
     :exclude-members: process_graph
     :undoc-members:
@@ -146,7 +134,7 @@ Radar
 SCAN
 ----
 
-.. autoclass:: pygod.models.SCAN
+.. autoclass:: pygod.detectors.SCAN
     :members:
     :exclude-members:
     :undoc-members:
