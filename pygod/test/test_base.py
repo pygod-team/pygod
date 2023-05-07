@@ -11,7 +11,7 @@ from numpy.testing import assert_raises
 import torch
 import numpy as np
 
-from ..detectors import Detector
+from pygod.detectors import Detector
 
 
 class MyEstimator(Detector):
