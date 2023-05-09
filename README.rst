@@ -77,7 +77,7 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 **Citing PyGOD**\ :
 
 Our `software paper <https://arxiv.org/abs/2204.12095>`_ and `benchmark paper <https://proceedings.neurips.cc/paper_files/paper/2022/hash/acc1ec4a9c780006c9aafd595104816b-Abstract-Datasets_and_Benchmarks.html>`_ are publicly available.
-If you use PyGOD in a scientific publication, we would appreciate citations to the following papers::
+If you use PyGOD or BOND in a scientific publication, we would appreciate citations to the following papers::
 
     @article{liu2022pygod,
       title={PyGOD: A Python Library for Graph Outlier Detection},

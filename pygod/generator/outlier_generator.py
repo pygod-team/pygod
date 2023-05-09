@@ -140,7 +140,7 @@ def gen_contextual_outlier(data, n, k, seed=None):
         candidate_idx = torch.randperm(data.num_nodes)[:k]
         euclidean_dist = torch.cdist(data.x[idx].unsqueeze(0), data.x[
             candidate_idx])
-        print(euclidean_dist)
+
         max_dist_idx = torch.argmax(euclidean_dist, dim=1)
         max_dist_node = candidate_idx[max_dist_idx]
         data.x[idx] = data.x[max_dist_node]

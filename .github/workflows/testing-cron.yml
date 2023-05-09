@@ -29,7 +29,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements_ci.txt
-        pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cpu.html
+        pip install torch_geometric
+        pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
         pip install pytest
         pip install coverage
         pip install coveralls

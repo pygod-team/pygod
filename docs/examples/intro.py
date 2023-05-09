@@ -13,9 +13,9 @@ you have basic familiarity with PyTorch and PyTorch Geometric (PyG).
 # ------------
 # PyGOD use ``torch_geometric.data.Data`` to handle the data. Here, we
 # use Cora, a PyG built-in dataset, as an example. To load your own
-# dataset into PyGOD, you can refer to
-# [creating your own datasets tutorial](https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html)
-# in PyG.
+# dataset into PyGOD, you can refer to `creating your own datasets
+# tutorial <https://pytorch-geometric.readthedocs.io/en/latest/notes
+# /create_dataset.html>`__ in PyG.
 
 
 import torch_geometric.transforms as T
@@ -26,7 +26,7 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 #######################################################################
 # Because there is no ground truth label of outliers in Cora, we follow
 # the method used by DOMINANT to inject 100 contextual outliers and 100
-# structure outliers into the graph. **Note**: If your dataset already
+# structure outliers into the graph. Note: If your dataset already
 # contains the outliers you want to detect, you don't have to inject
 # more outliers.
 
@@ -40,9 +40,9 @@ data.y = torch.logical_or(ys, ya).long()
 
 #######################################################################
 # We also provide various type of built-in datasets. You can load them
-# by passing the name of the dataset to `load_data` function.
-# See [data repository](https://github.com/pygod-team/data) for more
-# details.
+# by passing the name of the dataset to ``load_data`` function.
+# See `data repository <https://github.com/pygod-team/data>`__
+# for more details.
 
 
 from pygod.utils import load_data
@@ -56,21 +56,21 @@ data.y = data.y.bool()
 # You can use any detector by simply initializing without passing any
 # arguments. Default hyperparameters are ready for you. Of course, you
 # can also customize the parameters by passing arguments. Here, we use
-# `pygod.detector.DOMINANT` as an example.
+# ``pygod.detector.DOMINANT`` as an example.
 
 
 from pygod.detector import DOMINANT
 
-model = DOMINANT(hid_dim=64, num_layers=4, epoch=100)
+detector = DOMINANT(hid_dim=64, num_layers=4, epoch=100)
 
 #######################################################################
 # Training
 # --------
-# To train the model with the loaded data, simply feed the
-# `torch_geometric.data.Data` object into the model via method `fit`.
+# To train the detector with the loaded data, simply feed the
+# ``torch_geometric.data.Data`` object into the detector via ``fit``.
 
 
-model.fit(data)
+detector.fit(data)
 
 #######################################################################
 # Inference
@@ -81,11 +81,11 @@ model.fit(data)
 # as an example.
 
 
-pred, score, prob, conf = model.predict(data,
-                                        return_pred=True,
-                                        return_score=True,
-                                        return_prob=True,
-                                        return_conf=True)
+pred, score, prob, conf = detector.predict(data,
+                                           return_pred=True,
+                                           return_score=True,
+                                           return_prob=True,
+                                           return_conf=True)
 print('Labels:')
 print(pred)
 
@@ -99,7 +99,9 @@ print('Confidence:')
 print(conf)
 
 #######################################################################
-# To evaluate the performance outlier detector:
+# Evaluation
+# ----------
+# To evaluate the performance outlier detector with AUC score, you can:
 
 
 from pygod.metric import eval_roc_auc

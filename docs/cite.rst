@@ -11,14 +11,15 @@ If you use PyGOD or BOND in a scientific publication, we would appreciate citati
       year={2022}
     }
     @article{liu2022bond,
-      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-      title   = {BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs},
-      journal = {arXiv preprint arXiv:2206.10071},
-      year    = {2022},
+      title={Bond: Benchmarking unsupervised outlier node detection on static attributed graphs},
+      author={Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      journal={Advances in Neural Information Processing Systems},
+      volume={35},
+      pages={27021--27035},
+      year={2022}
     }
 
 or::
 
     Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K. and Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
-    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs. arXiv preprint arXiv:2206.10071.
-
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K. and Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Bond: Benchmarking unsupervised outlier node detection on static attributed graphs. Advances in Neural Information Processing Systems, 35, pp.27021-27035.
