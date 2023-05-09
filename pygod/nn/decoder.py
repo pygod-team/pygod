@@ -4,7 +4,7 @@ from torch_geometric.nn import GCN
 
 
 class DotProductDecoder(nn.Module):
-    """
+    r"""
     Dot product decoder for the structure reconstruction, which is
     defined as :math:`\symbf{A}' = \sigma(\symbf{Z}
     \symbf{Z}^\intercal)`, where :math:`\sigma` is the optional sigmoid
