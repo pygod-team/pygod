@@ -1,9 +1,9 @@
 """
-Model Example
-=============
+Detector Example
+================
 
 In this tutorial, you will learn the basic workflow of
-PyGOD with a model example of DOMINANT. This tutorial assumes that
+PyGOD with an example of DOMINANT. This tutorial assumes that
 you have basic familiarity with PyTorch and PyTorch Geometric (PyG).
 
 (Time estimate: 5 minutes)
@@ -61,7 +61,7 @@ data.y = data.y.bool()
 
 from pygod.detector import DOMINANT
 
-model = DOMINANT(hid_dim=64, num_layers=4)
+model = DOMINANT(hid_dim=64, num_layers=4, epoch=100)
 
 #######################################################################
 # Training
