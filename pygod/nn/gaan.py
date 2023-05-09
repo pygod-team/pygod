@@ -75,6 +75,25 @@ class GAANBase(torch.nn.Module):
         self.score_func = double_recon_loss
 
     def forward(self, x, noise):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        noise : torch.Tensor
+            Input noise.
+
+        Returns
+        -------
+        x_ : torch.Tensor
+            Reconstructed node features.
+        a : torch.Tensor
+            Reconstructed adjacency matrix from real samples.
+        a_ : torch.Tensor
+            Reconstructed adjacency matrix from fake samples.
+        """
         x_ = self.generator(noise)
 
         self.emb = self.discriminator(x)
@@ -87,6 +106,7 @@ class GAANBase(torch.nn.Module):
 
     @staticmethod
     def loss_func_g(a_):
+
         loss_g = F.binary_cross_entropy(a_, torch.ones_like(a_))
         return loss_g
 
@@ -98,4 +118,12 @@ class GAANBase(torch.nn.Module):
 
     @staticmethod
     def process_graph(data):
+        """
+        Obtain the dense adjacency matrix of the graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        """
         data.s = to_dense_adj(data.edge_index)[0]

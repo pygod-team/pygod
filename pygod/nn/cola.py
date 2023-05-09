@@ -60,7 +60,23 @@ class CoLABase(nn.Module):
         self.emb = None
 
     def forward(self, x, edge_index):
+        """
+        Forward computation.
 
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        logits : torch.Tensor
+            Discriminator logits of positive examples.
+        neg_logits : torch.Tensor
+            Discriminator logits of negative examples.
+        """
         self.emb = self.encoder(x, edge_index)
         logits = self.discriminator(x, self.emb)
 

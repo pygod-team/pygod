@@ -99,6 +99,25 @@ class GUIDEBase(torch.nn.Module):
         self.emb = ()
 
     def forward(self, x, s, edge_index):
+        """
+        Forward computation of GUIDE.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        s : torch.Tensor
+            Input structure embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        x_ : torch.Tensor
+            Reconstructed attribute embeddings.
+        s_ : torch.Tensor
+            Reconstructed structure embeddings.
+        """
         h_x = self.attr_encoder(x, edge_index)
         x_ = self.attr_decoder(h_x, edge_index)
         h_s = self.stru_encoder(s, edge_index)
