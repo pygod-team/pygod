@@ -11,14 +11,51 @@ from ..nn.functional import double_recon_loss
 
 
 class GUIDEBase(torch.nn.Module):
+    """
+    Higher-order Structure based Anomaly Detection on Attributed
+    Networks
+
+    GUIDE is an anomaly detector consisting of an attribute graph
+    convolutional autoencoder, and a structure graph attentive
+    autoencoder (not the same as the graph attention networks). Instead
+    of the adjacency matrix, node motif degree is used as input of
+    structure autoencoder. The reconstruction mean square error of the
+    autoencoders are defined as structure anomaly score and attribute
+    anomaly score, respectively.
+
+    Note: The calculation of node motif degree in preprocessing has
+    high time complexity. It may take longer than you expect.
+
+    See :cite:`yuan2021higher` for details.
+
+    Parameters
+    ----------
+    dim_a : int
+        Input dimension for attribute.
+    dim_s : int
+        Input dimension for structure.
+    hid_a : int, optional
+        Hidden dimension for attribute. Default: ``64``.
+    hid_s : int, optional
+        Hidden dimension for structure. Default: ``4``.
+    num_layers : int, optional
+        Total number of layers in model. Default: ``4``.
+    dropout : float, optional
+        Dropout rate. Default: ``0.``.
+    act : callable activation function or None, optional
+        Activation function if not None.
+        Default: ``torch.nn.functional.relu``.
+    **kwargs
+        Other parameters for GCN.
+    """
     def __init__(self,
-                 dim_x,
+                 dim_a,
                  dim_s,
-                 hid_x,
-                 hid_s,
-                 num_layers,
-                 dropout,
-                 act,
+                 hid_a=64,
+                 hid_s=4,
+                 num_layers=4,
+                 dropout=0.,
+                 act=torch.nn.functional.relu,
                  **kwargs):
         super(GUIDEBase, self).__init__()
 
@@ -28,18 +65,18 @@ class GUIDEBase(torch.nn.Module):
         encoder_layers = math.floor(num_layers / 2)
         decoder_layers = math.ceil(num_layers / 2)
 
-        self.attr_encoder = GCN(in_channels=dim_x,
-                                hidden_channels=hid_x,
+        self.attr_encoder = GCN(in_channels=dim_a,
+                                hidden_channels=hid_a,
                                 num_layers=encoder_layers,
-                                out_channels=dim_x,
+                                out_channels=dim_a,
                                 dropout=dropout,
                                 act=act,
                                 **kwargs)
 
-        self.attr_decoder = GCN(in_channels=dim_x,
-                                hidden_channels=hid_x,
+        self.attr_decoder = GCN(in_channels=dim_a,
+                                hidden_channels=hid_a,
                                 num_layers=decoder_layers,
-                                out_channels=dim_x,
+                                out_channels=dim_a,
                                 dropout=dropout,
                                 act=act,
                                 **kwargs)

@@ -17,46 +17,47 @@ import requests
 import warnings
 import numpy as np
 
-from ..metrics import *
+from ..metric import *
 
 MAX_INT = np.iinfo(np.int32).max
 MIN_INT = np.iinfo(np.int32).min
 
 
 def validate_device(gpu_id):
-    """Validate the input device id (GPU id) is valid on the given
-    machine. If no GPU is presented, return 'cpu'.
+    """Validate the input GPU ID is valid on the given environment.
+    If no GPU is presented, return 'cpu'.
 
     Parameters
     ----------
     gpu_id : int
-        GPU id to be used. The function will validate the usability
-        of the GPU. If failed, return device as 'cpu'.
+        GPU ID to check.
 
     Returns
     -------
-    device_id : str
-        Valid device id, e.g., 'cuda:0' or 'cpu'
+    device : str
+        Valid device, e.g., 'cuda:0' or 'cpu'.
     """
-    # if it is cpu
-    if gpu_id == -1:
-        return 'cpu'
 
     # cast to int for checking
     gpu_id = int(gpu_id)
 
+    # if it is cpu
+    if gpu_id == -1:
+        return 'cpu'
+
     # if gpu is available
     if torch.cuda.is_available():
         # check if gpu id is between 0 and the total number of GPUs
-        check_parameter(gpu_id, 0, torch.cuda.device_count(), param_name='gpu id', include_left=True,
+        check_parameter(gpu_id, 0, torch.cuda.device_count(),
+                        param_name='gpu id', include_left=True,
                         include_right=False)
-        device_id = 'cuda:{}'.format(gpu_id)
+        device = 'cuda:{}'.format(gpu_id)
     else:
         if gpu_id != 'cpu':
             warnings.warn('The cuda is not available. Set to cpu.')
-        device_id = 'cpu'
+        device = 'cpu'
 
-    return device_id
+    return device
 
 
 def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
@@ -199,7 +200,7 @@ def logger(epoch=0,
            train=True,
            deep=True):
     """
-    Logger for detectors.
+    Logger for detector.
 
     Parameters
     ----------
@@ -219,7 +220,7 @@ def logger(epoch=0,
     train : bool, optional
         Whether the logger is used for training.
     deep : bool, optional
-        Whether the logger is used for deep detectors.
+        Whether the logger is used for deep detector.
     """
     if verbose > 0:
         if deep:
@@ -265,7 +266,7 @@ def init_detector(name, **kwargs):
     """
     Model initialization function.
     """
-    module = import_module('pygod.detectors')
+    module = import_module('pygod.detector')
     assert name in module.__all__, "Model {} not found".format(name)
     return getattr(module, name)(**kwargs)
 

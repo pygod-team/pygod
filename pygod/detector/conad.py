@@ -15,13 +15,14 @@ from ..nn import DOMINANTBase
 
 class CONAD(DeepDetector):
     """
-    CONAD (Contrastive Attributed Network Anomaly Detection) is an
-    anomaly detector consisting of a shared graph
+    Contrastive Attributed Network Anomaly Detection
+
+    CONAD is an anomaly detector consisting of a shared graph
     convolutional encoder, a structure reconstruction decoder, and an
     attribute reconstruction decoder. The model is trained with both
-    contrastive loss and structure/attribute reconstruction loss.
-    The reconstruction mean square error of the decoders are defined
-    as structure anomaly score and attribute anomaly score, respectively.
+    contrastive loss and structure/attribute reconstruction loss. The
+    reconstruction mean square error of the decoders are defined as
+    structure anomaly score and attribute anomaly score, respectively.
 
     See :cite:`xu2022contrastive` for details.
 
@@ -30,58 +31,79 @@ class CONAD(DeepDetector):
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
-        Total number of layers in model. A half (ceil) of the layers
-        are for the encoder, the other half (floor) of the layers are
-        for decoders. Default: ``4``.
+        Total number of layers in model. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Default: ``0.3``.
+        Dropout rate. Default: ``0.``.
     weight_decay : float, optional
         Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
-    alpha : float, optional
-        Loss balance weight for attribute and structure. ``None`` for
-        balancing by standard deviation. Default: ``None``.
-    eta : float, optional
-        Loss balance weight for contrastive and reconstruction.
-        Default: ``0.5``.
+    sigmoid_s : bool, optional
+        Whether to use sigmoid function to scale the reconstructed
+        structure. Default: ``False``.
+    backbone : torch.nn.Module, optional
+        The backbone of the deep detector implemented in PyG.
+        Default: ``torch_geometric.nn.GCN``.
     contamination : float, optional
-        Valid in (0., 0.5). The proportion of outliers in the data set.
-        Used when fitting to define the threshold on the decision
-        function. Default: ``0.1``.
+        The amount of contamination of the dataset in (0., 0.5], i.e.,
+        the proportion of outliers in the dataset. Used when fitting to
+        define the threshold on the decision function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Default: ``0.005``.
+        Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Default: ``5``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Default: ``0``.
+        GPU Index, -1 for using CPU. Default: ``-1``.
     batch_size : int, optional
         Minibatch size, 0 for full batch training. Default: ``0``.
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
+    weight : float, optional
+        Weight between reconstruction of node feature and structure.
+        Default: ``0.5``.
+    eta : float, optional
+        Weight between contrastive and reconstruction.Default: ``0.5``.
+    margin : float, optional
+        Margin in margin ranking loss. Default: ``0.5``.
     r : float, optional
-        The rate of augmented anomalies. Default: ``.2``.
+        The rate of augmented anomalies. Default: ``0.2``.
     m : int, optional
         For densely connected nodes, the number of
         edges to add. Default: ``50``.
     k : int, optional
-        same as ``k`` in ``pygod.generator.gen_contextual_outliers``.
+        Same as ``k`` in ``pygod.generator.gen_contextual_outlier``.
         Default: ``50``.
     f : int, optional
         For disproportionate nodes, the scale factor applied
         on their attribute value. Default: ``10``.
-    verbose : bool
-        Verbosity mode. Turn on to print out log information.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
+    save_emb : bool, optional
+        Whether to save the embedding. Default: ``False``.
+    compile_model : bool, optional
+        Whether to compile the model with ``torch_geometric.compile``.
         Default: ``False``.
+    **kwargs : optional
+        Additional arguments for the backbone.
 
-    Examples
-    --------
-    >>> from pygod.detectors import CONAD
-    >>> model = CONAD()
-    >>> model.fit(data) # PyG graph data object
-    >>> prediction = model.predict(data)
+    Attributes
+    ----------
+    decision_score_ : torch.Tensor
+        The outlier scores of the training data. Outliers tend to have
+        higher scores. This value is available once the detector is
+        fitted.
+    threshold_ : float
+        The threshold is based on ``contamination``. It is the
+        :math:`N`*``contamination`` most abnormal samples in
+        ``decision_score_``. The threshold is calculated for generating
+        binary outlier labels.
+    label_ : torch.Tensor
+        The binary labels of the training data. 0 stands for inliers
+        and 1 for outliers. It is generated by applying
+        ``threshold_`` on ``decision_score_``.
     """
 
     def __init__(self,
@@ -99,13 +121,15 @@ class CONAD(DeepDetector):
                  batch_size=0,
                  num_neigh=-1,
                  weight=0.5,
-                 eta=.5,
-                 margin=.5,
-                 r=.2,
+                 eta=0.5,
+                 margin=0.5,
+                 r=0.2,
                  m=50,
                  k=50,
                  f=10,
                  verbose=0,
+                 save_emb=False,
+                 compile_model=False,
                  **kwargs):
 
         super(CONAD, self).__init__(hid_dim=hid_dim,
@@ -121,6 +145,8 @@ class CONAD(DeepDetector):
                                     batch_size=batch_size,
                                     num_neigh=num_neigh,
                                     verbose=verbose,
+                                    save_emb=save_emb,
+                                    compile_model=compile_model,
                                     **kwargs)
 
         # model param

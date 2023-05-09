@@ -2,7 +2,7 @@ import tqdm
 import torch
 import argparse
 import warnings
-from pygod.metrics import *
+from pygod.metric import *
 from pygod.utils.utility import load_data
 from utils import init_model
 
@@ -24,7 +24,7 @@ def main(args):
         y = data.y.bool()
         k = sum(y)
 
-        if np.isnan(score).any():
+        if torch.isnan(score).any():
             warnings.warn('contains NaN, skip one trial.')
             continue
 
@@ -35,11 +35,15 @@ def main(args):
     print(args.dataset + " " + model.__class__.__name__ + " " +
           "AUC: {:.4f}±{:.4f} ({:.4f})\t"
           "AP: {:.4f}±{:.4f} ({:.4f})\t"
-          "Recall: {:.4f}±{:.4f} ({:.4f})".format(np.mean(auc), np.std(auc),
-                                                  np.max(auc), np.mean(ap),
-                                                  np.std(ap), np.max(ap),
-                                                  np.mean(rec), np.std(rec),
-                                                  np.max(rec)))
+          "Recall: {:.4f}±{:.4f} ({:.4f})".format(torch.mean(auc),
+                                                  torch.std(auc),
+                                                  torch.max(auc),
+                                                  torch.mean(ap),
+                                                  torch.std(ap),
+                                                  torch.max(ap),
+                                                  torch.mean(rec),
+                                                  torch.std(rec),
+                                                  torch.max(rec)))
 
 
 if __name__ == '__main__':

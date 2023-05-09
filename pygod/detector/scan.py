@@ -15,10 +15,12 @@ from ..utils import logger
 
 class SCAN(Detector):
     """
-    SCAN (Structural Clustering Algorithm for Networks) is a clustering
-    algorithm, which only takes the graph structure without the node
-    features as the input. Note: This model will output detected
-    clusters instead of "outliers" descibed in the original paper.
+    Structural Clustering Algorithm for Networks
+
+    SCAN is a clustering algorithm, which only takes the graph structure
+    without the node features as the input. Note: This model will output
+    detected clusters instead of "outliers" descibed in the original
+    paper.
 
     See :cite:`xu2007scan` for details.
 
@@ -32,9 +34,9 @@ class SCAN(Detector):
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
         function. Default: ``0.1``.
-    verbose : bool
-        Verbosity mode. Turn on to print out log information.
-        Default: ``False``.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
 
     Attributes
     ----------
@@ -61,7 +63,7 @@ class SCAN(Detector):
 
     Examples
     --------
-    >>> from pygod.detectors import SCAN
+    >>> from pygod.detector import SCAN
     >>> model = SCAN()
     >>> model.fit(data)
     >>> prediction = model.predict()
@@ -71,7 +73,7 @@ class SCAN(Detector):
                  eps=.5,
                  mu=2,
                  contamination=0.1,
-                 verbose=False):
+                 verbose=0):
         super(SCAN, self).__init__(contamination=contamination,
                                    verbose=verbose)
 

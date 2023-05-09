@@ -9,8 +9,9 @@ from .functional import double_recon_loss
 
 class AnomalyDAEBase(nn.Module):
     """
-    AnomalyDAE (Dual autoencoder for anomaly detection on attributed
-    networks) is an anomaly detector that consists of a structure
+    Dual Autoencoder for Anomaly Detection on Attributed Networks
+
+    AnomalyDAE is an anomaly detector that consists of a structure
     autoencoder and an attribute autoencoder to learn both node
     embedding and attribute embedding jointly in latent space. The
     structural autoencoder uses Graph Attention layers. The
@@ -24,31 +25,29 @@ class AnomalyDAEBase(nn.Module):
     Parameters
     ----------
     in_dim : int
-         Dimension of input feature
+         Input dimension of model.
     num_nodes: int
-         Dimension of the input number of nodes
+         Number of input nodes or batch size in minibatch training.
     emb_dim:: int
-         Dimension of the embedding after the first reduced linear
-         layer (D1)
+         Embedding dimension of model. Default: ``64``.
     hid_dim : int
-         Dimension of final representation
+         Hidden dimension of model. Default: ``64``.
     dropout : float, optional
-        Dropout rate of the model
-        Default: 0
-    act : Callable, optional
+        Dropout rate. Default: ``0.``.
+    act : callable activation function or None, optional
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     **kwargs : optional
-        Additional arguments of ``torch_geometric.nn.GATConv``.
+        Other parameters of ``torch_geometric.nn.GATConv``.
     """
 
     def __init__(self,
                  in_dim,
                  num_nodes,
-                 emb_dim,
-                 hid_dim,
-                 dropout,
-                 act,
+                 emb_dim=64,
+                 hid_dim=64,
+                 dropout=0.,
+                 act=F.relu,
                  **kwargs):
         super(AnomalyDAEBase, self).__init__()
 
@@ -67,6 +66,25 @@ class AnomalyDAEBase(nn.Module):
         self.emb = None
 
     def forward(self, x, edge_index, batch_size):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+        batch_size : int
+            Batch size.
+
+        Returns
+        -------
+        x_ : torch.Tensor
+            Reconstructed attribute embeddings.
+        s_ : torch.Tensor
+            Reconstructed adjacency matrix.
+        """
         h = F.dropout(self.act(self.dense_stru(x)), self.dropout)
         self.emb = self.gat_layer(h, edge_index)
 
@@ -85,4 +103,12 @@ class AnomalyDAEBase(nn.Module):
 
     @staticmethod
     def process_graph(data):
+        """
+        Obtain the dense adjacency matrix of the graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        """
         data.s = to_dense_adj(data.edge_index)[0]

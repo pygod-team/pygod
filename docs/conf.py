@@ -36,6 +36,7 @@ release = __version__
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
@@ -161,4 +162,14 @@ sphinx_gallery_conf = {
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info),
+               None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "networkx": ("https://networkx.org/documentation/stable/", None),
+    'torch': ("https://pytorch.org/docs/master", None),
+    'torch_geometric': ("https://pytorch-geometric.readthedocs.io/en/latest",
+                        None),
+}

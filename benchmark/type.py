@@ -2,7 +2,7 @@ import tqdm
 import torch
 import argparse
 import warnings
-from pygod.metrics import *
+from pygod.metric import *
 from pygod.utils import load_data
 from utils import init_model
 
@@ -27,7 +27,7 @@ def main(args):
         ys = data.y >> 1 & 1
         kc, ks = sum(yc), sum(ys)
 
-        if np.isnan(score).any():
+        if torch.isnan(score).any():
             warnings.warn('contains NaN, skip one trial.')
             continue
 
@@ -44,12 +44,12 @@ def main(args):
           "AP: {:.4f}±{:.4f} ({:.4f})\tRecall: {:.4f}±{:.4f} ({:.4f})\n"
           "Structural: AUC: {:.4f}±{:.4f} ({:.4f})\t"
           "AP: {:.4f}±{:.4f} ({:.4f})\tRecall: {:.4f}±{:.4f} ({:.4f})"
-          .format(np.mean(aucc), np.std(aucc), np.max(aucc),
-                  np.mean(apc), np.std(apc), np.max(apc),
-                  np.mean(recc), np.std(recc), np.max(recc),
-                  np.mean(aucs), np.std(aucs), np.max(aucs),
-                  np.mean(aps), np.std(aps), np.max(aps),
-                  np.mean(recs), np.std(recs), np.max(recs)))
+          .format(torch.mean(aucc), torch.std(aucc), torch.max(aucc),
+                  torch.mean(apc), torch.std(apc), torch.max(apc),
+                  torch.mean(recc), torch.std(recc), torch.max(recc),
+                  torch.mean(aucs), torch.std(aucs), torch.max(aucs),
+                  torch.mean(aps), torch.std(aps), torch.max(aps),
+                  torch.mean(recs), torch.std(recs), torch.max(recs)))
 
 
 if __name__ == '__main__':

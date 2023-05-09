@@ -4,9 +4,8 @@ import torch
 import shutil
 import argparse
 import warnings
-import numpy as np
 from utils import init_model
-from pygod.metrics import eval_roc_auc
+from pygod.metric import eval_roc_auc
 from pygod.utils import load_data
 from torch_geometric.utils import remove_isolated_nodes
 
@@ -37,7 +36,7 @@ def main(args):
         y = data.y.bool()[mask]
         auc = eval_roc_auc(y, score)
 
-        if np.isnan(score).any():
+        if torch.isnan(score).any():
             warnings.warn('contains NaN, skip one trial.')
             continue
 

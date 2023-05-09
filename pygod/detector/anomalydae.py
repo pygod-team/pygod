@@ -9,17 +9,16 @@ import warnings
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.utils import to_dense_adj
 
 from . import DeepDetector
 from ..nn import AnomalyDAEBase
-from ..utils import validate_device
 
 
 class AnomalyDAE(DeepDetector):
     """
-    AnomalyDAE (Dual autoencoder for anomaly detection on attributed
-    networks) is an anomaly detector that consists of a structure
+    Dual Autoencoder for Anomaly Detection on Attributed Networks
+
+    AnomalyDAE is an anomaly detector that consists of a structure
     autoencoder and an attribute autoencoder to learn both node
     embedding and attribute embedding jointly in latent space. The
     structural autoencoder uses Graph Attention layers. The
@@ -32,59 +31,81 @@ class AnomalyDAE(DeepDetector):
 
     Parameters
     ----------
+    emb_dim : int, optional
+        Embedding dimension of model. Default: ``64``.
     hid_dim :  int, optional
-        Hidden dimension of model. Defaults: `64``.
-    out_dim : int, optional
-        Dimension of the reduced representation after passing through the 
-        structure autoencoder and attribute autoencoder. Defaults: ``4``.
+        Hidden dimension of model. Default: ``64``.
+    num_layers : int, optional
+        Total number of layers of AnomalyDAE is fixed to be 4. Changing
+        of this parameter will not affect the model. Default: ``4``.
     dropout : float, optional
-        Dropout rate. Defaults: ``0.2``.
+        Dropout rate. Default: ``0.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Defaults: ``1e-5``.
+        Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
         Activation function if not None.
-        Defaults: ``torch.nn.functional.relu``.
+        Default: ``torch.nn.functional.relu``.
+    backbone : torch.nn.Module
+        The backbone of AnomalyDAE is fixed. Changing of this
+        parameter will not affect the model. Default: ``None``.
     alpha : float, optional
-        Loss balance weight for attribute and structure. ``None`` for
-        balancing by standard deviation. Default: ``None``.
-    theta: float, optional
-         greater than 1, impose penalty to the reconstruction error of
-         the non-zero elements in the adjacency matrix
-         Defaults: ``1.01``
-    eta: float, optional
-         greater than 1, imporse penalty to the reconstruction error of 
-         the non-zero elements in the node attributes
-         Defaults: ``1.01``
+        Weight between reconstruction of node feature and structure.
+        Default: ``0.5``.
+    theta : float, optional
+        The additional penalty for nonzero attribute. Default: ``1.``.
+    eta : float, optional
+        The additional penalty for nonzero structure. Default: ``1.``.
     contamination : float, optional
-        Valid in (0., 0.5). The proportion of outliers in the data set.
-        Used when fitting to define the threshold on the decision
-        function. Defaults: ``0.1``.
+        The amount of contamination of the dataset in (0., 0.5], i.e.,
+        the proportion of outliers in the dataset. Used when fitting to
+        define the threshold on the decision function. Default: ``0.1``.
     lr : float, optional
-        Learning rate. Defaults: ``0.004``.
+        Learning rate. Default: ``0.004``.
     epoch : int, optional
-        Maximum number of training epoch. Defaults: ``5``.
+        Maximum number of training epoch. Default: ``100``.
     gpu : int
-        GPU Index, -1 for using CPU. Defaults: ``0``.
+        GPU Index, -1 for using CPU. Default: ``-1``.
     batch_size : int, optional
         Minibatch size, 0 for full batch training. Default: ``0``.
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
-    verbose : bool
-        Verbosity mode. Turn on to print out log information.
-        Defaults: ``False``.
+    gan : bool, optional
+        Whether using adversarial training. Default: ``False``.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
+    save_emb : bool, optional
+        Whether to save the embedding. Default: ``False``.
+    compile_model : bool, optional
+        Whether to compile the model with ``torch_geometric.compile``.
+        Default: ``False``.
+    **kwargs
+        Other parameters for the backbone model.
 
-    Examples
-    --------
-
+    Attributes
+    ----------
+    decision_score_ : torch.Tensor
+        The outlier scores of the training data. Outliers tend to have
+        higher scores. This value is available once the detector is
+        fitted.
+    threshold_ : float
+        The threshold is based on ``contamination``. It is the
+        :math:`N`*``contamination`` most abnormal samples in
+        ``decision_score_``. The threshold is calculated for generating
+        binary outlier labels.
+    label_ : torch.Tensor
+        The binary labels of the training data. 0 stands for inliers
+        and 1 for outliers. It is generated by applying
+        ``threshold_`` on ``decision_score_``.
     """
 
     def __init__(self,
                  emb_dim=64,
                  hid_dim=64,
                  num_layers=4,
-                 dropout=0.2,
-                 weight_decay=1e-5,
+                 dropout=0.,
+                 weight_decay=0.,
                  act=F.relu,
                  backbone=None,
                  alpha=0.5,
@@ -93,11 +114,14 @@ class AnomalyDAE(DeepDetector):
                  contamination=0.1,
                  lr=0.004,
                  epoch=5,
-                 gpu=0,
+                 gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
                  verbose=0,
+                 save_emb=False,
+                 compile_model=False,
                  **kwargs):
+
         if backbone is not None or num_layers != 4:
             warnings.warn("Backbone and num_layers are not used in AnomalyDAE")
 
@@ -114,6 +138,8 @@ class AnomalyDAE(DeepDetector):
                                          batch_size=batch_size,
                                          num_neigh=num_neigh,
                                          verbose=verbose,
+                                         save_emb=save_emb,
+                                         compile_model=compile_model,
                                          **kwargs)
 
         self.emb_dim = emb_dim

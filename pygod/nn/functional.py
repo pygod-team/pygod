@@ -11,17 +11,27 @@ def double_recon_loss(x,
                       pos_weight_s=0.5,
                       bce_s=False):
     r"""
-    Mean squared error reconstruction loss for feature and structure.
-    :math:`\alpha \|X−X'\odot\eta\|+(1-\alpha)\|S-S'\odot\theta\|`,
-    where :math:`\odot` is element-wise multiplication and :math:`\eta`
-    and :math:`\theta` are defined as follows:
-    :math:`\eta=\begin{cases}1&\text{if }x_i=0\\
-    \eta&\text{if }x_i>0\end{cases}`
-    and
-    :math:`\theta=\begin{cases}1&\text{if }s_{ij}=0\\
-    \theta&\text{if }s_{ij}>0\end{cases}`
-    where :math:`x_i` is the :math:`i`-th node feature and
-    :math:`s_{ij}` is the :math:`ij`-th element of the adjacency matrix.
+    Double reconstruction loss function for feature and structure.
+    The loss function is defined as :math:`\alpha \symbf{E_a} +
+    (1-\alpha) \symbf{E_s}`, where :math:`\alpha` is the weight between
+    0 and 1 inclusive, and :math:`\symbf{E_a}` and :math:`\symbf{E_s}`
+    are the reconstruction loss for feature and structure, respectively.
+    The first dimension is kept for outlier scores of each node.
+
+    For feature reconstruction, we use mean squared error loss:
+    :math:`\symbf{E_a} = \|\symbf{X}-\symbf{X}'\odot H\|`,
+    where :math:`H=\begin{cases}1 - \eta &
+    \text{if }x_{ij}=0\\ \eta & \text{if }x_{ij}>0\end{cases}`, and
+    :math:`\eta` is the positive weight for feature.
+
+    For structure reconstruction, we use mean squared error loss by
+    default: :math:`\symbf{E_s} = \|\symbf{S}-\symbf{S}'\odot
+    \Theta\|`, where :math:`\Theta=\begin{cases}1 -
+    \theta & \text{if }s_{ij}=0\\ \theta & \text{if }s_{ij}>0
+    \end{cases}`, and :math:`\theta` is the positive weight for
+    structure. Alternatively, we can use binary cross entropy loss
+    for structure reconstruction: :math:`\symbf{E_s} =
+    \text{BCE}(\symbf{S}, \symbf{S}' \odot \Theta)`.
 
     Parameters
     ----------
@@ -34,12 +44,12 @@ def double_recon_loss(x,
     s_ : torch.Tensor
         Reconstructed node structure
     weight : float, optional
-        Balancing weight between 0 and 1 inclusive between node feature
+        Balancing weight :math:`\alpha` between 0 and 1 inclusive between node feature
         and graph structure. Default: ``0.5``.
     pos_weight_a : float, optional
-        Non-zero penalty for feature. Default: ``1``.
+        Positive weight for feature :math:`\eta`. Default: ``0.5``.
     pos_weight_s : float, optional
-        Non-zero penalty for structure. Default: ``1``.
+        Positive weight for structure :math:`\theta`. Default: ``0.5``.
     bce_s : bool, optional
         Use binary cross entropy for structure reconstruction loss.
 
@@ -50,8 +60,8 @@ def double_recon_loss(x,
     """
 
     assert 0 <= weight <= 1, "weight must be a float between 0 and 1."
-    assert 0 <= pos_weight_a <= 1, "eta must be greater than or equal to 1."
-    assert 0 <= pos_weight_s <= 1, "theta must be greater than or equal to 1."
+    assert 0 <= pos_weight_a <= 1 and 0 <= pos_weight_s <= 1, \
+        "positive weight must be a float between 0 and 1."
 
     # attribute reconstruction loss
     diff_attr = torch.pow(x - x_, 2)

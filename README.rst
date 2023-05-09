@@ -42,8 +42,7 @@ PyGOD is a **Python library** for **graph outlier detection** (anomaly detection
 This exciting yet challenging field has many key applications, e.g., detecting
 suspicious activities in social networks [#Dou2020Enhancing]_  and security systems [#Cai2021Structural]_.
 
-PyGOD includes more than **10** latest graph-based detection algorithms,
-such as DOMINANT (SDM'19) and GUIDE (BigData'21).
+PyGOD includes **10+** graph outlier detection algorithms.
 For consistency and accessibility, PyGOD is developed on top of `PyTorch Geometric (PyG) <https://www.pyg.org/>`_
 and `PyTorch <https://pytorch.org/>`_, and follows the API design of `PyOD <https://github.com/yzhao062/pyod>`_.
 See examples below for detecting outliers with PyGOD in 5 lines!
@@ -52,8 +51,8 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 **PyGOD is featured for**:
 
 * **Unified APIs, detailed documentation, and interactive examples** across various graph-based algorithms.
-* **Comprehensive coverage** of more than 10 latest graph outlier detectors.
-* **Full support of detections at multiple levels**, such as node-, edge- (WIP), and graph-level tasks (WIP).
+* **Comprehensive coverage** of 10+ graph outlier detectors.
+* **Full support of detections at multiple levels**, such as node-, edge-, and graph-level tasks.
 * **Scalable design for processing large graphs** via mini-batch and sampling.
 * **Streamline data processing with PyG**--fully compatible with PyG data objects.
 
@@ -63,21 +62,21 @@ See examples below for detecting outliers with PyGOD in 5 lines!
 
 
     # train a dominant detector
-    from pygod.models import DOMINANT
+    from pygod.detector import DOMINANT
 
     model = DOMINANT(num_layers=4, epoch=20)  # hyperparameters can be set here
-    model.fit(data)  # data is a Pytorch Geometric data object
+    model.fit(train_data)  # input data is a PyG data object
 
-    # get outlier scores on the input data
-    outlier_scores = model.decision_scores_ # raw outlier scores on the input data
+    # get outlier scores on the training data (transductive setting)
+    score = model.decision_score_
 
-    # predict on the new data in the inductive setting
-    outlier_scores = model.decision_function(test_data) # raw outlier scores on the input data
+    # predict labels and scores on the testing data (inductive setting)
+    pred, score = model.predict(test_data, return_score=True)
 
 
 **Citing PyGOD**\ :
 
-Our `software paper <https://arxiv.org/abs/2204.12095>`_ and `benchmark paper <https://arxiv.org/abs/2206.10071>`_ are available on arxiv.
+Our `software paper <https://arxiv.org/abs/2204.12095>`_ and `benchmark paper <https://proceedings.neurips.cc/paper_files/paper/2022/hash/acc1ec4a9c780006c9aafd595104816b-Abstract-Datasets_and_Benchmarks.html>`_ are publicly available.
 If you use PyGOD in a scientific publication, we would appreciate citations to the following papers::
 
     @article{liu2022pygod,
@@ -87,18 +86,18 @@ If you use PyGOD in a scientific publication, we would appreciate citations to t
       year={2022}
     }
     @article{liu2022bond,
-      author  = {Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
-      title   = {BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs},
-      journal = {arXiv preprint arXiv:2206.10071},
-      year    = {2022},
+      title={Bond: Benchmarking unsupervised outlier node detection on static attributed graphs},
+      author={Liu, Kay and Dou, Yingtong and Zhao, Yue and Ding, Xueying and Hu, Xiyang and Zhang, Ruitong and Ding, Kaize and Chen, Canyu and Peng, Hao and Shu, Kai and Sun, Lichao and Li, Jundong and Chen, George H. and Jia, Zhihao and Yu, Philip S.},
+      journal={Advances in Neural Information Processing Systems},
+      volume={35},
+      pages={27021--27035},
+      year={2022}
     }
 
 or::
 
     Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K. and Chen, G.H., Jia, Z., and Yu, P.S. 2022. PyGOD: A Python Library for Graph Outlier Detection. arXiv preprint arXiv:2204.12095.
-    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K., Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. BOND: Benchmarking Unsupervised Outlier Node Detection on Static Attributed Graphs. arXiv preprint arXiv:2206.10071.
-
-
+    Liu, K., Dou, Y., Zhao, Y., Ding, X., Hu, X., Zhang, R., Ding, K., Chen, C., Peng, H., Shu, K. and Sun, L., Li, J., Chen, G.H., Jia, Z., and Yu, P.S. 2022. Bond: Benchmarking unsupervised outlier node detection on static attributed graphs. Advances in Neural Information Processing Systems, 35, pp.27021-27035.
 
 ----
 
@@ -146,21 +145,17 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-* **fit(G)**\ : Fit detector.
-* **decision_function(G)**\ : Predict raw anomaly score of PyG data G using the fitted detector.
+* **fit(data)**\ : Fit detector.
+* **decision_function(data)**\ : Predict raw anomaly score of PyG data using the fitted detector.
 
-Key Attributes of a fitted model:
+Key Attributes of a fitted detector:
 
-* **decision_scores_**\ : The outlier scores of the training data. The higher, the more abnormal.
-  Outliers tend to have higher scores.
-* **labels_**\ : The binary labels of the training data. 0 stands for inliers and 1 for outliers/anomalies.
+* **decision_score_**\ : The outlier scores of the input data. Outliers tend to have higher scores.
+* **label_**\ : The binary labels of the input data. 0 stands for inliers and 1 for outliers.
 
 For the inductive setting:
 
-* **predict(G)**\ : Predict if nodes in PyG data G is an outlier or not using the fitted detector.
-* **predict_proba(G)**\ : Predict the probability of nodes in PyG data G being outlier using the fitted detector.
-* **predict_confidence(G)**\ : Predict the model's node-wise confidence (available in predict and predict_proba) [#Perini2020Quantifying]_.
-
+* **predict(data)**\ : Predict if nodes in PyG data G is an outlier or not using the fitted detector.
 
 **Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
 See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
@@ -169,43 +164,24 @@ See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/l
 Implemented Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^
 
-PyGOD toolkit consists of two major functional groups:
-
-**(i) Node-level detection** :
-
-===================  ===================  ==================  =====  ===========  ========================================
-Type                 Backbone             Abbr                Year   Sampling      Ref
-===================  ===================  ==================  =====  ===========  ========================================
-Unsupervised         Clustering           SCAN                2007   No           [#Xu2007Scan]_
-Unsupervised         GNN+AE               GAE                 2016   Yes          [#Kipf2016Variational]_
-Unsupervised         MF                   Radar               2017   No           [#Li2017Radar]_
-Unsupervised         MF                   ANOMALOUS           2018   No           [#Peng2018Anomalous]_
-Unsupervised         MF                   ONE                 2019   No           [#Bandyopadhyay2019Outlier]_
-Unsupervised         GNN+AE               DOMINANT            2019   Yes          [#Ding2019Deep]_
-Unsupervised         MLP+AE               DONE                2020   Yes          [#Bandyopadhyay2020Outlier]_
-Unsupervised         MLP+AE               AdONE               2020   Yes          [#Bandyopadhyay2020Outlier]_
-Unsupervised         GNN+AE               AnomalyDAE          2020   Yes          [#Fan2020AnomalyDAE]_
-Unsupervised         GAN                  GAAN                2020   Yes          [#Chen2020Generative]_
-Unsupervised         GNN+AE               OCGNN               2021   Yes          [#Wang2021One]_
-Unsupervised/SSL     GNN+AE               CoLA                2021   Yes          [#Liu2021Anomaly]_
-Unsupervised         GNN+AE               GUIDE               2021   Yes          [#Yuan2021Higher]_
-Unsupervised/SSL     GNN+AE               CONAD               2022   Yes          [#Xu2022Contrastive]_
-===================  ===================  ==================  =====  ===========  ========================================
-
-**(ii) Utility functions** :
-
-===================  =======================  ==================================  ======================================================================================================================================
-Type                 Name                     Function                            Documentation
-===================  =======================  ==================================  ======================================================================================================================================
-Metric               eval_precision_at_k      Calculating Precision@k             `eval_precision_at_k <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_precision_at_k>`_
-Metric               eval_recall_at_k         Calculating Recall@k                `eval_recall_at_k <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_recall_at_k>`_
-Metric               eval_roc_auc             Calculating ROC-AUC Score           `eval_roc_auc <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_roc_auc>`_
-Metric               eval_average_precision   Calculating average precision       `eval_average_precision <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_average_precision>`_
-Metric               eval_f1                  Calculating F1 score                `eval_f1 <https://docs.pygod.org/en/latest/pygod.metrics.html#pygod.metrics.eval_f1>`_
-Generator            gen_structural_outliers  Generating structural outliers      `gen_structural_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_structural_outlierss>`_
-Generator            gen_contextual_outliers  Generating contextual outliers      `gen_contextual_outliers <https://docs.pygod.org/en/latest/pygod.generator.html#pygod.generator.gen_contextual_outliers>`_
-Dataset              load_data                Loading PyGOD built-in datasets     `load_data <https://docs.pygod.org/en/latest/pygod.utils.html#pygod.utils.load_data>`_
-===================  =======================  ==================================  ======================================================================================================================================
+==================  =====  ===========  ===========  ========================================
+Abbr                Year   Backbone     Sampling      Ref
+==================  =====  ===========  ===========  ========================================
+SCAN                2007   Clustering   No           [#Xu2007Scan]_
+GAE                 2016   GNN+AE       Yes          [#Kipf2016Variational]_
+Radar               2017   MF           No           [#Li2017Radar]_
+ANOMALOUS           2018   MF           No           [#Peng2018Anomalous]_
+ONE                 2019   MF           No           [#Bandyopadhyay2019Outlier]_
+DOMINANT            2019   GNN+AE       Yes          [#Ding2019Deep]_
+DONE                2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
+AdONE               2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
+AnomalyDAE          2020   GNN+AE       Yes          [#Fan2020AnomalyDAE]_
+GAAN                2020   GAN          Yes          [#Chen2020Generative]_
+OCGNN               2021   GNN+AE       Yes          [#Wang2021One]_
+CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
+GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
+CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
+==================  =====  ===========  ===========  ========================================
 
 
 ----

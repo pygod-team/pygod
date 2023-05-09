@@ -1,12 +1,46 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GCN
-from torch_geometric.utils import to_dense_adj
-
-from .functional import double_recon_loss
 
 
 class OCGNNBase(nn.Module):
+    """
+    One-Class Graph Neural Networks for Anomaly Detection in
+    Attributed Networks
+
+    OCGNN is an anomaly detector that measures the
+    distance of anomaly to the centroid, in a similar fashion to the
+    support vector machine, but in the embedding space after feeding
+    towards several layers of GCN.
+
+    See :cite:`wang2021one` for details.
+
+    Parameters
+    ----------
+    in_dim : int
+        Input dimension of model.
+    hid_dim :  int, optional
+        Hidden dimension of model. Default: ``64``.
+    num_layers : int, optional
+        Total number of layers in model. Default: ``2``.
+    dropout : float, optional
+        Dropout rate. Default: ``0.``.
+    act : callable activation function or None, optional
+        Activation function if not None.
+        Default: ``torch.nn.functional.relu``.
+    backbone : torch.nn.Module
+        The backbone of the deep detector implemented in PyG.
+        Default: ``torch_geometric.nn.GCN``.
+    beta : float, optional
+        The weight between the reconstruction loss and radius.
+        Default: ``0.5``.
+    warmup : int, optional
+        The number of epochs for warm-up training. Default: ``2``.
+    eps : float, optional
+        The slack variable. Default: ``0.001``.
+    **kwargs
+        Other parameters for the backbone model.
+    """
 
     def __init__(self,
                  in_dim,
@@ -14,10 +48,10 @@ class OCGNNBase(nn.Module):
                  num_layers=2,
                  dropout=0.,
                  act=torch.nn.functional.relu,
-                 beta=0.5,
-                 warmup=0,
-                 eps=0.001,
                  backbone=GCN,
+                 beta=0.5,
+                 warmup=2,
+                 eps=0.001,
                  **kwargs):
         super(OCGNNBase, self).__init__()
 
@@ -39,11 +73,41 @@ class OCGNNBase(nn.Module):
         self.emb = None
 
     def forward(self, x, edge_index):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        emb : torch.Tensor
+            Output embeddings.
+        """
 
         self.emb = self.gnn(x, edge_index)
         return self.emb
 
     def loss_func(self, emb):
+        """
+        Loss function for OCGNN
+
+        Parameters
+        ----------
+        emb : torch.Tensor
+            Embeddings.
+
+        Returns
+        -------
+        loss : torch.Tensor
+            Loss value.
+        score : torch.Tensor
+            Outlier scores of shape :math:`N` with gradients.
+        """
 
         dist = torch.sum(torch.pow(emb - self.c, 2), 1)
         score = dist - self.r ** 2

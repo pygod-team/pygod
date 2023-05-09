@@ -9,11 +9,11 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 
-from pygod.metrics import eval_roc_auc
-from pygod.metrics import eval_recall_at_k
-from pygod.metrics import eval_precision_at_k
-from pygod.metrics import eval_average_precision
-from pygod.metrics import eval_f1
+from pygod.metric import eval_roc_auc
+from pygod.metric import eval_recall_at_k
+from pygod.metric import eval_precision_at_k
+from pygod.metric import eval_average_precision
+from pygod.metric import eval_f1
 
 
 class TestMetric(unittest.TestCase):

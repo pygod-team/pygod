@@ -5,7 +5,11 @@ from torch_geometric.nn import GCN
 
 class DotProductDecoder(nn.Module):
     """
-    Dot product decoder for the structure reconstruction.
+    Dot product decoder for the structure reconstruction, which is
+    defined as :math:`\symbf{A}' = \sigma(\symbf{Z}
+    \symbf{Z}^\intercal)`, where :math:`\sigma` is the optional sigmoid
+    function, :math:`\symbf{Z}` is the input hidden embedding, and the
+    :math:`\symbf{A}'` is the reconstructed adjacency matrix.
 
     Parameters
     ----------
@@ -29,6 +33,7 @@ class DotProductDecoder(nn.Module):
     **kwargs : optional
         Additional arguments for the backbone.
     """
+
     def __init__(self,
                  in_dim,
                  hid_dim=64,
@@ -50,6 +55,21 @@ class DotProductDecoder(nn.Module):
                            **kwargs)
 
     def forward(self, x, edge_index):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input node embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        s_ : torch.Tensor
+            Reconstructed adjacency matrix.
+        """
         h = self.nn(x, edge_index)
         s_ = h @ h.T
         if self.sigmoid_s:

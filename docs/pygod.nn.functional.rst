@@ -1,15 +1,9 @@
-Funtional
-=========
+pygod.nn.functional
+===================
 
-.. automodule:: pygod.functional
+.. automodule:: pygod.nn.functional
     :members:
     :exclude-members:
     :undoc-members:
     :show-inheritance:
     :inherited-members:
-
-Reference
----------
-
-.. bibliography::
-   :cited:

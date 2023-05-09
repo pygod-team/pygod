@@ -32,10 +32,10 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 
 
 import torch
-from pygod.generator import gen_contextual_outliers, gen_structural_outliers
+from pygod.generator import gen_contextual_outlier, gen_structural_outlier
 
-data, ya = gen_contextual_outliers(data, n=100, k=50)
-data, ys = gen_structural_outliers(data, m=10, n=10)
+data, ya = gen_contextual_outlier(data, n=100, k=50)
+data, ys = gen_structural_outlier(data, m=10, n=10)
 data.y = torch.logical_or(ys, ya).int()
 
 
@@ -55,10 +55,10 @@ data.y = data.y.bool()
 # You can use any model by simply initializing without passing any
 # arguments. Default hyperparameters are ready for you. Of course, you
 # can also customize the parameters by passing arguments. Here, we use
-# `pygod.detectors.DOMINANT` as an example.
+# `pygod.detector.DOMINANT` as an example.
 
 
-from pygod.detectors import DOMINANT
+from pygod.detector import DOMINANT
 
 model = DOMINANT()
 
@@ -112,7 +112,7 @@ print(conf)
 # To evaluate the performance outlier detector:
 
 
-from pygod.metrics import eval_roc_auc
+from pygod.metric import eval_roc_auc
 
 auc_score = eval_roc_auc(data.y, score)
 print('AUC Score:', auc_score)

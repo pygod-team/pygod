@@ -1,6 +1,7 @@
 from random import choice
-from pygod.detectors import *
+from pygod.detector import *
 from pyod.models.lof import LOF
+from torch_geometric.nn import MLP
 from sklearn.ensemble import IsolationForest
 
 
@@ -103,14 +104,14 @@ def init_model(args):
                     batch_size=batch_size,
                     num_neigh=num_neigh)
     elif model_name == 'gcnae':
-        return GCNAE(hid_dim=choice(hid_dim),
-                     weight_decay=weight_decay,
-                     dropout=choice(dropout),
-                     lr=choice(lr),
-                     epoch=epoch,
-                     gpu=gpu,
-                     batch_size=batch_size,
-                     num_neigh=num_neigh)
+        return GAE(hid_dim=choice(hid_dim),
+                   weight_decay=weight_decay,
+                   dropout=choice(dropout),
+                   lr=choice(lr),
+                   epoch=epoch,
+                   gpu=gpu,
+                   batch_size=batch_size,
+                   num_neigh=num_neigh)
     elif model_name == 'guide':
         return GUIDE(a_hid=choice(hid_dim),
                      s_hid=choice([4, 5, 6]),
@@ -124,13 +125,14 @@ def init_model(args):
                      num_neigh=num_neigh,
                      cache_dir='./tmp')
     elif model_name == "mlpae":
-        return MLPAE(hid_dim=choice(hid_dim),
-                     weight_decay=weight_decay,
-                     dropout=choice(dropout),
-                     lr=choice(lr),
-                     epoch=epoch,
-                     gpu=gpu,
-                     batch_size=batch_size)
+        return GAE(hid_dim=choice(hid_dim),
+                   weight_decay=weight_decay,
+                   dropout=choice(dropout),
+                   lr=choice(lr),
+                   epoch=epoch,
+                   gpu=gpu,
+                   batch_size=batch_size,
+                   backbone=MLP)
     elif model_name == 'lof':
         return LOF()
     elif model_name == 'if':

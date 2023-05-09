@@ -6,6 +6,51 @@ from .done import DONEBase
 
 
 class AdONEBase(torch.nn.Module):
+    """
+    Adversarial Outlier Aware Attributed Network Embedding
+
+    AdONE consists of an attribute autoencoder and a structure
+    autoencoder. It estimates five loss to optimize the model,
+    including an attribute proximity loss, an attribute homophily loss,
+    a structure proximity loss, a structure homophily loss, and an
+    alignment loss. It calculates three outlier scores, and averages
+    them as an overall score.
+
+    See :cite:`bandyopadhyay2020outlier` for details.
+
+    Parameters
+    ----------
+    x_dim : int
+        Input dimension of attribute.
+    s_dim : int
+        Input dimension of structure.
+    hid_dim :  int, optional
+        Hidden dimension of model. Default: ``64``.
+    num_layers : int, optional
+        Total number of layers in model. A half (floor) of the layers
+        are for the encoder, the other half (ceil) of the layers are for
+        decoders. Default: ``4``.
+    dropout : float, optional
+        Dropout rate. Default: ``0.``.
+    weight_decay : float, optional
+        Weight decay (L2 penalty). Default: ``0.``.
+    act : callable activation function or None, optional
+        Activation function if not None.
+        Default: ``torch.nn.functional.relu``.
+    w1 : float, optional
+        Weight of structure proximity loss. Default: ``0.2``.
+    w2 : float, optional
+        Weight of structure homophily loss. Default: ``0.2``.
+    w3 : float, optional
+        Weight of attribute proximity loss. Default: ``0.2``.
+    w4 : float, optional
+        Weight of attribute homophily loss. Default: ``0.2``.
+    w5 : float, optional
+        Weight of alignment loss. Default: ``0.2``.
+    **kwargs
+        Other parameters for the backbone.
+    """
+
     def __init__(self,
                  x_dim,
                  s_dim,
@@ -49,6 +94,37 @@ class AdONEBase(torch.nn.Module):
         self.emb = None
 
     def forward(self, x, s, edge_index):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        s : torch.Tensor
+            Input structure embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        x_ : torch.Tensor
+            Reconstructed attribute embeddings.
+        s_ : torch.Tensor
+            Reconstructed structure embeddings.
+        h_a : torch.Tensor
+            Attribute hidden embeddings.
+        h_s : torch.Tensor
+            Structure hidden embeddings.
+        dna : torch.Tensor
+            Attribute neighbor distance.
+        dns : torch.Tensor
+            Structure neighbor distance.
+        dis_a : torch.Tensor
+            Attribute discriminator score.
+        dis_s : torch.Tensor
+            Structure discriminator score.
+        """
         x_, s_, h_a, h_s, dna, dns = self.done(x, s, edge_index)
         dis_a = torch.sigmoid(self.discriminator(h_a))
         dis_s = torch.sigmoid(self.discriminator(h_s))
@@ -57,6 +133,43 @@ class AdONEBase(torch.nn.Module):
         return x_, s_, h_a, h_s, dna, dns, dis_a, dis_s
 
     def loss_func(self, x, x_, s, s_, h_a, h_s, dna, dns, dis_a, dis_s):
+        """
+        Loss function for AdONE.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        x_ : torch.Tensor
+            Reconstructed attribute embeddings.
+        s : torch.Tensor
+            Input structure embeddings.
+        s_ : torch.Tensor
+            Reconstructed structure embeddings.
+        h_a : torch.Tensor
+            Attribute hidden embeddings.
+        h_s : torch.Tensor
+            Structure hidden embeddings.
+        dna : torch.Tensor
+            Attribute neighbor distance.
+        dns : torch.Tensor
+            Structure neighbor distance.
+        dis_a : torch.Tensor
+            Attribute discriminator score.
+        dis_s : torch.Tensor
+            Structure discriminator score.
+
+        Returns
+        -------
+        loss : torch.Tensor
+            Loss value.
+        oa : torch.Tensor
+            Attribute outlier scores.
+        os : torch.Tensor
+            Structure outlier scores.
+        oc : torch.Tensor
+            Combined outlier scores.
+        """
         # equation 9 is based on the official implementation, and it
         # is slightly different from the paper
         dx = torch.sum(torch.pow(x - x_, 2), 1)
@@ -100,4 +213,12 @@ class AdONEBase(torch.nn.Module):
 
     @staticmethod
     def process_graph(data):
+        """
+        Obtain the dense adjacency matrix of the graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        """
         data.s = to_dense_adj(data.edge_index)[0]

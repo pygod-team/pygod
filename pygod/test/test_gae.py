@@ -6,8 +6,8 @@ from numpy.testing import assert_raises
 
 import torch
 from torch_geometric.seed import seed_everything
-from pygod.detectors import GAE
-from pygod.metrics import eval_roc_auc
+from pygod.detector import GAE
+from pygod.metric import eval_roc_auc
 
 seed_everything(42)
 

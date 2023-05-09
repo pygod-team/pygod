@@ -10,29 +10,28 @@ from .functional import double_recon_loss
 
 class DOMINANTBase(nn.Module):
     """
-    DOMINANT (Deep Anomaly Detection on Attributed Networks) is an
-    anomaly detector consisting of a shared graph convolutional
-    encoder, a structure reconstruction decoder, and an attribute
-    reconstruction decoder. The reconstruction mean square error of the
-    decoders are defined as structure anomaly score and attribute
-    anomaly score, respectively.
+    Deep Anomaly Detection on Attributed Networks
+
+    DOMINANT is an anomaly detector consisting of a shared graph
+    convolutional encoder, a structure reconstruction decoder, and an
+    attribute reconstruction decoder. The reconstruction mean squared
+    error of the decoders are defined as structure anomaly score and
+    attribute anomaly score, respectively.
 
     See :cite:`ding2019deep` for details.
 
     Parameters
     ----------
     in_dim : int
-        Input dimension of node features.
+        Input dimension of model.
     hid_dim :  int
-       Hidden dimension of model.
+       Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
        Total number of layers in model. A half (floor) of the layers
        are for the encoder, the other half (ceil) of the layers are
        for decoders. Default: ``4``.
     dropout : float, optional
        Dropout rate. Default: ``0.``.
-    weight_decay : float, optional
-       Weight decay (L2 penalty). Default: ``0.``.
     act : callable activation function or None, optional
        Activation function if not None.
        Default: ``torch.nn.functional.relu``.
@@ -48,7 +47,7 @@ class DOMINANTBase(nn.Module):
 
     def __init__(self,
                  in_dim,
-                 hid_dim,
+                 hid_dim=64,
                  num_layers=4,
                  dropout=0.,
                  act=torch.nn.functional.relu,
@@ -92,6 +91,23 @@ class DOMINANTBase(nn.Module):
         self.emb = None
 
     def forward(self, x, edge_index):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        -------
+        x_ : torch.Tensor
+            Reconstructed attribute embeddings.
+        s_ : torch.Tensor
+            Reconstructed adjacency matrix.
+        """
 
         # encode feature matrix
         self.emb = self.shared_encoder(x, edge_index)
@@ -106,4 +122,12 @@ class DOMINANTBase(nn.Module):
 
     @staticmethod
     def process_graph(data):
+        """
+        Obtain the dense adjacency matrix of the graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        """
         data.s = to_dense_adj(data.edge_index)[0]

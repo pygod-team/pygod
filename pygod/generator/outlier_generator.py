@@ -12,7 +12,7 @@ from torch_geometric.data import Data
 from ..utils.utility import check_parameter
 
 
-def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
+def gen_structural_outlier(data, m, n, p=0, directed=False, seed=None):
     """Generating structural outliers according to paper :cite:`ding2019deep`.
     We randomly select ``m`` nodes from the network and then make those nodes
     fully connected, and then all the ``m`` nodes in the clique are regarded as
@@ -37,11 +37,11 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
 
     Returns
     -------
-    data : PyTorch Geometric Data instance (torch_geometric.data.Data)
+    data : torch_geometric.data.Data
         The structural outlier graph with injected edges.
     y_outlier : torch.Tensor
-        The outlier label tensor where 1 represents outliers and 0 represents
-        regular nodes.
+        The outlier label tensor where 1 represents outliers and 0
+        represents normal nodes.
     """
 
     if not isinstance(data, Data):
@@ -88,7 +88,7 @@ def gen_structural_outliers(data, m, n, p=0, directed=False, seed=None):
     return data, y_outlier
 
 
-def gen_contextual_outliers(data, n, k, seed=None):
+def gen_contextual_outlier(data, n, k, seed=None):
     r"""Generating contextual outliers according to paper :cite:`ding2019deep`.
     We randomly select ``n`` nodes as the attribute perturbation candidates.
     For each selected node :math:`i`, we randomly pick another ``k`` nodes
@@ -111,11 +111,11 @@ def gen_contextual_outliers(data, n, k, seed=None):
 
     Returns
     -------
-    data : PyTorch Geometric Data instance (torch_geometric.data.Data)
+    data : torch_geometric.data.Data
         The contextual outlier graph with modified node attributes.
     y_outlier : torch.Tensor
-        The outlier label tensor where 1 represents outliers and 0 represents
-        regular nodes.
+        The outlier label tensor where 1 represents outliers and 0
+        represents normal nodes.
     """
 
     if not isinstance(data, Data):

@@ -9,23 +9,42 @@ import torch
 from torch_geometric.utils import to_dense_adj
 
 from . import Detector
-from ..utils import logger
+from ..utils import logger, validate_device
 
 
 class ONE(Detector):
     """
-    ONE (Outlier Aware Network
-    Embedding for Attributed Networks)
+    Outlier Aware Network Embedding for Attributed Networks
 
     See :cite:`bandyopadhyay2019outlier` for details.
 
-
-    Examples
-    --------
-    >>> from pygod.detectors import ONE
-    >>> model = ONE()
-    >>> model.fit(data) # PyG graph data object
-    >>> prediction = model.predict(data)
+    Parameters
+    ----------
+    hid_a : int, optional
+        Hidden dimension for the attribute. Default: ``36``.
+    hid_s : int, optional
+        Hidden dimension for the structure. Default: ``36``.
+    alpha : float, optional
+        Weight for the attribute loss. Default: ``1.``.
+    beta : float, optional
+        Weight for the structural loss. Default: ``1.``.
+    gamma : float, optional
+        Weight for the combined loss. Default: ``1.``.
+    weight_decay : float, optional
+        Weight decay (L2 penalty). Default: ``0.``.
+    contamination : float, optional
+        Valid in (0., 0.5). The proportion of outliers in the data set.
+        Used when fitting to define the threshold on the decision
+        function. Default: ``0.1``.
+    lr : float, optional
+        Learning rate. Default: ``0.004``.
+    epoch : int, optional
+        Maximum number of training epoch. Default: ``5``.
+    gpu : int
+        GPU Index, -1 for using CPU. Default: ``-1``.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
     """
 
     def __init__(self,
@@ -34,10 +53,11 @@ class ONE(Detector):
                  alpha=1.,
                  beta=1.,
                  gamma=1.,
-                 weight_decay=0.01,
-                 lr=0.004,
+                 weight_decay=0.,
                  contamination=0.1,
+                 lr=0.004,
                  epoch=5,
+                 gpu=-1,
                  verbose=0):
         super(ONE, self).__init__(contamination=contamination)
 
@@ -50,6 +70,7 @@ class ONE(Detector):
         self.weight_decay = weight_decay
         self.lr = lr
         self.epoch = epoch
+        self.device = validate_device(gpu)
         self.verbose = verbose
 
         self.attribute_score_ = None

@@ -16,8 +16,10 @@ from ..utils import validate_device, logger
 
 class ANOMALOUS(Detector):
     """
-    ANOMALOUS (A Joint Modeling Approach for Anomaly Detection on
-    Attributed Networks) is an anomaly detector with CUR decomposition
+    A Joint Modeling Approach for Anomaly Detection on Attributed
+    Networks
+
+    ANOMALOUS is an anomaly detector with CUR decomposition
     and residual analysis. This model is transductive only.
 
     See :cite:`peng2018anomalous` for details.
@@ -25,27 +27,23 @@ class ANOMALOUS(Detector):
     Parameters
     ----------
     gamma : float, optional
-        Loss balance weight for attribute and structure.
-        Default: ``1.``.
+        Weight of node feature w.r.t. structure.
+        Default: ``1``.
     weight_decay : float, optional
-        Weight decay (alpha and beta in the original paper).
-        Default: ``0.01``.
+        Weight decay (L2 penalty). Default: ``0.``.
+    lr : float, optional
+        Learning rate. Default: ``0.004``.
+    epoch : int, optional
+        Maximum number of training epoch. Default: ``100``.
+    gpu : int
+        GPU Index, -1 for using CPU. Default: ``-1``.
     contamination : float, optional
         Valid in (0., 0.5). The proportion of outliers in the data set.
         Used when fitting to define the threshold on the decision
         function. Default: ``0.1``.
-    epoch : int, optional
-        Maximum number of training epoch. Default: ``5``.
-    verbose : bool
-        Verbosity mode. Turn on to print out log information.
-        Default: ``False``.
-
-    Examples
-    --------
-    >>> from pygod.detectors import ANOMALOUS
-    >>> model = ANOMALOUS()
-    >>> model.fit(data) # PyG graph data object
-    >>> prediction = model.predict(None)
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
     """
 
     def __init__(self,
