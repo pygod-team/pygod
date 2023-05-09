@@ -113,7 +113,8 @@ class GAEBase(nn.Module):
             x_ = self.decoder(self.emb, edge_index)
         return x_
 
-    def process_graph(self, data):
+    @staticmethod
+    def process_graph(data, recon_s=False):
         """
         Obtain the dense adjacency matrix of the graph.
 
@@ -121,6 +122,8 @@ class GAEBase(nn.Module):
         ----------
         data : torch_geometric.data.Data
             Input graph.
+        recon_s : bool, optional
+            Reconstruct the structure instead of node feature .
         """
-        if self.recon_s:
+        if recon_s:
             data.s = to_dense_adj(data.edge_index)[0]

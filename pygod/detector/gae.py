@@ -129,7 +129,7 @@ class GAE(DeepDetector):
                                   **kwargs)
 
     def process_graph(self, data):
-        GAEBase.process_graph(data)
+        GAEBase.process_graph(data, recon_s=self.recon_s)
 
     def init_model(self, **kwargs):
         if self.save_emb:
