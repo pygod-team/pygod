@@ -76,7 +76,6 @@ class TestDOMINANT(unittest.TestCase):
                             weight=0.8,
                             verbose=3,
                             save_emb=True,
-                            compile_model=True,
                             act_first=True)
         detector.fit(self.train_data)
 
