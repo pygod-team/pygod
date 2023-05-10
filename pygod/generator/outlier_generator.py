@@ -13,12 +13,12 @@ from ..utils.utility import check_parameter
 
 
 def gen_structural_outlier(data, m, n, p=0, directed=False, seed=None):
-    """Generating structural outliers according to paper :cite:`ding2019deep`.
-    We randomly select ``m`` nodes from the network and then make those nodes
-    fully connected, and then all the ``m`` nodes in the clique are regarded as
-    outliers. We iteratively repeat this process until a number of ``n``
-    cliques are generated and the total number of structural outliers is
-    ``m * n``.
+    """Generating structural outliers according to paper :
+    cite:`ding2019deep`. We randomly select ``m`` nodes from the network
+    and then make those nodes fully connected, and then all the ``m``
+    nodes in the clique are regarded as outliers. We iteratively repeat
+    this process until a number of ``n`` cliques are generated and the
+    total number of structural outliers is ``m * n``.
 
     Parameters
     ----------
@@ -89,12 +89,13 @@ def gen_structural_outlier(data, m, n, p=0, directed=False, seed=None):
 
 
 def gen_contextual_outlier(data, n, k, seed=None):
-    r"""Generating contextual outliers according to paper :cite:`ding2019deep`.
-    We randomly select ``n`` nodes as the attribute perturbation candidates.
-    For each selected node :math:`i`, we randomly pick another ``k`` nodes
-    from the data and select the node :math:`j` whose attributes :math:`x_j`
-    deviate the most from node :math:`i`'s attribute :math:`x_i` among ``k``
-    nodes by maximizing the Euclidean distance :math:`\| x_i − x_j \|`.
+    r"""Generating contextual outliers according to paper
+    :cite:`ding2019deep`. We randomly select ``n`` nodes as the
+    attribute perturbation candidates. For each selected node :math:`i`,
+    we randomly pick another ``k`` nodes from the data and select the
+    node :math:`j` whose attributes :math:`x_j` deviate the most from
+    node :math:`i`'s attribute :math:`x_i` among ``k`` nodes by
+    maximizing the Euclidean distance :math:`\| x_i − x_j \|`.
     Afterwards, we then substitute the attributes :math:`x_i` of node
     :math:`i` to :math:`x_j`.
 

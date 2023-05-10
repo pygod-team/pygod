@@ -4,18 +4,14 @@
 # Author: Yue Zhao <zhaoy@cmu.edu>
 # License: BSD 2 clause
 
-from __future__ import division
-from __future__ import print_function
-
 import os
-from importlib import import_module
-
 import torch
 import shutil
 import numbers
 import requests
 import warnings
 import numpy as np
+from importlib import import_module
 
 from ..metric import *
 
@@ -232,7 +228,8 @@ def logger(epoch=0,
             if isinstance(loss, tuple):
                 print("Loss G {:.4f} | Loss D {:.4f} | "
                       .format(loss[0], loss[1]), end='')
-            print("Loss {:.4f} | ".format(loss), end='')
+            else:
+                print("Loss {:.4f} | ".format(loss), end='')
 
         if verbose > 1:
             if target is not None:
@@ -264,10 +261,10 @@ def logger(epoch=0,
 
 def init_detector(name, **kwargs):
     """
-    Model initialization function.
+    Detector initialization function.
     """
     module = import_module('pygod.detector')
-    assert name in module.__all__, "Model {} not found".format(name)
+    assert name in module.__all__, "Detector {} not found".format(name)
     return getattr(module, name)(**kwargs)
 
 
@@ -276,7 +273,7 @@ def init_nn(name, **kwargs):
     Neural network initialization function.
     """
     module = import_module('pygod.nn')
-    assert name in module.__all__, "Model {} not found".format(name)
+    assert name in module.__all__, "Neural network {} not found".format(name)
     return getattr(module, name)(**kwargs)
 
 
@@ -330,7 +327,7 @@ def is_fitted(detector, attributes=None):
 
     Parameters
     ----------
-    detector : pygod.models.Detector
+    detector : pygod.detector.Detector
         The detector to check.
     attributes : list, optional
         The attributes to check.
@@ -342,6 +339,8 @@ def is_fitted(detector, attributes=None):
         Whether the detector is fitted.
     """
     if attributes is None:
-        attributes = ['model_']
-    assert all(hasattr(detector, attr) for attr in attributes), \
+        attributes = ['model']
+    assert all(hasattr(detector, attr) and
+               eval('detector.%s' % attr) is not None
+               for attr in attributes), \
         "The detector is not fitted yet"

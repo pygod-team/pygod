@@ -74,8 +74,6 @@ class Detector(ABC):
             The input graph.
         """
 
-        pass
-
     @abstractmethod
     def fit(self, data, label=None):
         """Fit detector with training data.
@@ -95,8 +93,6 @@ class Detector(ABC):
             Fitted detector.
         """
 
-        pass
-
     @abstractmethod
     def decision_function(self, data, label=None):
         """Predict raw outlier scores of testing data using the fitted
@@ -115,8 +111,6 @@ class Detector(ABC):
         score : torch.Tensor
             The outlier scores of shape :math:`N`.
         """
-
-        pass
 
     def predict(self,
                 data=None,
@@ -629,8 +623,6 @@ class DeepDetector(Detector, ABC):
             The initialized neural network detector.
         """
 
-        pass
-
     @abstractmethod
     def forward_model(self, data):
         """
@@ -648,5 +640,3 @@ class DeepDetector(Detector, ABC):
         score : torch.Tensor
             The outlier scores of the current batch.
         """
-
-        pass

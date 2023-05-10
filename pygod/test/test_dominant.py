@@ -27,13 +27,13 @@ class TestDOMINANT(unittest.TestCase):
 
     def test_parameters(self):
         assert (hasattr(self.detector, 'decision_score_') and
-                self.model.decision_score_ is not None)
+                self.detector.decision_score_ is not None)
         assert (hasattr(self.detector, 'label_') and
-                self.model.label_ is not None)
+                self.detector.label_ is not None)
         assert (hasattr(self.detector, 'threshold_') and
-                self.model.threshold_ is not None)
+                self.detector.threshold_ is not None)
         assert (hasattr(self.detector, 'model') and
-                self.model.model is not None)
+                self.detector.model is not None)
 
     def test_train_score(self):
         assert_equal(len(self.model.decision_score_), len(self.data.y))
