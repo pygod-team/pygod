@@ -142,5 +142,5 @@ class TestUtils(unittest.TestCase):
         with assert_raises(Exception):
             is_fitted(detector)
 
-        detector.fit(torch.load('pygod.test.test_graph.pt'))
+        detector.fit(torch.load('pygod/test/test_graph.pt'))
         is_fitted(detector)
