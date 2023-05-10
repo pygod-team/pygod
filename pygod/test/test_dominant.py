@@ -36,10 +36,10 @@ class TestDOMINANT(unittest.TestCase):
                 self.detector.model is not None)
 
     def test_train_score(self):
-        assert_equal(len(self.model.decision_score_), len(self.data.y))
+        assert_equal(len(self.detector.decision_score_), len(self.data.y))
 
     def test_prediction_score(self):
-        score = self.model.decision_function(self.data)
+        score = self.detector.decision_function(self.data)
 
         # check score shapes
         assert_equal(score.shape[0], self.data.y.shape[0])
@@ -48,33 +48,32 @@ class TestDOMINANT(unittest.TestCase):
         assert (eval_roc_auc(self.data.y, score) >= self.roc_floor)
 
     def test_prediction_label(self):
-        pred = self.model.predict(self.data)
+        pred = self.detector.predict(self.data)
         assert_equal(pred.shape[0], self.data.y.shape[0])
 
     def test_prediction_prob_linear(self):
-        _, prob = self.model.predict(self.data,
-                                     return_prob=True,
-                                     prob_method='linear')
+        _, prob = self.detector.predict(self.data,
+                                        return_prob=True,
+                                        prob_method='linear')
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 
     def test_prediction_prob_unify(self):
-        _, prob = self.model.predict(self.data,
-                                     return_prob=True,
-                                     prob_method='unify')
+        _, prob = self.detector.predict(self.data,
+                                        return_prob=True,
+                                        prob_method='unify')
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 
     def test_prediction_prob_parameter(self):
         with assert_raises(ValueError):
-            self.model.predict(self.data,
-                               return_prob=True,
-                               prob_method='something')
+            self.detector.predict(self.data,
+                                  return_prob=True,
+                                  prob_method='something')
 
     def test_prediction_conf(self):
-        pred, conf = self.model.predict(self.data, return_conf=True)
+        pred, conf = self.detector.predict(self.data, return_conf=True)
         assert_equal(pred.shape[0], self.data.y.shape[0])
         assert_equal(conf.shape[0], self.data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
-
