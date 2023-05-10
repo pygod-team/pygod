@@ -5,75 +5,115 @@ from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 import torch
+from torch_geometric.nn import GIN
 from torch_geometric.seed import seed_everything
-from pygod.detector import DOMINANT
-from pygod.metric import eval_roc_auc
 
-seed_everything(42)
+from pygod.metric import eval_roc_auc
+from pygod.detector import DOMINANT
+
+seed_everything(717)
 
 
 class TestDOMINANT(unittest.TestCase):
     def setUp(self):
-        # use the pre-defined fake graph with injected outliers
-        # for testing purpose
-
-        # the roc should be higher than this; it is model dependent
         self.roc_floor = 0.60
 
-        self.data = torch.load(os.path.join('pygod/test/train_graph.pt'))
+        self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
+        self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
-        self.detector = DOMINANT(epoch=5)
-        self.detector.fit(self.data)
+    def test_full(self):
+        detector = DOMINANT(epoch=5, num_layers=3)
+        detector.fit(self.train_data)
 
-    def test_parameters(self):
-        assert (hasattr(self.detector, 'decision_score_') and
-                self.detector.decision_score_ is not None)
-        assert (hasattr(self.detector, 'label_') and
-                self.detector.label_ is not None)
-        assert (hasattr(self.detector, 'threshold_') and
-                self.detector.threshold_ is not None)
-        assert (hasattr(self.detector, 'model') and
-                self.detector.model is not None)
+        score = detector.predict(return_pred=False, return_score=True)
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
-    def test_train_score(self):
-        assert_equal(len(self.detector.decision_score_), len(self.data.y))
+        pred, score, conf = detector.predict(self.test_data,
+                                             return_pred=True,
+                                             return_score=True,
+                                             return_conf=True)
 
-    def test_prediction_score(self):
-        score = self.detector.decision_function(self.data)
-
-        # check score shapes
-        assert_equal(score.shape[0], self.data.y.shape[0])
-
-        # check performance
-        assert (eval_roc_auc(self.data.y, score) >= self.roc_floor)
-
-    def test_prediction_label(self):
-        pred = self.detector.predict(self.data)
-        assert_equal(pred.shape[0], self.data.y.shape[0])
-
-    def test_prediction_prob_linear(self):
-        _, prob = self.detector.predict(self.data,
-                                        return_prob=True,
-                                        prob_method='linear')
-        assert (prob.min() >= 0)
-        assert (prob.max() <= 1)
-
-    def test_prediction_prob_unify(self):
-        _, prob = self.detector.predict(self.data,
-                                        return_prob=True,
-                                        prob_method='unify')
-        assert (prob.min() >= 0)
-        assert (prob.max() <= 1)
-
-    def test_prediction_prob_parameter(self):
-        with assert_raises(ValueError):
-            self.detector.predict(self.data,
-                                  return_prob=True,
-                                  prob_method='something')
-
-    def test_prediction_conf(self):
-        pred, conf = self.detector.predict(self.data, return_conf=True)
-        assert_equal(pred.shape[0], self.data.y.shape[0])
-        assert_equal(conf.shape[0], self.data.y.shape[0])
+        assert_equal(pred.shape[0], self.test_data.y.shape[0])
+        assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
+        assert_equal(conf.shape[0], self.test_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
+
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='linear')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
+
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='unify')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
+
+        with assert_raises(ValueError):
+            detector.predict(self.test_data,
+                             return_prob=True,
+                             prob_method='something')
+
+    def test_sample(self):
+        detector = DOMINANT(hid_dim=32,
+                            num_layers=2,
+                            dropout=0.5,
+                            weight_decay=0.01,
+                            act=None,
+                            sigmoid_s=True,
+                            backbone=GIN,
+                            contamination=0.2,
+                            lr=0.01,
+                            epoch=2,
+                            batch_size=64,
+                            num_neigh=1,
+                            weight=0.8,
+                            verbose=3,
+                            save_emb=True,
+                            compile_model=True,
+                            act_first=True)
+        detector.fit(self.train_data)
+
+        score = detector.predict(return_pred=False, return_score=True)
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
+
+        pred, score, conf, emb = detector.predict(self.test_data,
+                                                  return_pred=True,
+                                                  return_score=True,
+                                                  return_conf=True,
+                                                  return_emb=True)
+
+        assert_equal(pred.shape[0], self.test_data.y.shape[0])
+        assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
+        assert_equal(conf.shape[0], self.test_data.y.shape[0])
+        assert (conf.min() >= 0)
+        assert (conf.max() <= 1)
+        assert_equal(emb.shape[0], self.test_data.y.shape[0])
+        assert_equal(emb.shape[1], detector.hid_dim)
+
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='linear')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
+
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='unify')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
+
+        with assert_raises(ValueError):
+            detector.predict(self.test_data,
+                             return_prob=True,
+                             prob_method='something')
