@@ -4,7 +4,10 @@ scikit-learn
 scipy
 torch==2.0.0 -f https://download.pytorch.org/whl/cpu/torch/
 torch_geometric
-torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+torch_scatter -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+torch_sparse -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+torch_cluster -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
 pytest
 coverage
 coveralls
