@@ -20,20 +20,19 @@ class TestDOMINANT(unittest.TestCase):
         # the roc should be higher than this; it is model dependent
         self.roc_floor = 0.60
 
-        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
-        self.data = test_graph
+        self.data = torch.load(os.path.join('pygod/test/train_graph.pt'))
 
-        self.model = DOMINANT(epoch=5)
-        self.model.fit(self.data)
+        self.detector = DOMINANT(epoch=5)
+        self.detector.fit(self.data)
 
     def test_parameters(self):
-        assert (hasattr(self.model, 'decision_score_') and
+        assert (hasattr(self.detector, 'decision_score_') and
                 self.model.decision_score_ is not None)
-        assert (hasattr(self.model, 'label_') and
+        assert (hasattr(self.detector, 'label_') and
                 self.model.label_ is not None)
-        assert (hasattr(self.model, 'threshold_') and
+        assert (hasattr(self.detector, 'threshold_') and
                 self.model.threshold_ is not None)
-        assert (hasattr(self.model, 'model') and
+        assert (hasattr(self.detector, 'model') and
                 self.model.model is not None)
 
     def test_train_score(self):
@@ -79,6 +78,3 @@ class TestDOMINANT(unittest.TestCase):
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
 
-
-if __name__ == '__main__':
-    unittest.main()

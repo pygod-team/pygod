@@ -89,7 +89,3 @@ class TestGAE(unittest.TestCase):
 
         # check performance
         assert (eval_roc_auc(self.data.y, score) >= self.roc_floor)
-
-
-if __name__ == '__main__':
-    unittest.main()
