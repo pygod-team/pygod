@@ -8,10 +8,12 @@ on:
     branches:
       - main
       - dev
+      - gpu
   pull_request:
     branches: 
       - main
       - dev
+      - gpu
 
 jobs:
   build:
@@ -33,7 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements_ci.txt
+        pip install torch --index-url https://download.pytorch.org/whl/cpu
         pip install torch_geometric
         pip install torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
         pip install pytest

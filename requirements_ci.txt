@@ -1,5 +1,0 @@
-networkx
-numpy
-scikit-learn
-scipy
-torch>=2.0.0
