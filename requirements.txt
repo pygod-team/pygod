@@ -1,5 +1,5 @@
 numpy
-scikit-learn
 scipy
-setuptools
 networkx
+scikit-learn
+setuptools
