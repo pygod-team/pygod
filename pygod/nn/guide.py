@@ -68,12 +68,12 @@ class GUIDEBase(torch.nn.Module):
         self.attr_encoder = GCN(in_channels=dim_a,
                                 hidden_channels=hid_a,
                                 num_layers=encoder_layers,
-                                out_channels=dim_a,
+                                out_channels=hid_a,
                                 dropout=dropout,
                                 act=act,
                                 **kwargs)
 
-        self.attr_decoder = GCN(in_channels=dim_a,
+        self.attr_decoder = GCN(in_channels=hid_a,
                                 hidden_channels=hid_a,
                                 num_layers=decoder_layers,
                                 out_channels=dim_a,
@@ -84,11 +84,11 @@ class GUIDEBase(torch.nn.Module):
         self.stru_encoder = GNA(in_channels=dim_s,
                                 hidden_channels=hid_s,
                                 num_layers=encoder_layers,
-                                out_channels=dim_s,
+                                out_channels=hid_s,
                                 dropout=dropout,
                                 act=act)
 
-        self.stru_decoder = GNA(in_channels=dim_s,
+        self.stru_decoder = GNA(in_channels=hid_s,
                                 hidden_channels=hid_s,
                                 num_layers=decoder_layers,
                                 out_channels=dim_s,
@@ -96,7 +96,7 @@ class GUIDEBase(torch.nn.Module):
                                 act=act)
 
         self.loss_func = double_recon_loss
-        self.emb = ()
+        self.emb = None
 
     def forward(self, x, s, edge_index):
         """

@@ -162,6 +162,7 @@ class GAAN(DeepDetector):
 
     def forward_model(self, data):
         batch_size = data.batch_size
+        node_idx = data.n_id
 
         x = data.x.to(self.device)
         s = data.s.to(self.device)
@@ -185,7 +186,7 @@ class GAAN(DeepDetector):
 
         score = self.model.score_func(x=x,
                                       x_=x_,
-                                      s=s,
+                                      s=s[:, node_idx],
                                       s_=a,
                                       weight=self.weight,
                                       pos_weight_s=1,
