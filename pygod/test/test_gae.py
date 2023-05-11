@@ -2,10 +2,11 @@
 import os
 import unittest
 from numpy.testing import assert_equal
+from numpy.testing import assert_warns
 from numpy.testing import assert_raises
 
 import torch
-from torch_geometric.nn import GIN
+from torch_geometric.nn import GIN, MLP
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
@@ -66,7 +67,7 @@ class TestGAE(unittest.TestCase):
                        dropout=0.5,
                        weight_decay=0.01,
                        act=None,
-                       backbone=GIN,
+                       backbone=MLP,
                        recon_s=True,
                        sigmoid_s=True,
                        contamination=0.2,
@@ -116,3 +117,7 @@ class TestGAE(unittest.TestCase):
             detector.predict(self.test_data,
                              return_prob=True,
                              prob_method='something')
+
+    def test_params(self):
+        with assert_warns(UserWarning):
+            GAE(num_neigh=0, backbone=MLP)

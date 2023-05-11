@@ -72,7 +72,7 @@ class TestDOMINANT(unittest.TestCase):
                             lr=0.01,
                             epoch=2,
                             batch_size=16,
-                            num_neigh=1,
+                            num_neigh=[2, 1],
                             weight=0.8,
                             verbose=3,
                             save_emb=True,
