@@ -22,7 +22,7 @@ class TestSCAN(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = SCAN()
+        detector = SCAN(eps=0.1, mu=3)
         detector.fit(self.train_data)
 
         pred, score, conf = detector.predict(return_pred=True,
@@ -30,11 +30,10 @@ class TestSCAN(unittest.TestCase):
                                              return_conf=True)
 
         assert_equal(pred.shape[0], self.train_data.y.shape[0])
-        # TODO: assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
         assert_equal(conf.shape[0], self.train_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
-
         prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='linear')
