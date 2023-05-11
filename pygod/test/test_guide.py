@@ -98,9 +98,9 @@ class TestGUIDE(unittest.TestCase):
         assert (conf.max() <= 1)
 
         assert (emb[0].shape[0] == self.test_data.y.shape[0])
-        assert (emb[0].shape[1] == detector.hid_dim)
+        assert (emb[0].shape[1] == detector.hid_dim[0])
         assert (emb[1].shape[0] == self.test_data.y.shape[0])
-        assert (emb[1].shape[1] == detector.hid_dim)
+        assert (emb[1].shape[1] == detector.hid_dim[1])
 
         prob = detector.predict(self.test_data,
                                 return_pred=False,

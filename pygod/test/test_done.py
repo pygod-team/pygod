@@ -61,21 +61,21 @@ class TestDONE(unittest.TestCase):
                              prob_method='something')
 
     def test_sample(self):
-        detector = DONE(hid_dim=32,
+        detector = DONE(hid_dim=4,
                         num_layers=2,
-                        dropout=0.5,
-                        weight_decay=0.01,
+                        dropout=0.1,
+                        weight_decay=0.001,
                         act=None,
                         w1=0.1,
                         w2=0.1,
                         w3=0.1,
                         w4=0.1,
                         w5=0.6,
-                        contamination=0.2,
-                        lr=0.01,
+                        contamination=0.05,
+                        lr=0.001,
                         epoch=2,
                         batch_size=16,
-                        num_neigh=1,
+                        num_neigh=3,
                         verbose=3,
                         save_emb=True,
                         act_first=True)
