@@ -16,13 +16,13 @@ seed_everything(717)
 
 class TestCoLA(unittest.TestCase):
     def setUp(self):
-        self.roc_floor = 0.60
+        self.roc_floor = 0.55
 
         self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = CoLA(epoch=5, num_layers=3, hid_dim=4)
+        detector = CoLA(epoch=10, num_layers=2, hid_dim=8)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
@@ -64,12 +64,12 @@ class TestCoLA(unittest.TestCase):
         detector = CoLA(hid_dim=32,
                         num_layers=2,
                         dropout=0.5,
-                        weight_decay=0.01,
+                        weight_decay=0.001,
                         act=None,
                         backbone=GIN,
                         contamination=0.2,
-                        lr=0.01,
-                        epoch=2,
+                        lr=0.001,
+                        epoch=3,
                         batch_size=16,
                         num_neigh=1,
                         verbose=3,

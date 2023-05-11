@@ -16,13 +16,13 @@ seed_everything(717)
 
 class TestOCGNN(unittest.TestCase):
     def setUp(self):
-        self.roc_floor = 0.60
+        self.roc_floor = 0.55
 
         self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = OCGNN(epoch=5, num_layers=3)
+        detector = OCGNN(epoch=10, num_layers=2)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)

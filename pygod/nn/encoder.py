@@ -46,6 +46,7 @@ class GNA(torch.nn.Module):
         for layer in self.layers:
             s = layer(s, edge_index)
             s = F.dropout(s, self.dropout, training=self.training)
-            s = self.act(s)
+            if self.act is not None:
+               s = self.act(s)
         return s
 
