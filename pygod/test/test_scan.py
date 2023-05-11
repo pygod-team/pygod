@@ -9,12 +9,12 @@ import torch
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
-from pygod.detector import Radar
+from pygod.detector import SCAN
 
 seed_everything(717)
 
 
-class TestRadar(unittest.TestCase):
+class TestSCAN(unittest.TestCase):
     def setUp(self):
         self.roc_floor = 0.60
 
@@ -22,7 +22,7 @@ class TestRadar(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = Radar()
+        detector = SCAN()
         detector.fit(self.train_data)
 
         pred, score, conf = detector.predict(return_pred=True,
@@ -54,12 +54,11 @@ class TestRadar(unittest.TestCase):
                              prob_method='something')
 
     def test_params(self):
-        detector = Radar(eps=0.4,
-                         mu=3,
-                         contamination=0.3,
-                         verbose=3)
+        detector = SCAN(eps=0.4,
+                        mu=3,
+                        contamination=0.3,
+                        verbose=3)
         detector.fit(self.train_data)
 
         with assert_warns(UserWarning):
             detector.predict(self.test_data)
-

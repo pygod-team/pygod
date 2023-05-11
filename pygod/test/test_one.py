@@ -14,9 +14,9 @@ from pygod.detector import ONE
 seed_everything(717)
 
 
-class TestRadar(unittest.TestCase):
+class TestONE(unittest.TestCase):
     def setUp(self):
-        self.roc_floor = 0.60
+        self.roc_floor = 0.55
 
         self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))

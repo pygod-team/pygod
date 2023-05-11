@@ -93,7 +93,7 @@ class ONE(Detector):
         v = torch.randn(self.hid_a, in_dim)
 
         g = torch.randn(num_nodes, self.hid_s)
-        h = torch.randn(self.hid_a, num_nodes)
+        h = torch.randn(self.hid_s, num_nodes)
 
         self.model = ONEBase(g, h, u, v, w, self.alpha, self.beta, self.gamma)
         optimizer = torch.optim.Adam(self.model.parameters(),
