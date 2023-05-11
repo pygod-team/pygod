@@ -186,7 +186,7 @@ class CONAD(DeepDetector):
 
     def forward_model(self, data):
         batch_size = data.batch_size
-        node_idx = data.node_idx
+        node_idx = data.n_id
 
         x = data.x.to(self.device)
         s = data.s.to(self.device)
