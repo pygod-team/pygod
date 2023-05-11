@@ -6,6 +6,8 @@
 # License: BSD 2 clause
 
 import time
+import warnings
+
 import torch
 from torch import nn
 from torch_geometric.utils import to_dense_adj
@@ -20,7 +22,11 @@ class ANOMALOUS(Detector):
     Networks
 
     ANOMALOUS is an anomaly detector with CUR decomposition
-    and residual analysis. This model is transductive only.
+    and residual analysis.
+
+    .. note::
+        This detector is transductive only. Using ``predict`` with
+        unseen data will train the detector from scratch.
 
     See :cite:`peng2018anomalous` for details.
 
@@ -102,6 +108,8 @@ class ANOMALOUS(Detector):
 
     def decision_function(self, data, label=None):
         if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
             self.fit(data, label)
         return self.decision_score_
 

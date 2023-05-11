@@ -6,6 +6,8 @@
 
 import math
 import time
+import warnings
+
 import torch
 import numpy as np
 
@@ -21,6 +23,10 @@ class SCAN(Detector):
     without the node features as the input. Note: This model will output
     detected clusters instead of "outliers" descibed in the original
     paper.
+
+    .. note::
+        This detector is transductive only. Using ``predict`` with
+        unseen data will train the detector from scratch.
 
     See :cite:`xu2007scan` for details.
 
@@ -60,13 +66,6 @@ class SCAN(Detector):
     scatter_score_ : torch.Tensor
         The binary scatter scores of each node, i.e., the "outlier"
         scores in the original paper.
-
-    Examples
-    --------
-    >>> from pygod.detector import SCAN
-    >>> model = SCAN()
-    >>> model.fit(data)
-    >>> prediction = model.predict()
     """
 
     def __init__(self,
@@ -158,5 +157,7 @@ class SCAN(Detector):
 
     def decision_function(self, data, label=None):
         if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
             self.fit(data, label)
         return self.decision_score_

@@ -21,6 +21,10 @@ class DONE(DeepDetector):
     combination loss. It calculates three outlier scores, and averages
     them as an overall scores.
 
+    .. note::
+        This detector is transductive only. Using ``predict`` with
+        unseen data will train the detector from scratch.
+
     See :cite:`bandyopadhyay2020outlier` for details.
 
     Parameters

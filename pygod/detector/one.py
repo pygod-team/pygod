@@ -5,6 +5,8 @@
 # License: BSD 2 clause
 
 import time
+import warnings
+
 import torch
 from torch_geometric.utils import to_dense_adj
 
@@ -15,6 +17,10 @@ from ..utils import logger, validate_device
 class ONE(Detector):
     """
     Outlier Aware Network Embedding for Attributed Networks
+
+    .. note::
+        This detector is transductive only. Using ``predict`` with
+        unseen data will train the detector from scratch.
 
     See :cite:`bandyopadhyay2019outlier` for details.
 
@@ -131,6 +137,8 @@ class ONE(Detector):
 
     def decision_function(self, data, label=None):
         if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
             self.fit(data, label)
         return self.decision_score_
 
