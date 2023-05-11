@@ -29,23 +29,23 @@ class TestRadar(unittest.TestCase):
                                              return_score=True,
                                              return_conf=True)
 
-        assert_equal(pred.shape[0], self.test_data.y.shape[0])
-        assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
-        assert_equal(conf.shape[0], self.test_data.y.shape[0])
+        assert_equal(pred.shape[0], self.train_data.y.shape[0])
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
+        assert_equal(conf.shape[0], self.train_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
 
         prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='linear')
-        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert_equal(prob.shape[0], self.train_data.y.shape[0])
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 
         prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='unify')
-        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert_equal(prob.shape[0], self.train_data.y.shape[0])
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 

@@ -502,13 +502,23 @@ class DeepDetector(Detector, ABC):
 
         self.model.eval()
         outlier_score = torch.zeros(data.x.shape[0])
-        self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
+        if type(self.hid_dim) is tuple:
+            self.emb = (torch.zeros(data.x.shape[0], self.hid_dim[0]),
+                        torch.zeros(data.x.shape[0], self.hid_dim[1]))
+        else:
+            self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
         for sampled_data in loader:
             loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
             node_idx = sampled_data.n_id
-            self.emb[node_idx[:batch_size]] = self.model.emb[:batch_size]
+            if type(self.hid_dim) is tuple:
+                self.emb[0][node_idx[:batch_size]] = \
+                    self.model.emb[0][:batch_size]
+                self.emb[1][node_idx[:batch_size]] = \
+                    self.model.emb[1][:batch_size]
+            else:
+                self.emb[node_idx[:batch_size]] = self.model.emb[:batch_size]
 
             outlier_score[node_idx[:batch_size]] = score
 

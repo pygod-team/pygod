@@ -174,6 +174,9 @@ class GUIDE(DeepDetector):
         self.dim_s = data.s.shape[1]
 
     def init_model(self, **kwargs):
+        if self.save_emb:
+            self.emb = (torch.zeros(self.num_nodes, self.hid_dim),
+                        torch.zeros(self.num_nodes, self.hid_dim))
 
         return GUIDEBase(dim_a=self.in_dim,
                          dim_s=self.dim_s,
