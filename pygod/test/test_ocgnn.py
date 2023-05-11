@@ -2,7 +2,6 @@
 import os
 import unittest
 from numpy.testing import assert_equal
-from numpy.testing import assert_warns
 from numpy.testing import assert_raises
 
 import torch
@@ -10,12 +9,12 @@ from torch_geometric.nn import GIN
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
-from pygod.detector import GAAN
+from pygod.detector import OCGNN
 
 seed_everything(717)
 
 
-class TestGAAN(unittest.TestCase):
+class TestOCGNN(unittest.TestCase):
     def setUp(self):
         self.roc_floor = 0.60
 
@@ -23,7 +22,7 @@ class TestGAAN(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = GAAN(epoch=5, num_layers=3)
+        detector = OCGNN(epoch=5, num_layers=3)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
@@ -62,20 +61,23 @@ class TestGAAN(unittest.TestCase):
                              prob_method='something')
 
     def test_sample(self):
-        detector = GAAN(noise_dim=4,
-                        hid_dim=32,
-                        num_layers=2,
-                        dropout=0.5,
-                        weight_decay=0.01,
-                        act=None,
-                        contamination=0.2,
-                        lr=0.01,
-                        epoch=2,
-                        batch_size=16,
-                        weight=0.8,
-                        verbose=3,
-                        save_emb=True,
-                        act_first=True)
+        detector = OCGNN(hid_dim=32,
+                         num_layers=2,
+                         dropout=0.5,
+                         weight_decay=0.01,
+                         act=None,
+                         backbone=GIN,
+                         contamination=0.2,
+                         lr=0.01,
+                         epoch=2,
+                         batch_size=16,
+                         num_neigh=1,
+                         beta=0.4,
+                         warmup=1,
+                         eps=0.0001,
+                         verbose=3,
+                         save_emb=True,
+                         act_first=True)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
@@ -115,10 +117,3 @@ class TestGAAN(unittest.TestCase):
             detector.predict(self.test_data,
                              return_prob=True,
                              prob_method='something')
-
-    def test_params(self):
-        with assert_warns(UserWarning):
-            GAAN(backbone=GIN)
-
-        with assert_warns(UserWarning):
-            GAAN(num_neigh=2)

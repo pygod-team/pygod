@@ -175,9 +175,9 @@ class GUIDE(DeepDetector):
 
     def init_model(self, **kwargs):
 
-        return GUIDEBase(dim_x=self.in_dim,
+        return GUIDEBase(dim_a=self.in_dim,
                          dim_s=self.dim_s,
-                         hid_x=self.hid_dim[0],
+                         hid_a=self.hid_dim[0],
                          hid_s=self.hid_dim[1],
                          num_layers=self.num_layers,
                          dropout=self.dropout,

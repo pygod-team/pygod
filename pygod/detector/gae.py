@@ -154,7 +154,7 @@ class GAE(DeepDetector):
     def forward_model(self, data):
 
         batch_size = data.batch_size
-        node_idx = data.node_idx
+        node_idx = data.n_id
 
         x = data.x.to(self.device)
         edge_index = data.edge_index.to(self.device)
