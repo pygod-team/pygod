@@ -108,7 +108,6 @@ class DOMINANTBase(nn.Module):
         s_ : torch.Tensor
             Reconstructed adjacency matrix.
         """
-
         # encode feature matrix
         self.emb = self.shared_encoder(x, edge_index)
 

@@ -5,6 +5,7 @@ with Data Augmentation (CONAD)"""
 # License: BSD 2 clause
 
 import torch
+import numpy as np
 from copy import deepcopy
 from torch_geometric.nn import GCN
 from torch_geometric.utils import dense_to_sparse
@@ -191,10 +192,13 @@ class CONAD(DeepDetector):
         x = data.x.to(self.device)
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
-
         if self.model.training:
             x_aug, edge_index_aug, label_aug = \
-                self._data_augmentation(x, s)
+                self._data_augmentation(data)
+            x_aug = x_aug.to(self.device)
+            edge_index_aug = edge_index_aug.to(self.device)
+            label_aug = label_aug.to(self.device)
+
             _, _ = self.model(x_aug, edge_index_aug)
             h_aug = self.model.emb
 
@@ -216,7 +220,7 @@ class CONAD(DeepDetector):
 
         return loss, score.detach().cpu()
 
-    def _data_augmentation(self, x, adj):
+    def _data_augmentation(self, data):
         """
         Data augmentation on the input graph. Four types of
         pseudo anomalies will be injected:
@@ -227,8 +231,8 @@ class CONAD(DeepDetector):
         
         Parameters
         -----------
-        x : note attribute matrix
-        adj : dense adjacency matrix
+        data : torch_geometric.data.Data
+            The input graph data.
 
         Returns
         -------
@@ -242,29 +246,33 @@ class CONAD(DeepDetector):
         surround = self.k
         scale_factor = self.f
 
-        adj_aug, feat_aug = deepcopy(adj), deepcopy(x)
-        num_nodes = adj_aug.shape[1]
-        label_aug = torch.zeros(num_nodes, dtype=torch.int32)
+        x = data.x
+        adj = data.s
+        node_idx = data.n_id
 
-        prob = torch.rand(num_nodes)
+        batch_size = adj.shape[0]
+        num_nodes = adj.shape[1]
+
+        adj_aug, feat_aug = deepcopy(adj), deepcopy(x)
+        label_aug = torch.zeros(batch_size, dtype=torch.int32)
+
+        prob = torch.rand(batch_size)
         label_aug[prob < rate] = 1
 
         # high-degree
-        n_hd = torch.sum(prob < rate / 4)
+        hd_mask = prob < rate / 4
+        n_hd = torch.sum(hd_mask)
         edges_mask = torch.rand(n_hd, num_nodes) < num_added_edge / num_nodes
-        edges_mask = edges_mask.to(self.device)
-        # print(adj_aug[prob <= rate / 4, :].shape, edges_mask.shape)
-        # adj_aug[prob <= rate / 4, :] = edges_mask.float()
-        adj_aug[:, prob <= rate / 4] = edges_mask.float().T
+        edges_mask = edges_mask
+        adj_aug[hd_mask, :] = edges_mask.float()
 
         # outlying
         ol_mask = torch.logical_and(rate / 4 <= prob, prob < rate / 2)
         adj_aug[ol_mask, :] = 0
-        adj_aug[:, ol_mask] = 0
 
         # deviated
         dv_mask = torch.logical_and(rate / 2 <= prob, prob < rate * 3 / 4)
-        feat_c = feat_aug[torch.randperm(num_nodes)[:surround]]
+        feat_c = feat_aug[torch.randperm(batch_size)[:surround]]
         ds = torch.cdist(feat_aug[dv_mask], feat_c)
         feat_aug[dv_mask] = feat_c[torch.argmax(ds, 1)]
 
@@ -274,7 +282,9 @@ class CONAD(DeepDetector):
         feat_aug[mul_mask] *= scale_factor
         feat_aug[div_mask] /= scale_factor
 
-        edge_index_aug = dense_to_sparse(adj_aug)[0].to(self.device)
-        feat_aug = feat_aug.to(self.device)
-        label_aug = label_aug.to(self.device)
+        edge_index_aug = dense_to_sparse(adj_aug)[0]
+        inv_idx = torch.zeros(num_nodes, dtype=torch.int64)
+        inv_idx[node_idx] = torch.arange(batch_size)
+        edge_index_aug[1] = inv_idx[edge_index_aug[1]]
+
         return feat_aug, edge_index_aug, label_aug

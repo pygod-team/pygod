@@ -30,7 +30,7 @@ class TestONE(unittest.TestCase):
                                              return_conf=True)
 
         assert_equal(pred.shape[0], self.train_data.y.shape[0])
-        # TODO: assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
         assert_equal(conf.shape[0], self.train_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
