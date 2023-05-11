@@ -243,7 +243,7 @@ class CONAD(DeepDetector):
         scale_factor = self.f
 
         adj_aug, feat_aug = deepcopy(adj), deepcopy(x)
-        num_nodes = adj_aug.shape[0]
+        num_nodes = adj_aug.shape[1]
         label_aug = torch.zeros(num_nodes, dtype=torch.int32)
 
         prob = torch.rand(num_nodes)
@@ -253,7 +253,8 @@ class CONAD(DeepDetector):
         n_hd = torch.sum(prob < rate / 4)
         edges_mask = torch.rand(n_hd, num_nodes) < num_added_edge / num_nodes
         edges_mask = edges_mask.to(self.device)
-        adj_aug[prob <= rate / 4, :] = edges_mask.float()
+        # print(adj_aug[prob <= rate / 4, :].shape, edges_mask.shape)
+        # adj_aug[prob <= rate / 4, :] = edges_mask.float()
         adj_aug[:, prob <= rate / 4] = edges_mask.float().T
 
         # outlying

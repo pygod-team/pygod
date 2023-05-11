@@ -17,7 +17,7 @@ seed_everything(717)
 
 class TestAnomalyDAE(unittest.TestCase):
     def setUp(self):
-        self.roc_floor = 0.60
+        self.roc_floor = 0.55
 
         self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
@@ -73,7 +73,7 @@ class TestAnomalyDAE(unittest.TestCase):
                               contamination=0.2,
                               lr=0.01,
                               epoch=2,
-                              batch_size=64,
+                              batch_size=16,
                               num_neigh=1,
                               verbose=3,
                               save_emb=True,

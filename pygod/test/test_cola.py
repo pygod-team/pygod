@@ -70,7 +70,7 @@ class TestCoLA(unittest.TestCase):
                         contamination=0.2,
                         lr=0.01,
                         epoch=2,
-                        batch_size=64,
+                        batch_size=16,
                         num_neigh=1,
                         verbose=3,
                         save_emb=True,

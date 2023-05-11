@@ -9,12 +9,12 @@ from torch_geometric.nn import GIN
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
-from pygod.detector import DOMINANT
+from pygod.detector import GAE
 
 seed_everything(717)
 
 
-class TestDOMINANT(unittest.TestCase):
+class TestGAE(unittest.TestCase):
     def setUp(self):
         self.roc_floor = 0.60
 
@@ -22,7 +22,7 @@ class TestDOMINANT(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = DOMINANT(epoch=5, num_layers=3)
+        detector = GAE(epoch=5, num_layers=3)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
@@ -61,22 +61,22 @@ class TestDOMINANT(unittest.TestCase):
                              prob_method='something')
 
     def test_sample(self):
-        detector = DOMINANT(hid_dim=32,
-                            num_layers=2,
-                            dropout=0.5,
-                            weight_decay=0.01,
-                            act=None,
-                            sigmoid_s=True,
-                            backbone=GIN,
-                            contamination=0.2,
-                            lr=0.01,
-                            epoch=2,
-                            batch_size=16,
-                            num_neigh=1,
-                            weight=0.8,
-                            verbose=3,
-                            save_emb=True,
-                            act_first=True)
+        detector = GAE(hid_dim=32,
+                       num_layers=2,
+                       dropout=0.5,
+                       weight_decay=0.01,
+                       act=None,
+                       backbone=GIN,
+                       recon_s=True,
+                       sigmoid_s=True,
+                       contamination=0.2,
+                       lr=0.01,
+                       epoch=2,
+                       batch_size=16,
+                       num_neigh=1,
+                       verbose=3,
+                       save_emb=True,
+                       act_first=True)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
