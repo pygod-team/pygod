@@ -21,6 +21,10 @@ class AdONE(DeepDetector):
     alignment loss. It calculates three outlier scores, and averages
     them as an overall score.
 
+    .. note::
+        This detector is transductive only. Using ``predict`` with
+        unseen data will train the detector from scratch.
+
     See :cite:`bandyopadhyay2020outlier` for details.
 
     Parameters
@@ -210,3 +214,10 @@ class AdONE(DeepDetector):
         self.combined_score_[node_idx[:batch_size]] = oc.detach().cpu()
 
         return loss, ((oa + os + oc) / 3).detach().cpu()
+
+    def decision_function(self, data, label=None):
+        if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
+            self.fit(data, label)
+        return self.decision_score_

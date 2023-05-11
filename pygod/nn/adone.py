@@ -14,7 +14,7 @@ class AdONEBase(torch.nn.Module):
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and an
     alignment loss. It calculates three outlier scores, and averages
-    them as an overall score.
+    them as an overall score. This model is transductive only.
 
     See :cite:`bandyopadhyay2020outlier` for details.
 

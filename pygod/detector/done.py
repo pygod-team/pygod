@@ -207,3 +207,10 @@ class DONE(DeepDetector):
         self.combined_score_[node_idx[:batch_size]] = oc.detach().cpu()
 
         return loss, ((oa + os + oc) / 3).detach().cpu()
+
+    def decision_function(self, data, label=None):
+        if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
+            self.fit(data, label)
+        return self.decision_score_

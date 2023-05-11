@@ -16,7 +16,7 @@ class DONEBase(nn.Module):
     including an attribute proximity loss, an attribute homophily loss,
     a structure proximity loss, a structure homophily loss, and a
     combination loss. It calculates three outlier scores, and averages
-    them as an overall scores.
+    them as an overall scores. This model is transductive only.
 
     See :cite:`bandyopadhyay2020outlier` for details.
 
