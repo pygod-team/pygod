@@ -70,8 +70,6 @@ class AnomalyDAE(DeepDetector):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
-    gan : bool, optional
-        Whether using adversarial training. Default: ``False``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.

@@ -2,6 +2,7 @@
 import os
 import unittest
 from numpy.testing import assert_equal
+from numpy.testing import assert_warns
 from numpy.testing import assert_raises
 
 import torch
@@ -28,10 +29,12 @@ class TestDONE(unittest.TestCase):
         score = detector.predict(return_pred=False, return_score=True)
         assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
-        pred, score, conf = detector.predict(self.test_data,
-                                             return_pred=True,
-                                             return_score=True,
-                                             return_conf=True)
+        with assert_warns(UserWarning):
+            pred, score, conf, emb = detector.predict(self.test_data,
+                                                      return_pred=True,
+                                                      return_score=True,
+                                                      return_conf=True,
+                                                      return_emb=True)
 
         assert_equal(pred.shape[0], self.test_data.y.shape[0])
         assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
@@ -39,16 +42,14 @@ class TestDONE(unittest.TestCase):
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
 
-        prob = detector.predict(self.test_data,
-                                return_pred=False,
+        prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='linear')
         assert_equal(prob.shape[0], self.test_data.y.shape[0])
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 
-        prob = detector.predict(self.test_data,
-                                return_pred=False,
+        prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='unify')
         assert_equal(prob.shape[0], self.test_data.y.shape[0])
@@ -56,8 +57,7 @@ class TestDONE(unittest.TestCase):
         assert (prob.max() <= 1)
 
         with assert_raises(ValueError):
-            detector.predict(self.test_data,
-                             return_prob=True,
+            detector.predict(return_prob=True,
                              prob_method='something')
 
     def test_sample(self):
@@ -66,8 +66,6 @@ class TestDONE(unittest.TestCase):
                         dropout=0.5,
                         weight_decay=0.01,
                         act=None,
-                        sigmoid_s=True,
-                        backbone=GIN,
                         w1=0.1,
                         w2=0.1,
                         w3=0.1,
@@ -78,7 +76,6 @@ class TestDONE(unittest.TestCase):
                         epoch=2,
                         batch_size=64,
                         num_neigh=1,
-                        weight=0.8,
                         verbose=3,
                         save_emb=True,
                         act_first=True)
@@ -87,11 +84,12 @@ class TestDONE(unittest.TestCase):
         score = detector.predict(return_pred=False, return_score=True)
         assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
-        pred, score, conf, emb = detector.predict(self.test_data,
-                                                  return_pred=True,
-                                                  return_score=True,
-                                                  return_conf=True,
-                                                  return_emb=True)
+        with assert_warns(UserWarning):
+            pred, score, conf, emb = detector.predict(self.test_data,
+                                                      return_pred=True,
+                                                      return_score=True,
+                                                      return_conf=True,
+                                                      return_emb=True)
 
         assert_equal(pred.shape[0], self.test_data.y.shape[0])
         assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
@@ -109,16 +107,14 @@ class TestDONE(unittest.TestCase):
         assert (detector.structural_score_.shape == self.test_data.y.shape)
         assert (detector.combined_score_.shape == self.test_data.y.shape)
 
-        prob = detector.predict(self.test_data,
-                                return_pred=False,
+        prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='linear')
         assert_equal(prob.shape[0], self.test_data.y.shape[0])
         assert (prob.min() >= 0)
         assert (prob.max() <= 1)
 
-        prob = detector.predict(self.test_data,
-                                return_pred=False,
+        prob = detector.predict(return_pred=False,
                                 return_prob=True,
                                 prob_method='unify')
         assert_equal(prob.shape[0], self.test_data.y.shape[0])
@@ -126,6 +122,9 @@ class TestDONE(unittest.TestCase):
         assert (prob.max() <= 1)
 
         with assert_raises(ValueError):
-            detector.predict(self.test_data,
-                             return_prob=True,
+            detector.predict(return_prob=True,
                              prob_method='something')
+
+    def test_params(self):
+        with assert_warns(UserWarning):
+            DONE(backbone=GIN)
