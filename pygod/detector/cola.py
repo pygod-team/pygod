@@ -148,7 +148,7 @@ class CoLA(DeepDetector):
                             neg_logits[:batch_size]])
         con_label = torch.cat([torch.ones(batch_size),
                                torch.zeros(batch_size)]).to(self.device)
-        print(logits.shape, con_label.shape)
+
         loss = self.model.loss_func(logits, con_label)
 
         score = neg_logits[:batch_size] - pos_logits[:batch_size]

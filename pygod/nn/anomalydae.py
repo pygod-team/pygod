@@ -85,7 +85,10 @@ class AnomalyDAEBase(nn.Module):
         s_ : torch.Tensor
             Reconstructed adjacency matrix.
         """
-        h = F.dropout(self.act(self.dense_stru(x)), self.dropout)
+        h = self.dense_stru(x)
+        if self.act is not None:
+            h = self.act(h)
+        h = F.dropout(h, self.dropout)
         self.emb = self.gat_layer(h, edge_index)
 
         s_ = torch.sigmoid(self.emb @ self.emb.T)
@@ -93,7 +96,9 @@ class AnomalyDAEBase(nn.Module):
         if batch_size < self.num_nodes:
             x = F.pad(x, (0, 0, 0, self.num_nodes - batch_size))
 
-        x = self.act(self.dense_attr_1(x[:self.num_nodes].T))
+        x = self.dense_attr_1(x[:self.num_nodes].T)
+        if self.act is not None:
+            x = self.act(x)
         x = F.dropout(x, self.dropout)
         x = self.dense_attr_2(x)
         x = F.dropout(x, self.dropout)

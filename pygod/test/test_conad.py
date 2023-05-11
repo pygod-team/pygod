@@ -22,7 +22,7 @@ class TestCONAD(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = CONAD(epoch=5, num_layers=3)
+        detector = CONAD(epoch=5, hid_dim=4)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
@@ -77,9 +77,9 @@ class TestCONAD(unittest.TestCase):
                          eta=0.6,
                          margin=0.6,
                          r=0.3,
-                         m=2,
-                         k=2,
-                         f=2,
+                         m=3,
+                         k=3,
+                         f=3,
                          verbose=3,
                          save_emb=True,
                          act_first=True)

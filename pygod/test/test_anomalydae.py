@@ -23,7 +23,7 @@ class TestAnomalyDAE(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = AnomalyDAE(epoch=5, num_layers=3)
+        detector = AnomalyDAE(epoch=5)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
