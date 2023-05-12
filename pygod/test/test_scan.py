@@ -22,7 +22,7 @@ class TestSCAN(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = SCAN()
+        detector = SCAN(eps=0.2, mu=2)
         detector.fit(self.train_data)
 
         pred, score, conf = detector.predict(return_pred=True,

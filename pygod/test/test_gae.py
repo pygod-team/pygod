@@ -67,7 +67,7 @@ class TestGAE(unittest.TestCase):
                        dropout=0.5,
                        weight_decay=0.01,
                        act=None,
-                       backbone=MLP,
+                       backbone=GIN,
                        recon_s=True,
                        sigmoid_s=True,
                        contamination=0.2,

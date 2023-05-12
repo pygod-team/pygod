@@ -467,12 +467,12 @@ class DeepDetector(Detector, ABC):
                 if self.save_emb:
                     if type(self.emb) == tuple:
                         self.emb[0][node_idx[:batch_size]] = \
-                            self.model.emb[0][:batch_size]
+                            self.model.emb[0][:batch_size].cpu()
                         self.emb[1][node_idx[:batch_size]] = \
-                            self.model.emb[1][:batch_size]
+                            self.model.emb[1][:batch_size].cpu()
                     else:
                         self.emb[node_idx[:batch_size]] = \
-                            self.model.emb[:batch_size]
+                            self.model.emb[:batch_size].cpu()
                 self.decision_score_[node_idx[:batch_size]] = score
 
                 optimizer.zero_grad()
@@ -516,11 +516,12 @@ class DeepDetector(Detector, ABC):
             if self.save_emb:
                 if type(self.hid_dim) is tuple:
                     self.emb[0][node_idx[:batch_size]] = \
-                        self.model.emb[0][:batch_size]
+                        self.model.emb[0][:batch_size].cpu()
                     self.emb[1][node_idx[:batch_size]] = \
-                        self.model.emb[1][:batch_size]
+                        self.model.emb[1][:batch_size].cpu()
                 else:
-                    self.emb[node_idx[:batch_size]] = self.model.emb[:batch_size]
+                    self.emb[node_idx[:batch_size]] = \
+                        self.model.emb[:batch_size].cpu()
 
             outlier_score[node_idx[:batch_size]] = score
 
