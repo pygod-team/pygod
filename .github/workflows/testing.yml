@@ -8,12 +8,10 @@ on:
     branches:
       - main
       - dev
-      - gpu
   pull_request:
     branches: 
       - main
       - dev
-      - gpu
 
 jobs:
   build:

@@ -45,7 +45,7 @@ Development Environment
 
 To prevent the problems induced by inconsistent versions of dependencies, following requirements are suggested.
 
-- python>=3.9
+- python>=3.8
 - torch>=2.0.0
 - torch_geometry>=2.3.0
 
