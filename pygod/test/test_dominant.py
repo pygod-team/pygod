@@ -79,7 +79,9 @@ class TestDOMINANT(unittest.TestCase):
                             act_first=True)
         detector.fit(self.train_data)
 
-        score = detector.predict(return_pred=False, return_score=True)
+        score, _ = detector.predict(return_pred=False,
+                                    return_score=True,
+                                    return_emb=True)
         assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
         pred, score, conf, emb = detector.predict(self.test_data,

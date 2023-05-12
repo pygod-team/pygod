@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""Convolutional Layers for Graph Neural Networks."""
+# Author: Kay Liu <zliu234@uic.edu>
+# License: BSD 2 clause
+
 import torch
 from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import softmax, add_self_loops
