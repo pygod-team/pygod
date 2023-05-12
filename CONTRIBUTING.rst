@@ -1,7 +1,7 @@
 Contribute to PyGOD
 ===================
 
-This guide will tell how to contribute to pyGOD at the beginning stage.
+This guide will tell how to contribute to PyGOD at the beginning stage.
 This guide may change subject to the development process.
 
 
@@ -45,26 +45,8 @@ Development Environment
 
 To prevent the problems induced by inconsistent versions of dependencies, following requirements are suggested.
 
-- python>=3.6
-- torch>=1.10.1
-- torch_geometry>=2.0.3
+- python>=3.8
+- torch>=2.0.0
+- torch_geometry>=2.3.0
 
 Please follow the `installation guide <https://docs.pygod.org/en/latest/install.html>`_ for more details.
-
-
-Contributing New Models
------------------------
-
-To contribute a new model, simply
-
-1. Make a new file with the name of your model (say ``awesome-gnn.py``) within the directory ``pygod/models``.
-
-2. Populate it with your work, a minimal example file to demonstrate its effectiveness, such like `dominant example <https://docs.pygod.org/en/latest/tutorials/intro.html#sphx-glr-tutorials-intro-py>`_.
-
-3. Add a corresponding test file. See `test repo <https://github.com/pygod-team/pygod/tree/main/pygod/test>`_ for example.
-
-4. Run the entire test folder to make sure nothing is broken locally.
-
-5. Make a pull request once you are done to the **dev branch**. Brief explain your development.
-
-6. We will review your PR if the tests are successful :)

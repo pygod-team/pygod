@@ -9,31 +9,23 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
 
 import os
 import sys
 from os.path import dirname, abspath
 
 sys.path.insert(0, abspath('..'))
-suod_dir = dirname(dirname(abspath(__file__)))
-
-version_path = os.path.join(suod_dir, 'pygod', 'version.py')
-exec(open(version_path).read())
+root_dir = dirname(dirname(abspath(__file__)))
 
 # -- Project information -----------------------------------------------------
 
 project = 'PyGOD'
-copyright = '2022, PyGOD Team'
+copyright = '2023 PyGOD Team'
 author = 'PyGOD Team'
 
-# The short X.Y version
+version_path = os.path.join(root_dir, 'pygod', 'version.py')
+exec(open(version_path).read())
 version = __version__
-# The full version, including alpha/beta/rc tags
 release = __version__
 
 
@@ -44,10 +36,11 @@ release = __version__
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
-    'sphinx.ext.imgmath',
+    "sphinx.ext.mathjax",
     'sphinx.ext.viewcode',
     'sphinxcontrib.bibtex',
     'sphinx.ext.napoleon',
@@ -169,4 +162,14 @@ sphinx_gallery_conf = {
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info),
+               None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "networkx": ("https://networkx.org/documentation/stable/", None),
+    'torch': ("https://pytorch.org/docs/master", None),
+    'torch_geometric': ("https://pytorch-geometric.readthedocs.io/en/latest",
+                        None),
+}

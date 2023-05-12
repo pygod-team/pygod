@@ -4,55 +4,56 @@
 # Author: Yue Zhao <zhaoy@cmu.edu>
 # License: BSD 2 clause
 
-from __future__ import division
-from __future__ import print_function
-
 import os
+import torch
+import shutil
+import numbers
 import requests
 import warnings
-import torch
 import numpy as np
-import numbers
-import shutil
+from importlib import import_module
+
+from ..metric import *
 
 MAX_INT = np.iinfo(np.int32).max
-MIN_INT = -1 * MAX_INT
+MIN_INT = np.iinfo(np.int32).min
 
 
 def validate_device(gpu_id):
-    """Validate the input device id (GPU id) is valid on the given
-    machine. If no GPU is presented, return 'cpu'.
+    """Validate the input GPU ID is valid on the given environment.
+    If no GPU is presented, return 'cpu'.
 
     Parameters
     ----------
     gpu_id : int
-        GPU id to be used. The function will validate the usability
-        of the GPU. If failed, return device as 'cpu'.
+        GPU ID to check.
 
     Returns
     -------
-    device_id : str
-        Valid device id, e.g., 'cuda:0' or 'cpu'
+    device : str
+        Valid device, e.g., 'cuda:0' or 'cpu'.
     """
-    # if it is cpu
-    if gpu_id == -1:
-        return 'cpu'
 
     # cast to int for checking
     gpu_id = int(gpu_id)
 
+    # if it is cpu
+    if gpu_id == -1:
+        return 'cpu'
+
     # if gpu is available
     if torch.cuda.is_available():
         # check if gpu id is between 0 and the total number of GPUs
-        check_parameter(gpu_id, 0, torch.cuda.device_count(), param_name='gpu id', include_left=True,
+        check_parameter(gpu_id, 0, torch.cuda.device_count(),
+                        param_name='gpu id', include_left=True,
                         include_right=False)
-        device_id = 'cuda:{}'.format(gpu_id)
+        device = 'cuda:{}'.format(gpu_id)
     else:
         if gpu_id != 'cpu':
             warnings.warn('The cuda is not available. Set to cpu.')
-        device_id = 'cpu'
+        device = 'cpu'
 
-    return device_id
+    return device
 
 
 def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
@@ -79,14 +80,14 @@ def check_parameter(param, low=MIN_INT, high=MAX_INT, param_name='',
     """
 
     # param, low and high should all be numerical
-    if not isinstance(param, (numbers.Integral, np.integer, float)):
+    if not isinstance(param, (numbers.Integral, int, float)):
         raise TypeError('{param_name} is set to {param} Not numerical'.format(
             param=param, param_name=param_name))
 
-    if not isinstance(low, (numbers.Integral, np.integer, float)):
+    if not isinstance(low, (numbers.Integral, int, float)):
         raise TypeError('low is set to {low}. Not numerical'.format(low=low))
 
-    if not isinstance(high, (numbers.Integral, np.integer, float)):
+    if not isinstance(high, (numbers.Integral, int, float)):
         raise TypeError('high is set to {high}. Not numerical'.format(
             high=high))
 
@@ -184,3 +185,162 @@ def load_data(name, cache_dir=None):
         shutil.unpack_archive(zip_path, cache_dir)
         data = torch.load(file_path)
     return data
+
+
+def logger(epoch=0,
+           loss=0,
+           score=None,
+           target=None,
+           time=None,
+           verbose=0,
+           train=True,
+           deep=True):
+    """
+    Logger for detector.
+
+    Parameters
+    ----------
+    epoch : int, optional
+        The current epoch.
+    loss : float, optional
+        The current epoch loss value.
+    score : torch.Tensor, optional
+        The current outlier scores.
+    target : torch.Tensor, optional
+        The ground truth labels.
+    time : float, optional
+        The current epoch time.
+    verbose : int, optional
+        Verbosity mode. Range in [0, 3]. Larger value for printing out
+        more log information. Default: ``0``.
+    train : bool, optional
+        Whether the logger is used for training.
+    deep : bool, optional
+        Whether the logger is used for deep detector.
+    """
+    if verbose > 0:
+        if deep:
+            if train:
+                print("Epoch {:04d}: ".format(epoch), end='')
+            else:
+                print("Test: ", end='')
+
+            if isinstance(loss, tuple):
+                print("Loss G {:.4f} | Loss D {:.4f} | "
+                      .format(loss[0], loss[1]), end='')
+            else:
+                print("Loss {:.4f} | ".format(loss), end='')
+
+        if verbose > 1:
+            if target is not None:
+                auc = eval_roc_auc(target, score)
+                print("AUC {:.4f}".format(auc), end='')
+
+            if verbose > 2:
+                if target is not None:
+                    pos_size = target.nonzero().size(0)
+                    rec = eval_recall_at_k(target, score, pos_size)
+                    pre = eval_precision_at_k(target, score, pos_size)
+                    ap = eval_average_precision(target, score)
+
+                    contamination = sum(target) / len(target)
+                    threshold = np.percentile(score,
+                                              100 * (1 - contamination))
+                    pred = (score > threshold).long()
+                    f1 = eval_f1(target, pred)
+
+                    print(" | Recall {:.4f} | Precision {:.4f} "
+                          "| AP {:.4f} | F1 {:.4f}"
+                          .format(rec, pre, ap, f1), end='')
+
+            if time is not None:
+                print(" | Time {:.2f}".format(time), end='')
+
+        print()
+
+
+def init_detector(name, **kwargs):
+    """
+    Detector initialization function.
+    """
+    module = import_module('pygod.detector')
+    assert name in module.__all__, "Detector {} not found".format(name)
+    return getattr(module, name)(**kwargs)
+
+
+def init_nn(name, **kwargs):
+    """
+    Neural network initialization function.
+    """
+    module = import_module('pygod.nn')
+    assert name in module.__all__, "Neural network {} not found".format(name)
+    return getattr(module, name)(**kwargs)
+
+
+def pprint(params, offset=0, printer=repr):
+    """Pretty print the dictionary 'params'
+
+    Parameters
+    ----------
+    params : dict
+        The dictionary to pretty print
+    offset : int, optional
+        The offset at the beginning of each line.
+    printer : callable, optional
+        The function to convert entries to strings, typically
+        the builtin str or repr.
+    """
+
+    params_list = list()
+    this_line_length = offset
+    line_sep = ',\n' + (1 + offset) * ' '
+    for i, (k, v) in enumerate(sorted(params.items())):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr = '%s=%s' % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr = '%s=%s' % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+        if i > 0:
+            if this_line_length + len(this_repr) >= 75 or '\n' in this_repr:
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(', ')
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    lines = ''.join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    return lines
+
+
+def is_fitted(detector, attributes=None):
+    """
+    Check if the detector is fitted.
+
+    Parameters
+    ----------
+    detector : pygod.detector.Detector
+        The detector to check.
+    attributes : list, optional
+        The attributes to check.
+        Default: ``None``.
+
+    Returns
+    -------
+    is_fitted : bool
+        Whether the detector is fitted.
+    """
+    if attributes is None:
+        attributes = ['model']
+    assert all(hasattr(detector, attr) and
+               eval('detector.%s' % attr) is not None
+               for attr in attributes), \
+        "The detector is not fitted yet"

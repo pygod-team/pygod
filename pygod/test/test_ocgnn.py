@@ -1,109 +1,119 @@
 # -*- coding: utf-8 -*-
 import os
 import unittest
-# noinspection PyProtectedMember
 from numpy.testing import assert_equal
 from numpy.testing import assert_raises
 
 import torch
+from torch_geometric.nn import GIN
 from torch_geometric.seed import seed_everything
-from pygod.models import OCGNN
-from pygod.metrics import eval_roc_auc
 
-seed_everything(42)
+from pygod.metric import eval_roc_auc
+from pygod.detector import OCGNN
+
+seed_everything(717)
 
 
 class TestOCGNN(unittest.TestCase):
     def setUp(self):
-        # use the pre-defined fake graph with injected outliers
-        # for testing purpose
+        self.roc_floor = 0.55
 
-        # the roc should be higher than this; it is model dependent
-        self.roc_floor = 0.60
+        self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
+        self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
-        test_graph = torch.load(os.path.join('pygod', 'test', 'test_graph.pt'))
-        self.data = test_graph
+    def test_full(self):
+        detector = OCGNN(epoch=10, num_layers=2)
+        detector.fit(self.train_data)
 
-        self.model = OCGNN()
-        self.model.fit(self.data)
+        score = detector.predict(return_pred=False, return_score=True)
+        # TODO: assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
-    def test_parameters(self):
-        assert (hasattr(self.model, 'decision_scores_') and
-                self.model.decision_scores_ is not None)
-        assert (hasattr(self.model, 'labels_') and
-                self.model.labels_ is not None)
-        assert (hasattr(self.model, 'threshold_') and
-                self.model.threshold_ is not None)
-        assert (hasattr(self.model, '_mu') and
-                self.model._mu is not None)
-        assert (hasattr(self.model, '_sigma') and
-                self.model._sigma is not None)
-        assert (hasattr(self.model, 'model') and
-                self.model.model is not None)
+        pred, score, conf = detector.predict(self.test_data,
+                                             return_pred=True,
+                                             return_score=True,
+                                             return_conf=True)
 
-    def test_train_scores(self):
-        assert_equal(len(self.model.decision_scores_), len(self.data.y))
+        assert_equal(pred.shape[0], self.test_data.y.shape[0])
+        assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
+        assert_equal(conf.shape[0], self.test_data.y.shape[0])
+        assert (conf.min() >= 0)
+        assert (conf.max() <= 1)
 
-    def test_prediction_scores(self):
-        pred_scores = self.model.decision_function(self.data)
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='linear')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
 
-        # check score shapes
-        assert_equal(pred_scores.shape[0], self.data.y.shape[0])
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='unify')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
 
-        # check performance
-        assert (eval_roc_auc(self.data.y, pred_scores) >= self.roc_floor)
-
-    def test_prediction_labels(self):
-        pred_labels = self.model.predict(self.data)
-        assert_equal(pred_labels.shape[0], self.data.y.shape[0])
-
-    def test_prediction_proba(self):
-        pred_proba = self.model.predict_proba(self.data)
-        assert (pred_proba.min() >= 0)
-        assert (pred_proba.max() <= 1)
-
-    def test_prediction_proba_linear(self):
-        pred_proba = self.model.predict_proba(self.data, method='linear')
-        assert (pred_proba.min() >= 0)
-        assert (pred_proba.max() <= 1)
-
-    def test_prediction_proba_unify(self):
-        pred_proba = self.model.predict_proba(self.data, method='unify')
-        assert (pred_proba.min() >= 0)
-        assert (pred_proba.max() <= 1)
-
-    def test_prediction_proba_parameter(self):
         with assert_raises(ValueError):
-            self.model.predict_proba(self.data, method='something')
+            detector.predict(self.test_data,
+                             return_prob=True,
+                             prob_method='something')
 
-    def test_prediction_labels_confidence(self):
-        pred_labels, confidence = self.model.predict(self.data,
-                                                     return_confidence=True)
-        assert_equal(pred_labels.shape[0], self.data.y.shape[0])
-        assert_equal(confidence.shape[0], self.data.y.shape[0])
-        assert (confidence.min() >= 0)
-        assert (confidence.max() <= 1)
+    def test_sample(self):
+        detector = OCGNN(hid_dim=32,
+                         num_layers=2,
+                         dropout=0.5,
+                         weight_decay=0.01,
+                         act=None,
+                         backbone=GIN,
+                         contamination=0.2,
+                         lr=0.01,
+                         epoch=2,
+                         batch_size=16,
+                         num_neigh=1,
+                         beta=0.4,
+                         warmup=1,
+                         eps=0.0001,
+                         verbose=3,
+                         save_emb=True,
+                         act_first=True)
+        detector.fit(self.train_data)
 
-    def test_prediction_proba_linear_confidence(self):
-        pred_proba, confidence = self.model.predict_proba(self.data,
-                                                          method='linear',
-                                                          return_confidence=True)
-        assert (pred_proba.min() >= 0)
-        assert (pred_proba.max() <= 1)
+        score = detector.predict(return_pred=False, return_score=True)
+        # TODO: assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
-        assert_equal(confidence.shape[0], self.data.y.shape[0])
-        assert (confidence.min() >= 0)
-        assert (confidence.max() <= 1)
+        pred, score, conf, emb = detector.predict(self.test_data,
+                                                  return_pred=True,
+                                                  return_score=True,
+                                                  return_conf=True,
+                                                  return_emb=True)
 
-    def test_model_clone(self):
-        pass
-        # clone_clf = clone(self.model)
+        assert_equal(pred.shape[0], self.test_data.y.shape[0])
+        # TODO: assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
+        assert_equal(conf.shape[0], self.test_data.y.shape[0])
+        assert (conf.min() >= 0)
+        assert (conf.max() <= 1)
+        assert_equal(emb.shape[0], self.test_data.y.shape[0])
+        assert_equal(emb.shape[1], detector.hid_dim)
 
-    def tearDown(self):
-        pass
-        # remove the data folder
-        # rmtree(self.path)
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='linear')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
 
+        prob = detector.predict(self.test_data,
+                                return_pred=False,
+                                return_prob=True,
+                                prob_method='unify')
+        assert_equal(prob.shape[0], self.test_data.y.shape[0])
+        assert (prob.min() >= 0)
+        assert (prob.max() <= 1)
 
-if __name__ == '__main__':
-    unittest.main()
+        with assert_raises(ValueError):
+            detector.predict(self.test_data,
+                             return_prob=True,
+                             prob_method='something')

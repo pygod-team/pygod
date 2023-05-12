@@ -1,0 +1,5 @@
+Reference
+=========
+
+.. bibliography::
+   :cited:

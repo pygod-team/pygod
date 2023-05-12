@@ -1,9 +1,9 @@
 """
-Model Example
+Detector Example
 ================
 
-In this introductory tutorial, you will learn the basic workflow of
-PyGOD with a model example of DOMINANT. This tutorial assumes that
+In this tutorial, you will learn the basic workflow of
+PyGOD with an example of DOMINANT. This tutorial assumes that
 you have basic familiarity with PyTorch and PyTorch Geometric (PyG).
 
 (Time estimate: 5 minutes)
@@ -11,11 +11,11 @@ you have basic familiarity with PyTorch and PyTorch Geometric (PyG).
 #######################################################################
 # Data Loading
 # ------------
-# PyGOD use `torch_geometric.data.Data` to handle the data. Here, we
+# PyGOD use ``torch_geometric.data.Data`` to handle the data. Here, we
 # use Cora, a PyG built-in dataset, as an example. To load your own
-# dataset into PyGOD, you can refer to [creating your own datasets
-# tutorial](https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html)
-# in PyG.
+# dataset into PyGOD, you can refer to `creating your own datasets
+# tutorial <https://pytorch-geometric.readthedocs.io/en/latest/notes
+# /create_dataset.html>`__ in PyG.
 
 
 import torch_geometric.transforms as T
@@ -26,23 +26,24 @@ data = Planetoid('./data/Cora', 'Cora', transform=T.NormalizeFeatures())[0]
 #######################################################################
 # Because there is no ground truth label of outliers in Cora, we follow
 # the method used by DOMINANT to inject 100 contextual outliers and 100
-# structure outliers into the graph. **Note**: If your dataset already
-# contains the outliers you want to detect, you don't need to inject
+# structure outliers into the graph. Note: If your dataset already
+# contains the outliers you want to detect, you don't have to inject
 # more outliers.
 
 
 import torch
-from pygod.generator import gen_contextual_outliers, gen_structural_outliers
+from pygod.generator import gen_contextual_outlier, gen_structural_outlier
 
-data, ya = gen_contextual_outliers(data, n=100, k=50)
-data, ys = gen_structural_outliers(data, m=10, n=10)
-data.y = torch.logical_or(ys, ya).int()
-
+data, ya = gen_contextual_outlier(data, n=100, k=50)
+data, ys = gen_structural_outlier(data, m=10, n=10)
+data.y = torch.logical_or(ys, ya).long()
 
 #######################################################################
-# **New feature for PyGOD 0.3.0: we now provide built-in datasets!**
-# See [data repository](https://github.com/pygod-team/data) for more
-# details.
+# We also provide various type of built-in datasets. You can load them
+# by passing the name of the dataset to ``load_data`` function.
+# See `data repository <https://github.com/pygod-team/data>`__
+# for more details.
+
 
 from pygod.utils import load_data
 
@@ -52,69 +53,58 @@ data.y = data.y.bool()
 #######################################################################
 # Initialization
 # --------------
-# You can use any model by simply initializing without passing any
+# You can use any detector by simply initializing without passing any
 # arguments. Default hyperparameters are ready for you. Of course, you
 # can also customize the parameters by passing arguments. Here, we use
-# `pygod.models.DOMINANT` as an example.
+# ``pygod.detector.DOMINANT`` as an example.
 
 
-from pygod.models import DOMINANT
+from pygod.detector import DOMINANT
 
-model = DOMINANT()
+detector = DOMINANT(hid_dim=64, num_layers=4, epoch=100)
 
 #######################################################################
 # Training
 # --------
-# To train the model with the loaded data, simply feed the
-# `torch_geometric.data.Data` object into the model via method `fit`.
+# To train the detector with the loaded data, simply feed the
+# ``torch_geometric.data.Data`` object into the detector via ``fit``.
 
 
-model.fit(data)
+detector.fit(data)
 
 #######################################################################
 # Inference
 # ---------
-# Then, your model is ready to use.
-# We provide several inference methods.
-#
-# To predict the labels only:
+# After training, the detector is ready to use. You can use the detector
+# to predict the labels, raw outlier scores, probability of the
+# outlierness, and prediction confidence. Here, we use the loaded data
+# as an example.
 
 
-labels = model.predict(data)
+pred, score, prob, conf = detector.predict(data,
+                                           return_pred=True,
+                                           return_score=True,
+                                           return_prob=True,
+                                           return_conf=True)
 print('Labels:')
-print(labels)
+print(pred)
 
-#######################################################################
-# To predict raw outlier scores:
-
-
-outlier_scores = model.decision_function(data)
 print('Raw scores:')
-print(outlier_scores)
+print(score)
 
-#######################################################################
-# To predict the probability of the outlierness:
-
-
-prob = model.predict_proba(data)
 print('Probability:')
 print(prob)
 
-#######################################################################
-# To predict the labels with confidence:
-
-
-labels, confidence = model.predict(data, return_confidence=True)
-print('Labels:')
-print(labels)
 print('Confidence:')
-print(confidence)
+print(conf)
 
 #######################################################################
-# To evaluate the performance outlier detector:
+# Evaluation
+# ----------
+# To evaluate the performance outlier detector with AUC score, you can:
 
 
-from pygod.metrics import eval_roc_auc
+from pygod.metric import eval_roc_auc
 
-auc_score = eval_roc_auc(data.y.numpy(), outlier_scores)
+auc_score = eval_roc_auc(data.y, score)
 print('AUC Score:', auc_score)
