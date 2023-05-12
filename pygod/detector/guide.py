@@ -73,8 +73,8 @@ class GUIDE(DeepDetector):
     selected_motif : bool, optional
         Whether to use selected motif in the paper. Default: ``True``.
     cache_dir : str, optional
-        The directory for the node motif degree caching.
-        Default: ``None``.
+        The directory for the node motif degree caching. If ``None``,
+        ~/.pygod will be used. Default: ``None``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -160,9 +160,6 @@ class GUIDE(DeepDetector):
                 "Graphlet size is fixed when using selected motif"
         self.selected_motif = selected_motif
         self.verbose = verbose
-
-        if cache_dir is None:
-            cache_dir = os.path.join(os.path.expanduser('~'), '.pygod')
         self.cache_dir = cache_dir
 
     def process_graph(self, data):

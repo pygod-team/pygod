@@ -64,7 +64,7 @@ class TestGUIDE(unittest.TestCase):
     def test_sample(self):
         detector = GUIDE(hid_a=4,
                          hid_s=2,
-                         num_layers=2,
+                         num_layers=6,
                          dropout=0.5,
                          weight_decay=0.01,
                          act=None,

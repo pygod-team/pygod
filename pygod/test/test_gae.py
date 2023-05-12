@@ -120,4 +120,5 @@ class TestGAE(unittest.TestCase):
 
     def test_params(self):
         with assert_warns(UserWarning):
-            GAE(num_neigh=1, backbone=MLP)
+            detector = GAE(num_neigh=1, backbone=MLP)
+            detector.fit(self.test_data)
