@@ -145,6 +145,8 @@ class SCAN(Detector):
 
     def _neighborhood(self, v):
         candidates = self._neighbors(v)
+        if len(candidates) == 0:
+            return torch.empty(0)
         sim = np.vectorize(self._similarity)(candidates, v)
         return candidates[sim > self.eps]
 
