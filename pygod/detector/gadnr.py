@@ -1,34 +1,46 @@
 # -*- coding: utf-8 -*-
-""" One-Class Graph Neural Networks for Anomaly Detection in Attributed
-Networks"""
-# Author: Xueying Ding <xding2@andrew.cmu.edu>
+"""GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction (GADNR)
+   The code is partially from the original implementation in 
+   https://github.com/Graph-COM/GAD-NR"""
+# Author: Yingtong Dou <ytongdou@gmail.com>
 # License: BSD 2 clause
 
+import os
+import warnings
+
 import torch
-from torch_geometric.nn import GCN
+import torch.nn.functional as F
 
 from . import DeepDetector
-from ..nn import OCGNNBase
+from ..nn import GADNRBase
 
 
-class OCGNN(DeepDetector):
+class GADNR(DeepDetector):
     """
-    One-Class Graph Neural Networks for Anomaly Detection in
-    Attributed Networks
+    Higher-order Structure based Anomaly Detection on Attributed
+    Networks
 
-    OCGNN is an anomaly detector that measures the
-    distance of anomaly to the centroid, in a similar fashion to the
-    support vector machine, but in the embedding space after feeding
-    towards several layers of GCN.
+    GUIDE is an anomaly detector consisting of an attribute graph
+    convolutional autoencoder, and a structure graph attentive
+    autoencoder (not the same as the graph attention networks). Instead
+    of the adjacency matrix, node motif degree is used as input of
+    structure autoencoder. The reconstruction mean square error of the
+    autoencoders are defined as structure anomaly score and attribute
+    anomaly score, respectively.
 
-    See :cite:`wang2021one` for details.
+    Note: The calculation of node motif degree in preprocessing has
+    high time complexity. It may take longer than you expect.
+
+    See :cite:`yuan2021higher` for details.
 
     Parameters
     ----------
-    hid_dim :  int, optional
-        Hidden dimension of model. Default: ``64``.
+    hid_a : int, optional
+        Hidden dimension for attribute. Default: ``64``.
+    hid_s : int, optional
+        Hidden dimension for structure. Default: ``4``.
     num_layers : int, optional
-        Total number of layers in model. Default: ``2``.
+        Total number of layers in model. Default: ``4``.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
@@ -37,8 +49,11 @@ class OCGNN(DeepDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     backbone : torch.nn.Module
-        The backbone of the deep detector implemented in PyG.
-        Default: ``torch_geometric.nn.GCN``.
+        The backbone of GUIDE is fixed. Changing of this
+        parameter will not affect the model. Default: ``None``.
+    alpha : float, optional
+        Weight between reconstruction of node feature and structure.
+        Default: ``0.5``.
     contamination : float, optional
         The amount of contamination of the dataset in (0., 0.5], i.e.,
         the proportion of outliers in the dataset. Used when fitting to
@@ -54,13 +69,13 @@ class OCGNN(DeepDetector):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
-    beta : float, optional
-        The weight between the reconstruction loss and radius.
-        Default: ``0.5``.
-    warmup : int, optional
-        The number of epochs for warm-up training. Default: ``2``.
-    eps : float, optional
-        The slack variable. Default: ``0.001``.
+    graphlet_size : int, optional
+        The maximum size of graphlet. Default: ``4``.
+    selected_motif : bool, optional
+        Whether to use selected motif in the paper. Default: ``True``.
+    cache_dir : str, optional
+        The directory for the node motif degree caching. If ``None``,
+        ~/.pygod will be used. Default: ``None``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -70,7 +85,7 @@ class OCGNN(DeepDetector):
         Whether to compile the model with ``torch_geometric.compile``.
         Default: ``False``.
     **kwargs
-        Other parameters for the backbone model.
+        Other parameters for the backbone.
 
     Attributes
     ----------
@@ -96,26 +111,32 @@ class OCGNN(DeepDetector):
     """
 
     def __init__(self,
-                 hid_dim=64,
-                 num_layers=2,
+                 hid_a=64,
+                 hid_s=4,
+                 num_layers=4,
                  dropout=0.,
                  weight_decay=0.,
-                 act=torch.nn.functional.relu,
-                 backbone=GCN,
+                 act=F.relu,
+                 backbone=None,
+                 alpha=0.5,
                  contamination=0.1,
-                 lr=4e-3,
+                 lr=0.004,
                  epoch=100,
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
-                 beta=0.5,
-                 warmup=2,
-                 eps=0.001,
+                 graphlet_size=4,
+                 selected_motif=True,
+                 cache_dir=None,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
                  **kwargs):
-        super(OCGNN, self).__init__(hid_dim=hid_dim,
+
+        if backbone is not None:
+            warnings.warn("Backbone is not used in GUIDE")
+
+        super(GUIDE, self).__init__(hid_dim=(hid_a, hid_s),
                                     num_layers=num_layers,
                                     dropout=dropout,
                                     weight_decay=weight_decay,
@@ -132,36 +153,54 @@ class OCGNN(DeepDetector):
                                     compile_model=compile_model,
                                     **kwargs)
 
-        self.beta = beta
-        self.warmup = warmup
-        self.eps = eps
+        self.dim_s = None
+        self.alpha = alpha
+        self.graphlet_size = graphlet_size
+        if selected_motif:
+            assert self.graphlet_size == 4, \
+                "Graphlet size is fixed when using selected motif"
+        self.selected_motif = selected_motif
+        self.verbose = verbose
+        self.cache_dir = cache_dir
 
     def process_graph(self, data):
-        pass
+
+        data.s = GUIDEBase.calc_gdd(data,
+                                    self.cache_dir,
+                                    graphlet_size=self.graphlet_size,
+                                    selected_motif=self.selected_motif)
+        self.dim_s = data.s.shape[1]
 
     def init_model(self, **kwargs):
         if self.save_emb:
-            self.emb = torch.zeros(self.num_nodes,
-                                   self.hid_dim)
+            self.emb = (torch.zeros(self.num_nodes, self.hid_dim[0]),
+                        torch.zeros(self.num_nodes, self.hid_dim[1]))
 
-        return OCGNNBase(in_dim=self.in_dim,
-                         hid_dim=self.hid_dim,
+        return GUIDEBase(dim_a=self.in_dim,
+                         dim_s=self.dim_s,
+                         hid_a=self.hid_dim[0],
+                         hid_s=self.hid_dim[1],
                          num_layers=self.num_layers,
                          dropout=self.dropout,
                          act=self.act,
-                         beta=self.beta,
-                         warmup=self.warmup,
-                         eps=self.eps,
-                         backbone=self.backbone,
                          **kwargs).to(self.device)
 
     def forward_model(self, data):
+
         batch_size = data.batch_size
 
         x = data.x.to(self.device)
+        s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        emb = self.model(x, edge_index)
-        loss, score = self.model.loss_func(emb[:batch_size])
+        x_, s_ = self.model(x, s, edge_index)
+
+        score = self.model.loss_func(x[:batch_size],
+                                     x_[:batch_size],
+                                     s[:batch_size],
+                                     s_[:batch_size],
+                                     self.alpha)
+
+        loss = torch.mean(score)
 
         return loss, score.detach().cpu()

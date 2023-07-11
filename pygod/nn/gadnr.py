@@ -8,7 +8,7 @@ from .decoder import DotProductDecoder
 from .functional import double_recon_loss
 
 
-class DOMINANTBase(nn.Module):
+class GADNRBase(nn.Module):
     """
     Deep Anomaly Detection on Attributed Networks
 

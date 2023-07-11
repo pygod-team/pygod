@@ -7,9 +7,9 @@ from .gaan import GAANBase
 from .gae import GAEBase
 from .guide import GUIDEBase
 from .ocgnn import OCGNNBase
-
+from .gadnr import GADNRBase
 
 __all__ = [
     "AdONEBase", "AnomalyDAEBase", "CoLABase", "DOMINANTBase", "DONEBase",
-    "GAANBase", "GAEBase", "GUIDEBase", "OCGNNBase"
+    "GAANBase", "GAEBase", "GUIDEBase", "OCGNNBase", "GADNRBase"
 ]
