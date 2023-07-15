@@ -105,7 +105,7 @@ Installation
 ^^^^^^^^^^^^
 
 **Note on PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ and `PyTorch <https://pytorch.org/>`_.
+PyGOD depends on `PyTorch <https://https://pytorch.org/get-started/locally/>`_ and `PyTorch Geometric (PyG, including its optional dependencies) <https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html#>`_.
 To streamline the installation, PyGOD does **NOT** install these libraries for you.
 Please install them from the above links for running PyGOD:
 
