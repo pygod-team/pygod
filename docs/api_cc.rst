@@ -3,19 +3,16 @@ API CheatSheet
 
 The following APIs are applicable for all detectors for easy use.
 
-* :func:`pygod.detector.Detector.fit`: Fit detector.
-* :func:`pygod.detector.Detector.decision_function`: Predict raw anomaly scores of PyG data using the fitted detector
+* :func:`pygod.detector.Detector.fit`: Fit the detector with train data.
+* :func:`pygod.detector.Detector.predict`: Predict on test data (train data if not provided) using the fitted detector.
 
 Key Attributes of a fitted detector:
 
 * :attr:`pygod.detector.Detector.decision_score_`: The outlier scores of the input data. Outliers tend to have higher scores.
 * :attr:`pygod.detector.Detector.label_`: The binary labels of the input data. 0 stands for inliers and 1 for outliers.
+* :attr:`threshold_` : The determined threshold for binary classification. Scores above the threshold are outliers.
 
-For the inductive setting:
-
-* :func:`pygod.detector.Detector.predict`: Predict if a particular sample is an outlier or not using the fitted detector.
-
-**Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
+**Input of PyGOD**: Please pass in a `PyG Data object <https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.Data.html#torch_geometric.data.Data>`_.
 See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
 
 
