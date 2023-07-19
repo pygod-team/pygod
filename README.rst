@@ -177,7 +177,7 @@ DONE                2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]
 AdONE               2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
 AnomalyDAE          2020   GNN+AE       Yes          [#Fan2020AnomalyDAE]_
 GAAN                2020   GAN          Yes          [#Chen2020Generative]_
-OCGNN               2021   GNN+AE       Yes          [#Wang2021One]_
+OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
 CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
