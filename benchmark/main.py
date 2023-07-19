@@ -3,7 +3,7 @@ import torch
 import argparse
 import warnings
 from pygod.metric import *
-from pygod.utils.utility import load_data
+from pygod.utils import load_data
 from utils import init_model
 
 
