@@ -28,7 +28,7 @@ def main(args):
         else:
             model.fit(data)
             t = time.time() - start_time
-            score = model.decision_scores_
+            score = model.decision_score_
 
         if os.path.isdir('./tmp'):
             shutil.rmtree('./tmp')
