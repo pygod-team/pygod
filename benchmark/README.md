@@ -4,7 +4,7 @@ Official implementation of paper [BOND: Benchmarking Unsupervised Outlier Node D
 
 ## Usage
 
-**Please update to the latest PyGOD version before the experiments.**
+**Please update to the latest PyGOD version and install additional dependencies for benchmark via ```pip install -r requirements.txt``` before the experiments.**
 
 To obtain the main result of each model on each dataset, run:
 
