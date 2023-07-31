@@ -19,7 +19,7 @@ def main(args):
             score = model.decision_function(data.x)
         else:
             model.fit(data)
-            score = model.decision_scores_
+            score = model.decision_score_
 
         y = data.y.bool()
         k = sum(y)
