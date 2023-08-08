@@ -155,35 +155,20 @@ class GADNR(DeepDetector):
 
         self.dim_s = None
         self.alpha = alpha
-        self.graphlet_size = graphlet_size
-        if selected_motif:
-            assert self.graphlet_size == 4, \
-                "Graphlet size is fixed when using selected motif"
-        self.selected_motif = selected_motif
         self.verbose = verbose
         self.cache_dir = cache_dir
 
     def process_graph(self, data):
-
-        data.s = GUIDEBase.calc_gdd(data,
-                                    self.cache_dir,
-                                    graphlet_size=self.graphlet_size,
-                                    selected_motif=self.selected_motif)
-        self.dim_s = data.s.shape[1]
+        GADNRBase.process_graph()
 
     def init_model(self, **kwargs):
         if self.save_emb:
             self.emb = (torch.zeros(self.num_nodes, self.hid_dim[0]),
                         torch.zeros(self.num_nodes, self.hid_dim[1]))
 
-        return GUIDEBase(dim_a=self.in_dim,
-                         dim_s=self.dim_s,
-                         hid_a=self.hid_dim[0],
-                         hid_s=self.hid_dim[1],
-                         num_layers=self.num_layers,
-                         dropout=self.dropout,
-                         act=self.act,
-                         **kwargs).to(self.device)
+        return GADNRBase(in_dim, hid_dim, hid_dim, 2, sample_size, device=device, 
+                    neighbor_num_list=neighbor_num_list, GNN_name=encoder, 
+                    lambda_loss1=lambda_loss1, lambda_loss2=lambda_loss2,lambda_loss3=lambda_loss3)
 
     def forward_model(self, data):
 
