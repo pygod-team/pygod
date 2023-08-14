@@ -1,11 +1,13 @@
 import math
+import random
+
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GIN
+import torch.multiprocessing as mp
+from torch_geometric.nn import GIN, SAGEConv, PNAConv
 from torch_geometric.utils import to_dense_adj
 
-from .encoder import MLP_GAD_NR
-from .decoder import DotProductDecoder
+from .nn import MLP_GAD_NR, MLP_generator, FNN_GAD_NR
 from .functional import double_recon_loss
 
 
@@ -51,7 +53,7 @@ class GADNRBase(nn.Module):
                  hid_dim=64,
                  num_layers=2,
                  sample_size=2,
-                 neibor_num_list=None,
+                 neighbor_num_list=None,
                  lambda_loss1=1e-2,
                  lambda_loss2=1e-3,
                  lambda_loss3=1e-4,
@@ -79,10 +81,10 @@ class GADNRBase(nn.Module):
 
         self.gaussian_mean = nn.Parameter(
             torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                                                     0.5 / hid_dim)).to(device)
+                                                             0.5 / hid_dim)).to(device)
         self.gaussian_log_sigma = nn.Parameter(
             torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                                                     0.5 / hid_dim)).to(device)
+                                                             0.5 / hid_dim)).to(device)
         self.m = torch.distributions.Normal(torch.zeros(sample_size, hid_dim),
                                             torch.ones(sample_size, hid_dim))
         
@@ -100,16 +102,15 @@ class GADNRBase(nn.Module):
             torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim, 0.5 / hid_dim)).to(device)
         self.mlp_m = torch.distributions.Normal(torch.zeros(hid_dim), torch.ones(hid_dim))
 
-        self.mlp_mean = FNN(hid_dim, hid_dim, hid_dim, 3)
-        self.mlp_sigma = FNN(hid_dim, hid_dim, hid_dim, 3)
+        self.mlp_mean = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
+        self.mlp_sigma = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
         self.softplus = nn.Softplus()
 
         self.mean_agg = SAGEConv(hid_dim, hid_dim, aggr='mean', normalize = False)
-        # self.mean_agg = GraphSAGE(hid_dim, hid_dim, aggr='mean', num_layers=1)
         self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],scalers=["identity"], deg=neighbor_num_list)        
         self.layer1_generator = MLP_generator(hid_dim, hid_dim)
 
-        # GNN Encoder
+        # Encoder
         self.shared_encoder = backbone(in_channels=hid_dim,
                                        hidden_channels=hid_dim,
                                        num_layers=encoder_layers,
@@ -118,9 +119,40 @@ class GADNRBase(nn.Module):
                                        act=act,
                                        **kwargs)
 
-
-        self.loss_func = double_recon_loss
+        # Decoder
+        self.degree_decoder = FNN_GAD_NR(hid_dim, hid_dim, 1, 4)
+        self.feature_decoder = FNN_GAD_NR(hid_dim, hid_dim, in_dim, 3)
+        self.degree_loss_func = nn.MSELoss()
+        self.feature_loss_func = nn.MSELoss()
+        self.pool = mp.Pool(4)
+        self.in_dim = in_dim
+        self.sample_size = sample_size 
+        self.init_projection = FNN_GAD_NR(in_dim, hid_dim, hid_dim, 1)
         self.emb = None
+
+
+    # Sample neighbors from neighbor set, if the length of neighbor set less than sample size, then do the padding.
+    def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
+        sampled_embeddings_list = []
+        mark_len_list = []
+        for index in indexes:
+            sampled_embeddings = []
+            neighbor_indexes = neighbor_dict[index]
+            if len(neighbor_indexes) < self.sample_size:
+                mask_len = len(neighbor_indexes)
+                sample_indexes = neighbor_indexes
+            else:
+                sample_indexes = random.sample(neighbor_indexes, self.sample_size)
+                mask_len = self.sample_size
+            for index in sample_indexes:
+                sampled_embeddings.append(gt_embeddings[index].tolist())
+            if len(sampled_embeddings) < self.sample_size:
+                for _ in range(self.sample_size - len(sampled_embeddings)):
+                    sampled_embeddings.append(torch.zeros(self.out_dim).tolist())
+            sampled_embeddings_list.append(sampled_embeddings)
+            mark_len_list.append(mask_len)
+        
+        return sampled_embeddings_list, mark_len_list
 
     def forward(self, x, edge_index):
         """
@@ -143,6 +175,7 @@ class GADNRBase(nn.Module):
         
         # feature projection
         x = self.linear(x)
+        # TODO add extra projection for GIN model
 
         # encode feature matrix
         self.emb = self.shared_encoder(x, edge_index)
@@ -154,6 +187,73 @@ class GADNRBase(nn.Module):
         s_ = self.struct_decoder(self.emb, edge_index)
 
         return x_, s_
+
+    def loss_func(self,
+                  gij,
+                  ground_truth_degree_matrix,
+                  h0,
+                  neighbor_dict,
+                  device,
+                  h,
+                  edge_index):
+        """
+        Obtain the dense adjacency matrix of the graph.
+
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        """
+
+        # TODO dissecting the decoders and put it into the forward function
+        
+        # Degree decoder below:
+        tot_nodes = gij.shape[0]
+        degree_logits = self.degree_decoding(gij)
+        ground_truth_degree_matrix = torch.unsqueeze(ground_truth_degree_matrix, dim=1)
+        degree_loss = self.degree_loss_func(degree_logits, ground_truth_degree_matrix.float())
+        degree_loss_per_node = (degree_logits-ground_truth_degree_matrix).pow(2)
+        _, degree_masks = torch.max(degree_logits.data, dim=1)
+        h_loss = 0
+        feature_loss = 0
+        
+        # layer 1
+        loss_list = []
+        loss_list_per_node = []
+        feature_loss_list = []
+        # Sample multiple times to remove noise
+        for _ in range(3):
+            local_index_loss_sum = 0
+            local_index_loss_sum_per_node = []
+            indexes = []
+            h0_prime = self.feature_decoder(gij)
+            feature_losses = self.feature_loss_func(h0, h0_prime)
+            feature_losses_per_node = (h0-h0_prime).pow(2).mean(1)
+            feature_loss_list.append(feature_losses_per_node)
+            
+            local_index_loss, local_index_loss_per_node = self.reconstruction_neighbors2(gij,h0,edge_index)
+            
+            loss_list.append(local_index_loss)
+            loss_list_per_node.append(local_index_loss_per_node)
+            
+        loss_list = torch.stack(loss_list)
+        h_loss += torch.mean(loss_list)
+        
+        loss_list_per_node = torch.stack(loss_list_per_node)
+        h_loss_per_node = torch.mean(loss_list_per_node,dim=0)
+        
+        feature_loss_per_node = torch.mean(torch.stack(feature_loss_list),dim=0)
+        feature_loss += torch.mean(torch.stack(feature_loss_list))
+                
+        h_loss_per_node = h_loss_per_node.reshape(tot_nodes,1)
+        degree_loss_per_node = degree_loss_per_node.reshape(tot_nodes,1)
+        feature_loss_per_node = feature_loss_per_node.reshape(tot_nodes,1)
+        
+        loss = self.lambda_loss1 * h_loss + degree_loss * self.lambda_loss3 + self.lambda_loss2 * feature_loss
+        loss_per_node = self.lambda_loss1 * h_loss_per_node + degree_loss_per_node * self.lambda_loss3 + self.lambda_loss2 * feature_loss_per_node
+        
+        return loss,loss_per_node,h_loss_per_node,degree_loss_per_node,feature_loss_per_node
+
 
     @staticmethod
     def process_graph(data):

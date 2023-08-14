@@ -125,18 +125,13 @@ class GADNR(DeepDetector):
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
-                 graphlet_size=4,
-                 selected_motif=True,
                  cache_dir=None,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
                  **kwargs):
 
-        if backbone is not None:
-            warnings.warn("Backbone is not used in GUIDE")
-
-        super(GUIDE, self).__init__(hid_dim=(hid_a, hid_s),
+        super(GADNR, self).__init__(hid_dim=(hid_a, hid_s),
                                     num_layers=num_layers,
                                     dropout=dropout,
                                     weight_decay=weight_decay,
@@ -172,20 +167,16 @@ class GADNR(DeepDetector):
 
     def forward_model(self, data):
 
-        batch_size = data.batch_size
+        l1, h0 = self.model(data.x, data.edge_index)
+        
+        losses = self.model.loss_func(l1,
+                                       ground_truth_degree_matrix,
+                                       h0,
+                                       neighbor_dict,
+                                       device,
+                                       data.x, 
+                                       data.edge_index)
 
-        x = data.x.to(self.device)
-        s = data.s.to(self.device)
-        edge_index = data.edge_index.to(self.device)
+        loss, loss_per_node, h_loss, degree_loss, feature_loss = losses
 
-        x_, s_ = self.model(x, s, edge_index)
-
-        score = self.model.loss_func(x[:batch_size],
-                                     x_[:batch_size],
-                                     s[:batch_size],
-                                     s_[:batch_size],
-                                     self.alpha)
-
-        loss = torch.mean(score)
-
-        return loss, score.detach().cpu()
+        return loss, loss_per_node,h_loss,degree_loss,feature_loss

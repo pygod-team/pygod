@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Graph Decoders"""
-# Author: Kay Liu <zliu234@uic.edu>
+# Author: Kay Liu <zliu234@uic.edu>, Yingtong Dou <ytongdou@gmail.com>
 # License: BSD 2 clause
 
 import torch
@@ -60,7 +60,7 @@ class DotProductDecoder(nn.Module):
                            **kwargs)
 
     def forward(self, x, edge_index):
-        """
+        r"""
         Forward computation.
 
         Parameters
