@@ -34,11 +34,7 @@ def init_model(args):
     else:
         hid_dim = [32, 64, 128, 256]
 
-    if args.dataset[:3] == 'inj' or args.dataset[:3] == 'gen':
-        # auto balancing on injected dataset
-        alpha = [None]
-    else:
-        alpha = [0.8, 0.5, 0.2]
+    alpha = [0.8, 0.5, 0.2]
 
     if model_name == "adone":
         return AdONE(hid_dim=choice(hid_dim),
