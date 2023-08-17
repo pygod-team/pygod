@@ -32,6 +32,10 @@ def main(args):
         ap.append(eval_average_precision(y, score))
         rec.append(eval_recall_at_k(y, score, k))
 
+    auc = torch.tensor(auc)
+    ap = torch.tensor(ap)
+    rec = torch.tensor(rec)
+
     print(args.dataset + " " + model.__class__.__name__ + " " +
           "AUC: {:.4f}±{:.4f} ({:.4f})\t"
           "AP: {:.4f}±{:.4f} ({:.4f})\t"
