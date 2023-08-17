@@ -66,7 +66,7 @@ def init_model(args):
                      lr=choice(lr),
                      epoch=epoch,
                      gpu=gpu,
-                     wight=choice(alpha),
+                     weight=choice(alpha),
                      batch_size=batch_size,
                      num_neigh=num_neigh)
     elif model_name == 'dominant':
@@ -76,7 +76,7 @@ def init_model(args):
                         lr=choice(lr),
                         epoch=epoch,
                         gpu=gpu,
-                        wight=choice(alpha),
+                        weight=choice(alpha),
                         batch_size=batch_size,
                         num_neigh=num_neigh)
     elif model_name == 'done':
@@ -96,7 +96,7 @@ def init_model(args):
                     lr=choice(lr),
                     epoch=epoch,
                     gpu=gpu,
-                    wight=choice(alpha),
+                    weight=choice(alpha),
                     batch_size=batch_size,
                     num_neigh=num_neigh)
     elif model_name == 'gcnae':
