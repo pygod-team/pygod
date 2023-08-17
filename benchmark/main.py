@@ -28,16 +28,9 @@ def main(args):
             warnings.warn('contains NaN, skip one trial.')
             continue
 
-        auc_val = eval_roc_auc(y, score)
-        auc.append(auc_val)
-
-        ap_val = eval_average_precision(y, score)
-        ap.append(ap_val)
-
-        rec_val = eval_recall_at_k(y, score, k)
-        if isinstance(rec_val, torch.Tensor):
-            rec_val = rec_val.tolist()
-        rec.append(rec_val)
+        auc.append(eval_roc_auc(y, score))
+        ap.append(eval_average_precision(y, score))
+        rec.append(eval_recall_at_k(y, score, k))
 
     auc = torch.tensor(auc)
     ap = torch.tensor(ap)
