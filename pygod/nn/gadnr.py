@@ -3,6 +3,7 @@ import random
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch_geometric.nn import GIN, SAGEConv, PNAConv
 from torch_geometric.utils import to_dense_adj
@@ -11,6 +12,7 @@ from .nn import MLP_GAD_NR, MLP_generator, FNN_GAD_NR
 from .functional import double_recon_loss
 
 
+# TODO update the argument documentation
 class GADNRBase(nn.Module):
     """
     Deep Anomaly Detection on Attributed Networks
@@ -53,6 +55,7 @@ class GADNRBase(nn.Module):
                  hid_dim=64,
                  num_layers=2,
                  sample_size=2,
+                 sample_time=3,
                  neighbor_num_list=None,
                  lambda_loss1=1e-2,
                  lambda_loss2=1e-3,
@@ -62,16 +65,18 @@ class GADNRBase(nn.Module):
                  extra_linear_proj=True,
                  backbone=GIN,
                  **kwargs):
-        super(DOMINANTBase, self).__init__()
+        super(GADNRBase, self).__init__()
 
         # split the number of layers for the encoder and decoders
         assert num_layers >= 2, \
             "Number of layers must be greater than or equal to 2."
         encoder_layers = math.floor(num_layers / 2)
         decoder_layers = math.ceil(num_layers / 2)
+        # TODO use the decoder layers
         
         self.linear = nn.Linear(in_dim, hid_dim)
         self.out_dim = hid_dim
+        self.sample_time = sample_time
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
@@ -81,33 +86,44 @@ class GADNRBase(nn.Module):
 
         self.gaussian_mean = nn.Parameter(
             torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                             0.5 / hid_dim)).to(device)
+                                                             0.5 / hid_dim))
         self.gaussian_log_sigma = nn.Parameter(
             torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                             0.5 / hid_dim)).to(device)
+                                                             0.5 / hid_dim))
         self.m = torch.distributions.Normal(torch.zeros(sample_size, hid_dim),
                                             torch.ones(sample_size, hid_dim))
         
-        self.m_batched = torch.distributions.Normal(torch.zeros(sample_size, self.tot_node, hid_dim),
-                                            torch.ones(sample_size, self.tot_node, hid_dim))
+        self.m_batched = torch.distributions.Normal(torch.zeros(sample_size,
+                                                                self.tot_node,
+                                                                hid_dim),
+                                            torch.ones(sample_size,
+                                                       self.tot_node,
+                                                       hid_dim))
 
-        self.m_h = torch.distributions.Normal(torch.zeros(sample_size, hid_dim),
-                                            50* torch.ones(sample_size, hid_dim))
+        self.m_h = torch.distributions.Normal(torch.zeros(sample_size,
+                                                          hid_dim),
+                                            50* torch.ones(sample_size,
+                                                           hid_dim))
 
         # Before MLP Gaussian Means, and std
 
         self.mlp_gaussian_mean = nn.Parameter(
-            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim, 0.5 / hid_dim)).to(device)
+            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim,
+                                                0.5 / hid_dim))
         self.mlp_gaussian_log_sigma = nn.Parameter(
-            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim, 0.5 / hid_dim)).to(device)
-        self.mlp_m = torch.distributions.Normal(torch.zeros(hid_dim), torch.ones(hid_dim))
+            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim,
+                                                0.5 / hid_dim))
+        self.mlp_m = torch.distributions.Normal(torch.zeros(hid_dim),
+                                                torch.ones(hid_dim))
 
         self.mlp_mean = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
         self.mlp_sigma = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
         self.softplus = nn.Softplus()
 
-        self.mean_agg = SAGEConv(hid_dim, hid_dim, aggr='mean', normalize = False)
-        self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],scalers=["identity"], deg=neighbor_num_list)        
+        self.mean_agg = SAGEConv(hid_dim, hid_dim,
+                                 aggr='mean', normalize = False)
+        self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],
+                               scalers=["identity"], deg=neighbor_num_list)        
         self.layer1_generator = MLP_generator(hid_dim, hid_dim)
 
         # Encoder
@@ -130,9 +146,10 @@ class GADNRBase(nn.Module):
         self.init_projection = FNN_GAD_NR(in_dim, hid_dim, hid_dim, 1)
         self.emb = None
 
-
-    # Sample neighbors from neighbor set, if the length of neighbor set less than sample size, then do the padding.
     def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
+        """ Sample neighbors from neighbor set, if the length of neighbor set
+            less than sample size, then do the padding.
+        """
         sampled_embeddings_list = []
         mark_len_list = []
         for index in indexes:
@@ -142,13 +159,15 @@ class GADNRBase(nn.Module):
                 mask_len = len(neighbor_indexes)
                 sample_indexes = neighbor_indexes
             else:
-                sample_indexes = random.sample(neighbor_indexes, self.sample_size)
+                sample_indexes = random.sample(neighbor_indexes,
+                                               self.sample_size)
                 mask_len = self.sample_size
             for index in sample_indexes:
                 sampled_embeddings.append(gt_embeddings[index].tolist())
             if len(sampled_embeddings) < self.sample_size:
                 for _ in range(self.sample_size - len(sampled_embeddings)):
-                    sampled_embeddings.append(torch.zeros(self.out_dim).tolist())
+                    sampled_embeddings.append(torch.zeros(self.out_dim
+                                                          ).tolist())
             sampled_embeddings_list.append(sampled_embeddings)
             mark_len_list.append(mask_len)
         
@@ -167,35 +186,104 @@ class GADNRBase(nn.Module):
 
         Returns
         -------
-        x_ : torch.Tensor
-            Reconstructed attribute embeddings.
-        s_ : torch.Tensor
-            Reconstructed adjacency matrix.
+        h0 : torch.Tensor
+            Node feature initial embeddings.
+        l1 : torch.Tensor
+            Node embedding after encoder.
+        degree_logits : torch.Tensor
+            Reconstructed node degree logits.
+        feat_recon_list : List[torch.Tensor]
+            Reconstructed node features.
+        neigh_recon_list :  List[torch.Tensor]
+            Reconstructed neighbor distributions.
         """
         
         # feature projection
-        x = self.linear(x)
+        h0 = self.linear(x)
         # TODO add extra projection for GIN model
 
         # encode feature matrix
-        self.emb = self.shared_encoder(x, edge_index)
+        l1 = self.shared_encoder(h0, edge_index)
+        
+        # decode node degree
+        degree_logits = F.relu(self.degree_decoder(l1))
 
-        # reconstruct feature matrix
-        x_ = self.attr_decoder(self.emb, edge_index)
+        # decode the node feature and neighbor distribution
+        feat_recon_list = []
+        neigh_recon_list = []
+        # sample multiple times to remove noises
+        for _ in range(self.sample_time):
+            h0_prime = self.feature_decoder(l1)
+            feat_recon_list.append(h0_prime)
+            
+            neigh_recon_info = self.neigh_distr_recon(l1,h0,edge_index)
+            neigh_recon_list.append(neigh_recon_info)
 
-        # decode adjacency matrix
-        s_ = self.struct_decoder(self.emb, edge_index)
+        return h0, l1, degree_logits, feat_recon_list, neigh_recon_list
 
-        return x_, s_
+    def neigh_distr_recon(self, l1, h0, edge_index, device):
+        """Computing the target neighbor distribution and 
+        reconstructed neighbor distribution
+        """
+                
+        mean_neigh = self.mean_agg(h0, edge_index).detach()
+        std_neigh = self.std_agg(h0, edge_index).detach()
+        
+        cov_neigh = torch.bmm(std_neigh.unsqueeze(dim=-1),
+                              std_neigh.unsqueeze(dim=1))
+        
+        target_mean = mean_neigh
+        target_cov = cov_neigh
+        
+        self_embedding = l1
+        self_embedding = self_embedding.unsqueeze(0)
+        self_embedding = self_embedding.repeat(self.sample_size, 1, 1)
+        generated_mean = self.mlp_mean(self_embedding)
+        generated_sigma = self.mlp_sigma(self_embedding)
+
+        
+        std_z = self.m_batched.sample().to(device)
+        var = generated_mean + generated_sigma.exp() * std_z
+        nhij = self.layer1_generator(var)
+        
+        generated_mean = torch.mean(nhij,dim=0)
+        generated_std = torch.std(nhij,dim=0)
+        generated_cov = torch.bmm(generated_std.unsqueeze(dim=-1),
+                                  generated_std.unsqueeze(dim=1))/ \
+                                  self.sample_size
+           
+        tot_nodes = l1.shape[0]
+        h_dim = l1.shape[1]
+        
+        single_eye = torch.eye(h_dim).to(device)
+        single_eye = single_eye.unsqueeze(dim=0)
+        batch_eye = single_eye.repeat(tot_nodes,1,1)
+        
+        target_cov = target_cov + batch_eye
+        generated_cov = generated_cov + batch_eye
+
+        det_target_cov = torch.linalg.det(target_cov) 
+        det_generated_cov = torch.linalg.det(generated_cov) 
+        trace_mat = torch.matmul(torch.inverse(generated_cov),target_cov)
+             
+        x = torch.bmm(torch.unsqueeze(generated_mean - target_mean,dim=1),
+                      torch.inverse(generated_cov))
+        y = torch.unsqueeze(generated_mean - target_mean,dim=-1)
+        z = torch.bmm(x,y).squeeze()
+
+        # the information needed for loss computation
+        recon_info = [det_target_cov, det_generated_cov, h_dim, trace_mat, z]
+    
+        return recon_info  
 
     def loss_func(self,
-                  gij,
-                  ground_truth_degree_matrix,
                   h0,
-                  neighbor_dict,
-                  device,
-                  h,
-                  edge_index):
+                  l1,
+                  degree_logits,
+                  feat_recon_list,
+                  neigh_recon_list,
+                  ground_truth_degree_matrix,
+                  neighbor_dict):
         """
         Obtain the dense adjacency matrix of the graph.
 
@@ -204,35 +292,38 @@ class GADNRBase(nn.Module):
         data : torch_geometric.data.Data
             Input graph.
         """
-
-        # TODO dissecting the decoders and put it into the forward function
         
-        # Degree decoder below:
-        tot_nodes = gij.shape[0]
-        degree_logits = self.degree_decoding(gij)
-        ground_truth_degree_matrix = torch.unsqueeze(ground_truth_degree_matrix, dim=1)
-        degree_loss = self.degree_loss_func(degree_logits, ground_truth_degree_matrix.float())
-        degree_loss_per_node = (degree_logits-ground_truth_degree_matrix).pow(2)
-        _, degree_masks = torch.max(degree_logits.data, dim=1)
+        tot_nodes = l1.shape[0]
+
+        # degree reconstruction loss
+        ground_truth_degree_matrix = \
+            torch.unsqueeze(ground_truth_degree_matrix, dim=1)
+        degree_loss = self.degree_loss_func(degree_logits,
+                                            ground_truth_degree_matrix.float())
+        degree_loss_per_node = \
+            (degree_logits-ground_truth_degree_matrix).pow(2)
+        
         h_loss = 0
         feature_loss = 0
-        
-        # layer 1
         loss_list = []
         loss_list_per_node = []
         feature_loss_list = []
         # Sample multiple times to remove noise
-        for _ in range(3):
-            local_index_loss_sum = 0
-            local_index_loss_sum_per_node = []
-            indexes = []
-            h0_prime = self.feature_decoder(gij)
-            feature_losses = self.feature_loss_func(h0, h0_prime)
+        for t in range(self.sample_time):
+            # feature reconstrcution loss 
+            h0_prime = feat_recon_list[t]
             feature_losses_per_node = (h0-h0_prime).pow(2).mean(1)
             feature_loss_list.append(feature_losses_per_node)
             
-            local_index_loss, local_index_loss_per_node = self.reconstruction_neighbors2(gij,h0,edge_index)
-            
+            # neigbor distribution reconstruction loss
+            det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
+                                                            neigh_recon_list[t]
+            KL_loss = 0.5 * (torch.log(det_target_cov / det_generated_cov) - \
+                         h_dim + trace_mat.diagonal(offset=0, dim1=-1, 
+                                                    dim2=-2).sum(-1) + z)
+            local_index_loss = torch.mean(KL_loss)
+            local_index_loss_per_node = KL_loss
+    
             loss_list.append(local_index_loss)
             loss_list_per_node.append(local_index_loss_per_node)
             
@@ -242,27 +333,47 @@ class GADNRBase(nn.Module):
         loss_list_per_node = torch.stack(loss_list_per_node)
         h_loss_per_node = torch.mean(loss_list_per_node,dim=0)
         
-        feature_loss_per_node = torch.mean(torch.stack(feature_loss_list),dim=0)
+        feature_loss_per_node = torch.mean(torch.stack(feature_loss_list),
+                                           dim=0)
         feature_loss += torch.mean(torch.stack(feature_loss_list))
                 
         h_loss_per_node = h_loss_per_node.reshape(tot_nodes,1)
         degree_loss_per_node = degree_loss_per_node.reshape(tot_nodes,1)
         feature_loss_per_node = feature_loss_per_node.reshape(tot_nodes,1)
         
-        loss = self.lambda_loss1 * h_loss + degree_loss * self.lambda_loss3 + self.lambda_loss2 * feature_loss
-        loss_per_node = self.lambda_loss1 * h_loss_per_node + degree_loss_per_node * self.lambda_loss3 + self.lambda_loss2 * feature_loss_per_node
+        loss = self.lambda_loss1 * h_loss \
+            + degree_loss * self.lambda_loss3 \
+            + self.lambda_loss2 * feature_loss
+        loss_per_node = self.lambda_loss1 * h_loss_per_node \
+            + degree_loss_per_node * self.lambda_loss3 \
+                + self.lambda_loss2 * feature_loss_per_node
         
-        return loss,loss_per_node,h_loss_per_node,degree_loss_per_node,feature_loss_per_node
-
+        return loss, loss_per_node, h_loss_per_node, \
+            degree_loss_per_node, feature_loss_per_node
 
     @staticmethod
     def process_graph(data):
         """
-        Obtain the dense adjacency matrix of the graph.
+        Obtain the neighbor dictornary and number of neighbors per node list
 
         Parameters
         ----------
         data : torch_geometric.data.Data
             Input graph.
         """
-        data.s = to_dense_adj(data.edge_index)[0]
+        in_nodes = data.edge_index[0,:]
+        out_nodes = data.edge_index[1,:]
+
+        neighbor_dict = {}
+        for in_node, out_node in zip(in_nodes, out_nodes):
+            if in_node.item() not in neighbor_dict:
+                neighbor_dict[in_node.item()] = []
+            neighbor_dict[in_node.item()].append(out_node.item())
+
+        neighbor_num_list = []
+        for i in neighbor_dict:
+            neighbor_num_list.append(len(neighbor_dict[i]))
+        
+        neighbor_num_list = torch.tensor(neighbor_num_list)
+
+        return neighbor_dict, neighbor_num_list

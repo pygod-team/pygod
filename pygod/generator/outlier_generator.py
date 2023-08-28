@@ -150,3 +150,5 @@ def gen_contextual_outlier(data, n, k, seed=None):
     y_outlier[outlier_idx] = 1
 
     return data, y_outlier
+
+# TODO add new generator from GAD-NR
