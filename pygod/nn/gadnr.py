@@ -53,7 +53,9 @@ class GADNRBase(nn.Module):
     def __init__(self,
                  in_dim,
                  hid_dim=64,
-                 num_layers=2,
+                 encoder_layers=2,
+                 deg_dec_layers=4,
+                 fea_dec_layers=3,
                  sample_size=2,
                  sample_time=3,
                  neighbor_num_list=None,
@@ -62,17 +64,10 @@ class GADNRBase(nn.Module):
                  lambda_loss3=1e-4,
                  dropout=0.,
                  act=torch.nn.functional.relu,
-                 extra_linear_proj=True,
                  backbone=GIN,
+                 device='cpu',
                  **kwargs):
         super(GADNRBase, self).__init__()
-
-        # split the number of layers for the encoder and decoders
-        assert num_layers >= 2, \
-            "Number of layers must be greater than or equal to 2."
-        encoder_layers = math.floor(num_layers / 2)
-        decoder_layers = math.ceil(num_layers / 2)
-        # TODO use the decoder layers
         
         self.linear = nn.Linear(in_dim, hid_dim)
         self.out_dim = hid_dim
@@ -80,6 +75,7 @@ class GADNRBase(nn.Module):
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
+        self.device = device
 
         self.neighbor_num_list = neighbor_num_list
         self.tot_node = len(neighbor_num_list)
@@ -136,14 +132,14 @@ class GADNRBase(nn.Module):
                                        **kwargs)
 
         # Decoder
-        self.degree_decoder = FNN_GAD_NR(hid_dim, hid_dim, 1, 4)
-        self.feature_decoder = FNN_GAD_NR(hid_dim, hid_dim, in_dim, 3)
+        self.degree_decoder = FNN_GAD_NR(hid_dim, hid_dim, 1, deg_dec_layers)
+        self.feature_decoder = FNN_GAD_NR(hid_dim, hid_dim,
+                                          in_dim, fea_dec_layers)
         self.degree_loss_func = nn.MSELoss()
         self.feature_loss_func = nn.MSELoss()
         self.pool = mp.Pool(4)
         self.in_dim = in_dim
         self.sample_size = sample_size 
-        self.init_projection = FNN_GAD_NR(in_dim, hid_dim, hid_dim, 1)
         self.emb = None
 
     def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
@@ -200,11 +196,13 @@ class GADNRBase(nn.Module):
         
         # feature projection
         h0 = self.linear(x)
-        # TODO add extra projection for GIN model
 
         # encode feature matrix
         l1 = self.shared_encoder(h0, edge_index)
         
+        # save embeddings
+        self.emb = l1
+
         # decode node degree
         degree_logits = F.relu(self.degree_decoder(l1))
 
@@ -264,7 +262,7 @@ class GADNRBase(nn.Module):
 
         det_target_cov = torch.linalg.det(target_cov) 
         det_generated_cov = torch.linalg.det(generated_cov) 
-        trace_mat = torch.matmul(torch.inverse(generated_cov),target_cov)
+        trace_mat = torch.matmul(torch.inverse(generated_cov), target_cov)
              
         x = torch.bmm(torch.unsqueeze(generated_mean - target_mean,dim=1),
                       torch.inverse(generated_cov))

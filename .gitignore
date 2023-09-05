@@ -152,3 +152,4 @@ cython_debug/
 .idea/
 .clangd/
 .vscode/
+local_test.py
