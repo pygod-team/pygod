@@ -149,7 +149,7 @@ class GAE(DeepDetector):
                        recon_s=self.recon_s,
                        sigmoid_s=self.sigmoid_s,
                        backbone=self.backbone,
-                       **kwargs)
+                       **kwargs).to(self.device)
 
     def forward_model(self, data):
 
