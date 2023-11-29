@@ -114,15 +114,15 @@ class ANOMALOUS(Detector):
         return self.decision_score_
 
     def process_graph(self, data):
-        x = data.x
-        s = data.s
+        x = data.x.to(self.device)
+        s = data.s.to(self.device)
 
         s = torch.max(s, s.T)
         laplacian = torch.diag(torch.sum(s, dim=1)) - s
 
-        w_init = torch.randn_like(x.T)
+        w_init = torch.randn_like(x.T).to(self.device)
         r_init = torch.inverse((1 + self.weight_decay)
-            * torch.eye(x.shape[0]) + self.gamma * laplacian) @ x
+            * torch.eye(x.shape[0]).to(self.device) + self.gamma * laplacian) @ x
 
         return x, s, laplacian, w_init, r_init
 
