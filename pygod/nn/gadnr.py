@@ -6,10 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch_geometric.nn import GIN, SAGEConv, PNAConv
-from torch_geometric.utils import to_dense_adj
 
-from .nn import MLP_GAD_NR, MLP_generator, FNN_GAD_NR
-from .functional import double_recon_loss
+from .nn import MLP_generator, FNN_GAD_NR
+from .functional import KL_neighbor_loss, W2_neighbor_loss
 
 
 class GADNRBase(nn.Module):
@@ -42,6 +41,8 @@ class GADNRBase(nn.Module):
     sample_time : int, optional
         The number sample times to remove the noise during node feature and
         neighborhood distribution reconstruction. Default: ``3``.
+    batch_size : int, optional
+        Minibatch size, 0 for full batch training. Default: ``0``.
     neighbor_num_list : List 
         The number of neigbhors for each node used by the PNAConv model .
         Default: ``None``.
@@ -76,7 +77,9 @@ class GADNRBase(nn.Module):
                  fea_dec_layers=3,
                  sample_size=2,
                  sample_time=3,
+                 batch_size=0,
                  neighbor_num_list=None,
+                 neigh_loss='KL',
                  lambda_loss1=1e-2,
                  lambda_loss2=1e-3,
                  lambda_loss3=1e-4,
@@ -90,9 +93,11 @@ class GADNRBase(nn.Module):
         self.linear = nn.Linear(in_dim, hid_dim)
         self.out_dim = hid_dim
         self.sample_time = sample_time
+        self.batch_size = batch_size
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
+        self.neigh_loss = neigh_loss
         self.device = device
 
         self.neighbor_num_list = neighbor_num_list
@@ -100,12 +105,17 @@ class GADNRBase(nn.Module):
 
         # the normal distrubution used during 
         # neighborhood distribution recontruction
-        self.m_batched = torch.distributions.Normal(torch.zeros(sample_size,
+        self.m_fullbatch = torch.distributions.Normal(torch.zeros(sample_size,
                                                                 self.tot_node,
                                                                 hid_dim),
                                             torch.ones(sample_size,
                                                        self.tot_node,
                                                        hid_dim))
+        
+        self.m_minibatch = torch.distributions.Normal(torch.zeros(sample_size,
+                                                                  hid_dim),
+                                                      torch.ones(sample_size,
+                                                                 hid_dim))
 
         self.mlp_mean = nn.Linear(hid_dim, hid_dim)
         self.mlp_sigma = nn.Linear(hid_dim, hid_dim)
@@ -114,7 +124,7 @@ class GADNRBase(nn.Module):
                                  aggr='mean', normalize = False)
         self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],
                                scalers=["identity"], deg=neighbor_num_list)        
-        self.layer1_generator = MLP_generator(hid_dim, hid_dim)
+        self.mlp_gen = MLP_generator(hid_dim, hid_dim)
 
         # Encoder
         self.shared_encoder = backbone(in_channels=hid_dim,
@@ -133,13 +143,17 @@ class GADNRBase(nn.Module):
                                           hid_dim, fea_dec_layers)
         self.degree_loss_func = nn.MSELoss()
         self.feature_loss_func = nn.MSELoss()
+        if self.neigh_loss == "KL": 
+            self.neighbor_loss = KL_neighbor_loss
+        elif self.neigh_loss == 'W2': 
+            self.neighbor_loss = W2_neighbor_loss
+        else:
+            raise ValueError('The loss should be either KL or W2')
         self.pool = mp.Pool(4)
         self.in_dim = in_dim
         self.sample_size = sample_size 
         self.emb = None
 
-    # TODO this function is reserved for the mini-batch training
-    # which will be implemented later
     def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
         """ Sample neighbors from neighbor set, if the length of neighbor set
             less than sample size, then do the padding.
@@ -167,59 +181,9 @@ class GADNRBase(nn.Module):
         
         return sampled_embeddings_list, mark_len_list
 
-    def forward(self, x, edge_index):
-        """
-        Forward computation.
-
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input attribute embeddings.
-        edge_index : torch.Tensor
-            Edge index.
-
-        Returns
-        ----------
-        h0 : torch.Tensor
-            Node feature initial embeddings.
-        l1 : torch.Tensor
-            Node embedding after encoder.
-        degree_logits : torch.Tensor
-            Reconstructed node degree logits.
-        feat_recon_list : List[torch.Tensor]
-            Reconstructed node features.
-        neigh_recon_list : List[torch.Tensor]
-            Reconstructed neighbor distributions.
-        """
-        
-        # feature projection
-        h0 = self.linear(x)
-
-        # encode feature matrix
-        l1 = self.shared_encoder(h0, edge_index)
-        
-        # save embeddings
-        self.emb = l1
-
-        # decode node degree
-        degree_logits = F.relu(self.degree_decoder(l1))
-
-        # decode the node feature and neighbor distribution
-        feat_recon_list = []
-        neigh_recon_list = []
-        # sample multiple times to remove noises
-        for _ in range(self.sample_time):
-            h0_prime = self.feature_decoder(l1)
-            feat_recon_list.append(h0_prime)
-            
-            neigh_recon_info = self.neigh_distr_recon(l1,h0,edge_index)
-            neigh_recon_list.append(neigh_recon_info)
-
-        return h0, l1, degree_logits, feat_recon_list, neigh_recon_list
-
-    def neigh_distr_recon(self, l1, h0, edge_index):
+    def full_batch_neigh_recon(self, h1, h0, edge_index):
         """Computing the target neighbor distribution and 
-        reconstructed neighbor distribution
+        reconstructed neighbor distribution using full batch of the data.
         """
                 
         mean_neigh = self.mean_agg(h0, edge_index).detach()
@@ -231,16 +195,15 @@ class GADNRBase(nn.Module):
         target_mean = mean_neigh
         target_cov = cov_neigh
         
-        self_embedding = l1
+        self_embedding = h1
         self_embedding = self_embedding.unsqueeze(0)
         self_embedding = self_embedding.repeat(self.sample_size, 1, 1)
         generated_mean = self.mlp_mean(self_embedding)
         generated_sigma = self.mlp_sigma(self_embedding)
 
-        
-        std_z = self.m_batched.sample().to(self.device)
+        std_z = self.m_fullbatch.sample().to(self.device)
         var = generated_mean + generated_sigma.exp() * std_z
-        nhij = self.layer1_generator(var)
+        nhij = self.mlp_gen(var)
         
         generated_mean = torch.mean(nhij,dim=0)
         generated_std = torch.std(nhij,dim=0)
@@ -248,8 +211,8 @@ class GADNRBase(nn.Module):
                                   generated_std.unsqueeze(dim=1))/ \
                                   self.sample_size
            
-        tot_nodes = l1.shape[0]
-        h_dim = l1.shape[1]
+        tot_nodes = h1.shape[0]
+        h_dim = h1.shape[1]
         
         single_eye = torch.eye(h_dim).to(self.device)
         single_eye = single_eye.unsqueeze(dim=0)
@@ -272,14 +235,115 @@ class GADNRBase(nn.Module):
     
         return recon_info  
 
+    def mini_batch_neigh_recon(self,
+                               neighbor_dict,
+                               h1,
+                               h0):
+        """Computing the target neighbor distribution and 
+        reconstructed neighbor distribution using mini_batch of the data
+        and neigbor sampling.
+        """
+        neighbor_indexes, gen_neighs, tar_neighs = [], [], []
+        
+        for i, _ in enumerate(h1):
+            neighbor_indexes.append(i)
+        sampled_embeddings_list, _ = \
+            self.sample_neighbors(neighbor_indexes, neighbor_dict, h0)
+        for i, neighbor_embeddings1 in enumerate(sampled_embeddings_list):
+            # Generating h^k_v, reparameterization trick
+            index = neighbor_indexes[i]
+            mean = h1[index].repeat(self.sample_size, 1)
+            mean = self.mlp_mean(mean)
+            sigma = h1[index].repeat(self.sample_size, 1)
+            sigma = self.mlp_sigma(sigma)
+            std_z = self.m_minibatch.sample().to(self.device)
+            var = mean + sigma.exp() * std_z
+            nhij = self.mlp_gen(var)
+            
+            generated_neighbors = nhij
+            sum_neighbor_norm = 0
+            
+            for _, generated_neighbor in enumerate(generated_neighbors):
+                sum_neighbor_norm += \
+                    torch.norm(generated_neighbor) / math.sqrt(self.out_dim)
+            generated_neighbors = \
+                torch.unsqueeze(generated_neighbors, dim=0).to(self.device)
+            target_neighbors = \
+                torch.unsqueeze(torch.FloatTensor(neighbor_embeddings1), 
+                                dim=0).to(self.device)
+            
+            gen_neighs.append(generated_neighbors)
+            tar_neighs.append(target_neighbors)
+        
+        # the information needed for loss computation
+        recon_info = [gen_neighs, tar_neighs]
+
+        return recon_info
+
+    def forward(self, x, edge_index, neighbor_dict):
+        """
+        Forward computation.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input attribute embeddings.
+        edge_index : torch.Tensor
+            Edge index.
+
+        Returns
+        ----------
+        h0 : torch.Tensor
+            Node feature initial embeddings.
+        h1 : torch.Tensor
+            Node embedding after encoder.
+        degree_logits : torch.Tensor
+            Reconstructed node degree logits.
+        feat_recon_list : List[torch.Tensor]
+            Reconstructed node features.
+        neigh_recon_list : List[torch.Tensor]
+            Reconstructed neighbor distributions.
+        """
+        
+        # feature projection
+        h0 = self.linear(x)
+
+        # encode feature matrix
+        h1 = self.shared_encoder(h0, edge_index)
+        
+        # save embeddings
+        self.emb = h1
+
+        # decode node degree
+        degree_logits = F.relu(self.degree_decoder(h1))
+
+        # decode the node feature and neighbor distribution
+        feat_recon_list = []
+        neigh_recon_list = []
+        # sample multiple times to remove noises
+        for _ in range(self.sample_time):
+            h0_prime = self.feature_decoder(h1)
+            feat_recon_list.append(h0_prime)
+            
+            if self.batch_size == 0: # full batch mode
+                neigh_recon_info = self.full_batch_neigh_recon(h1,
+                                                               h0,
+                                                               edge_index)
+            else: # mini batch mode
+                neigh_recon_info = self.mini_batch_neigh_recon(neighbor_dict,
+                                                               h1,
+                                                               h0)
+            neigh_recon_list.append(neigh_recon_info)
+
+        return h0, h1, degree_logits, feat_recon_list, neigh_recon_list
+
     def loss_func(self,
                   h0,
-                  l1,
+                  h1,
                   degree_logits,
                   feat_recon_list,
                   neigh_recon_list,
-                  ground_truth_degree_matrix,
-                  neighbor_dict):
+                  ground_truth_degree_matrix):
         """
         The loss function proposed in the GAD-NR paper.
 
@@ -287,7 +351,7 @@ class GADNRBase(nn.Module):
         ----------
         h0 : torch.Tensor
             Node feature initial embeddings.
-        l1 : torch.Tensor
+        h1 : torch.Tensor
             Node embedding after encoder.
         degree_logits : torch.Tensor
             Reconstructed node degree logits.
@@ -317,7 +381,7 @@ class GADNRBase(nn.Module):
             compute the adaptive decision score (outlier score) of the node. 
         """
         
-        tot_nodes = l1.shape[0]
+        tot_nodes = h1.shape[0]
 
         # degree reconstruction loss
         ground_truth_degree_matrix = \
@@ -340,14 +404,29 @@ class GADNRBase(nn.Module):
             feature_loss_list.append(feature_losses_per_node)
             
             # neigbor distribution reconstruction loss
-            det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
-                                                            neigh_recon_list[t]
-            KL_loss = 0.5 * (torch.log(det_target_cov / det_generated_cov) - \
-                         h_dim + trace_mat.diagonal(offset=0, dim1=-1, 
+            if self.batch_size == 0: # full batch neighbor reconsturction
+                det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
+                                                        neigh_recon_list[t]
+                KL_loss = 0.5 * (torch.log(det_target_cov / 
+                                           det_generated_cov) - \
+                        h_dim + trace_mat.diagonal(offset=0, dim1=-1, 
                                                     dim2=-2).sum(-1) + z)
-            local_index_loss = torch.mean(KL_loss)
-            local_index_loss_per_node = KL_loss
-    
+                local_index_loss = torch.mean(KL_loss)
+                local_index_loss_per_node = KL_loss
+            else: # mini batch neighbor reconstruction
+                local_index_loss_per_node = []
+                gen_neighs, tar_neighs = neigh_recon_list[t] 
+                for generated_neighbors, target_neighbors in \
+                                zip(gen_neighs, tar_neighs):
+                    temp_loss = self.neighbor_loss(generated_neighbors,
+                                                target_neighbors,
+                                                self.device)
+                    local_index_loss += temp_loss
+                    local_index_loss_per_node.append(temp_loss)
+                                        
+                local_index_loss_per_node = \
+                    torch.stack(local_index_loss_per_node)
+            
             loss_list.append(local_index_loss)
             loss_list_per_node.append(local_index_loss_per_node)
             
@@ -377,7 +456,7 @@ class GADNRBase(nn.Module):
             degree_loss_per_node, feature_loss_per_node
 
     @staticmethod
-    def process_graph(data):
+    def process_graph(self, data):
         """
         Obtain the neighbor dictornary and number of neighbors per node list
 

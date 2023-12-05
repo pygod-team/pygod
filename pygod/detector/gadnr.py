@@ -35,6 +35,7 @@ class GADNR(DeepDetector):
                  backbone=GIN,
                  sample_size=2,
                  sample_time=3,
+                 neigh_loss='KL',
                  lambda_loss1=0.01,
                  lambda_loss2=0.1,
                  lambda_loss3=0.8,
@@ -75,6 +76,7 @@ class GADNR(DeepDetector):
         self.fea_dec_layers = fea_dec_layers
         self.sample_size = sample_size
         self.sample_time = sample_time
+        self.neigh_loss = neigh_loss
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
@@ -97,27 +99,31 @@ class GADNR(DeepDetector):
                          deg_dec_layers=self.deg_dec_layers,
                          fea_dec_layers=self.fea_dec_layers,
                          sample_size=self.sample_size,
-                         sample_time=self.sample_time, 
+                         sample_time=self.sample_time,
+                         batch_size=self.batch_size, 
                          neighbor_num_list=self.neighbor_num_list,
-                         backbone=self.backbone,
+                         neigh_loss=self.neigh_loss,
                          lambda_loss1=self.lambda_loss1,
                          lambda_loss2=self.lambda_loss2,
                          lambda_loss3=self.lambda_loss3,
+                         backbone=self.backbone,
                          device=self.device).to(self.device)
 
     def forward_model(self, data):
 
         h0, l1, degree_logits, feat_recon_list, neigh_recon_list = \
-                                            self.model(data.x, data.edge_index)
+                                            self.model(data.x,
+                                                       data.edge_index,
+                                                       self.neighbor_dict)
         
         loss, loss_per_node, h_loss, degree_loss, feature_loss = \
-                 self.model.loss_func(h0,
-                                      l1,
-                                      degree_logits,
-                                      feat_recon_list,
-                                      neigh_recon_list,
-                                      self.neighbor_num_list,
-                                      self.neighbor_dict)
+                                self.model.loss_func(h0,
+                                                     l1,
+                                                     degree_logits,
+                                                     feat_recon_list,
+                                                     neigh_recon_list,
+                                                     self.neighbor_num_list,
+                                                     self.neighbor_dict)
 
         return loss, loss_per_node.cpu().detach(), h_loss.cpu().detach(), \
             degree_loss.cpu().detach(), feature_loss.cpu().detach()
