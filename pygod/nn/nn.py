@@ -46,8 +46,8 @@ class MLP_GAD_NR(torch.nn.Module):
         else:
             # Multi-layer model
             self.linear_or_not = False
-            self.linears = nn.ModuleList()
-            self.batch_norms = nn.ModuleList()
+            self.linears = torch.nn.ModuleList()
+            self.batch_norms = torch.nn.ModuleList()
 
             self.linears.append(nn.Linear(in_dim, hid_dim))
             for _ in range(num_layers - 2):
@@ -78,22 +78,8 @@ class MLP_GAD_NR(torch.nn.Module):
             # If MLP
             h = x
             for layer in range(self.num_layers - 1):
-                h = self.linears[layer](h)
-                
-                if len(h.shape) > 2:
-                    h = torch.transpose(h, 0, 1)
-                    h = torch.transpose(h, 1, 2)
-                    
-                h = self.batch_norms[layer](h)
-                
-                if len(h.shape) > 2:
-                    h = torch.transpose(h, 1, 2)
-                    h = torch.transpose(h, 0, 1)
-
-                h = self.act(h)
-                h = self.linears[self.num_layers - 1](h)
-                
-            return h 
+                h = self.act(self.batch_norms[layer](self.linears[layer](h)))
+            return self.linears[self.num_layers - 1](h)
 
 
 class MLP_generator(nn.Module):
@@ -170,7 +156,7 @@ class FNN_GAD_NR(nn.Module):
                  act=torch.nn.functional.relu):
         super(FNN_GAD_NR, self).__init__()
         self.act = act
-        self.linear1 = MLP_GAD_NR(num_layers, in_dim, hid_dim, out_dim)
+        self.linear1 = MLP_GAD_NR(in_dim, hid_dim, out_dim, num_layers)
         self.linear2 = nn.Linear(out_dim, out_dim)
     
     def forward(self, emb):

@@ -12,7 +12,6 @@ from .nn import MLP_GAD_NR, MLP_generator, FNN_GAD_NR
 from .functional import double_recon_loss
 
 
-# TODO update the argument documentation
 class GADNRBase(nn.Module):
     """
     Deep Anomaly Detection on Attributed Networks
@@ -29,23 +28,42 @@ class GADNRBase(nn.Module):
     ----------
     in_dim : int
         Input dimension of model.
-    hid_dim :  int
-       Hidden dimension of model. Default: ``64``.
-    num_layers : int, optional
-       Total number of layers in model. A half (floor) of the layers
-       are for the encoder, the other half (ceil) of the layers are
-       for decoders. Default: ``4``.
+    hid_dim : int
+        Hidden dimension of model. Default: ``64``.
+    encoder_layers : int, optional
+        The number of layers for the graph encoder. Default: ``2``.
+    deg_dec_layers : int, optional
+        The number of layers for the node degree decoder. Default: ``4``.
+    fea_dec_layers : int, optional
+        The number of layers for the node feature decoder. Default: ``3``.
+    sample_size : int, optional
+        The number of samples for the neighborhood distribution.
+        Default: ``2``.
+    sample_time : int, optional
+        The number sample times to remove the noise during node feature and
+        neighborhood distribution reconstruction. Default: ``3``.
+    neighbor_num_list : List 
+        The number of neigbhors for each node used by the PNAConv model .
+        Default: ``None``.
+    lambda_loss1 : float, optional
+        The weight of the neighborhood reconstruction loss term.
+        Default: ``1e-2``.
+    lambda_loss2 : float, optional
+        The weight of the node feature reconstruction loss term.
+        Default: ``1e-3``.
+    lambda_loss3 : float, optional
+        The weight of the node degree reconstruction loss term.
+        Default: ``1e-4``.
     dropout : float, optional
        Dropout rate. Default: ``0.``.
     act : callable activation function or None, optional
        Activation function if not None.
        Default: ``torch.nn.functional.relu``.
-    sigmoid_s : bool, optional
-        Whether to apply sigmoid to the structure reconstruction.
-        Default: ``False``.
     backbone : torch.nn.Module, optional
         The backbone of the deep detector implemented in PyG.
-        Default: ``torch_geometric.nn.GCN``.
+        Default: ``torch_geometric.nn.GIN``.
+    device : string, optinal
+        The device used by the model. Default: ``cpu``.
     **kwargs : optional
         Additional arguments for the backbone.
     """
@@ -80,15 +98,8 @@ class GADNRBase(nn.Module):
         self.neighbor_num_list = neighbor_num_list
         self.tot_node = len(neighbor_num_list)
 
-        self.gaussian_mean = nn.Parameter(
-            torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                             0.5 / hid_dim))
-        self.gaussian_log_sigma = nn.Parameter(
-            torch.FloatTensor(sample_size, hid_dim).uniform_(-0.5 / hid_dim,
-                                                             0.5 / hid_dim))
-        self.m = torch.distributions.Normal(torch.zeros(sample_size, hid_dim),
-                                            torch.ones(sample_size, hid_dim))
-        
+        # the normal distrubution used during 
+        # neighborhood distribution recontruction
         self.m_batched = torch.distributions.Normal(torch.zeros(sample_size,
                                                                 self.tot_node,
                                                                 hid_dim),
@@ -96,25 +107,8 @@ class GADNRBase(nn.Module):
                                                        self.tot_node,
                                                        hid_dim))
 
-        self.m_h = torch.distributions.Normal(torch.zeros(sample_size,
-                                                          hid_dim),
-                                            50* torch.ones(sample_size,
-                                                           hid_dim))
-
-        # Before MLP Gaussian Means, and std
-
-        self.mlp_gaussian_mean = nn.Parameter(
-            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim,
-                                                0.5 / hid_dim))
-        self.mlp_gaussian_log_sigma = nn.Parameter(
-            torch.FloatTensor(hid_dim).uniform_(-0.5 / hid_dim,
-                                                0.5 / hid_dim))
-        self.mlp_m = torch.distributions.Normal(torch.zeros(hid_dim),
-                                                torch.ones(hid_dim))
-
-        self.mlp_mean = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
-        self.mlp_sigma = FNN_GAD_NR(hid_dim, hid_dim, hid_dim, 3)
-        self.softplus = nn.Softplus()
+        self.mlp_mean = nn.Linear(hid_dim, hid_dim)
+        self.mlp_sigma = nn.Linear(hid_dim, hid_dim)
 
         self.mean_agg = SAGEConv(hid_dim, hid_dim,
                                  aggr='mean', normalize = False)
@@ -133,8 +127,10 @@ class GADNRBase(nn.Module):
 
         # Decoder
         self.degree_decoder = FNN_GAD_NR(hid_dim, hid_dim, 1, deg_dec_layers)
+        # feature decoder does not reconstruct the raw feature 
+        # but the embeddings obtained by the ``self.linear``` layer 
         self.feature_decoder = FNN_GAD_NR(hid_dim, hid_dim,
-                                          in_dim, fea_dec_layers)
+                                          hid_dim, fea_dec_layers)
         self.degree_loss_func = nn.MSELoss()
         self.feature_loss_func = nn.MSELoss()
         self.pool = mp.Pool(4)
@@ -142,6 +138,8 @@ class GADNRBase(nn.Module):
         self.sample_size = sample_size 
         self.emb = None
 
+    # TODO this function is reserved for the mini-batch training
+    # which will be implemented later
     def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
         """ Sample neighbors from neighbor set, if the length of neighbor set
             less than sample size, then do the padding.
@@ -181,7 +179,7 @@ class GADNRBase(nn.Module):
             Edge index.
 
         Returns
-        -------
+        ----------
         h0 : torch.Tensor
             Node feature initial embeddings.
         l1 : torch.Tensor
@@ -190,7 +188,7 @@ class GADNRBase(nn.Module):
             Reconstructed node degree logits.
         feat_recon_list : List[torch.Tensor]
             Reconstructed node features.
-        neigh_recon_list :  List[torch.Tensor]
+        neigh_recon_list : List[torch.Tensor]
             Reconstructed neighbor distributions.
         """
         
@@ -219,7 +217,7 @@ class GADNRBase(nn.Module):
 
         return h0, l1, degree_logits, feat_recon_list, neigh_recon_list
 
-    def neigh_distr_recon(self, l1, h0, edge_index, device):
+    def neigh_distr_recon(self, l1, h0, edge_index):
         """Computing the target neighbor distribution and 
         reconstructed neighbor distribution
         """
@@ -240,7 +238,7 @@ class GADNRBase(nn.Module):
         generated_sigma = self.mlp_sigma(self_embedding)
 
         
-        std_z = self.m_batched.sample().to(device)
+        std_z = self.m_batched.sample().to(self.device)
         var = generated_mean + generated_sigma.exp() * std_z
         nhij = self.layer1_generator(var)
         
@@ -253,7 +251,7 @@ class GADNRBase(nn.Module):
         tot_nodes = l1.shape[0]
         h_dim = l1.shape[1]
         
-        single_eye = torch.eye(h_dim).to(device)
+        single_eye = torch.eye(h_dim).to(self.device)
         single_eye = single_eye.unsqueeze(dim=0)
         batch_eye = single_eye.repeat(tot_nodes,1,1)
         
@@ -283,12 +281,40 @@ class GADNRBase(nn.Module):
                   ground_truth_degree_matrix,
                   neighbor_dict):
         """
-        Obtain the dense adjacency matrix of the graph.
+        The loss function proposed in the GAD-NR paper.
 
         Parameters
         ----------
-        data : torch_geometric.data.Data
-            Input graph.
+        h0 : torch.Tensor
+            Node feature initial embeddings.
+        l1 : torch.Tensor
+            Node embedding after encoder.
+        degree_logits : torch.Tensor
+            Reconstructed node degree logits.
+        feat_recon_list : List[torch.Tensor]
+            Reconstructed node features.
+        neigh_recon_list : List[torch.Tensor]
+            Reconstructed neighbor distributions.
+        ground_truth_degree_matrix : torch.Tensor
+            The ground trurh degree of the input nodes.
+
+        Returns
+        ----------
+        loss : torch.Tensor
+            The total loss value used to backpropagate and update
+            the model parameters.
+        loss_per_node : torch.Tensor
+            The original loss value per node used to compute the 
+            decision score (outlier score) of the node.
+        h_loss_per_node :  torch.Tensor 
+            The neigborhood reconstruction loss value per node used to 
+            compute the adaptive decision score (outlier score) of the node. 
+        degree_loss_per_node :  torch.Tensor
+            The node degree reconstruction loss value per node used to 
+            compute the adaptive decision score (outlier score) of the node.       
+        feature_loss_per_node :  torch.Tensor
+            The node feature reconstruction loss value per node used to 
+            compute the adaptive decision score (outlier score) of the node. 
         """
         
         tot_nodes = l1.shape[0]
@@ -329,7 +355,7 @@ class GADNRBase(nn.Module):
         h_loss += torch.mean(loss_list)
         
         loss_list_per_node = torch.stack(loss_list_per_node)
-        h_loss_per_node = torch.mean(loss_list_per_node,dim=0)
+        h_loss_per_node = torch.mean(loss_list_per_node, dim=0)
         
         feature_loss_per_node = torch.mean(torch.stack(feature_loss_list),
                                            dim=0)
@@ -342,6 +368,7 @@ class GADNRBase(nn.Module):
         loss = self.lambda_loss1 * h_loss \
             + degree_loss * self.lambda_loss3 \
             + self.lambda_loss2 * feature_loss
+        
         loss_per_node = self.lambda_loss1 * h_loss_per_node \
             + degree_loss_per_node * self.lambda_loss3 \
                 + self.lambda_loss2 * feature_loss_per_node

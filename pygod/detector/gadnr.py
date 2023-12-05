@@ -6,7 +6,6 @@
 # License: BSD 2 clause
 
 import time
-
 import torch
 import torch.nn.functional as F
 from torch_geometric.loader import NeighborLoader
@@ -20,7 +19,12 @@ from ..utils import logger
 
 class GADNR(DeepDetector):
     """
-    XXXX
+    TODO finish the docstring
+
+    real_loss : bool, optional
+    Whether using the original loss proposed in the paper as the
+    decision score, if not, using the proposed adaptive decision score.
+    Default: ``False``.
     """
 
     def __init__(self,
@@ -34,6 +38,7 @@ class GADNR(DeepDetector):
                  lambda_loss1=0.01,
                  lambda_loss2=0.1,
                  lambda_loss3=0.8,
+                 real_loss=False,
                  lr=0.01,
                  epoch=500,
                  dropout=0.,
@@ -73,6 +78,7 @@ class GADNR(DeepDetector):
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
+        self.real_loss = real_loss
         self.neighbor_dict = None 
         self.neighbor_num_list = None
         self.verbose = verbose
@@ -80,7 +86,7 @@ class GADNR(DeepDetector):
     def process_graph(self, data):
         self.neighbor_dict, self.neighbor_num_list = \
                                                 GADNRBase.process_graph(data)
-        self.neighbor_num_list.to(self.device)
+        self.neighbor_num_list = self.neighbor_num_list.to(self.device)
 
     def init_model(self, **kwargs):
         if self.save_emb:
@@ -116,18 +122,35 @@ class GADNR(DeepDetector):
         return loss, loss_per_node.cpu().detach(), h_loss.cpu().detach(), \
             degree_loss.cpu().detach(), feature_loss.cpu().detach()
 
-    # TODO update the fit function documentation
     def fit(self,
             data,
             label=None,
-            real_loss=False,
             h_loss_weight=1.0,
-            degree_loss_weight=0.0,
-            feature_loss_weight=2.5
+            degree_loss_weight=0.,
+            feature_loss_weight=2.5,
+            loss_step=20
             ):
         """
-        Overwrite the base fit function since GAD-NR use 
+        Overwrite the base model fit function since GAD-NR uses 
         multiple personalized loss functions.
+        Parameters
+        ----------
+        data : torch_geometric.data.Data
+            Input graph.
+        label : torch.Tensor, optional
+            The optional outlier ground truth labels used for testing.
+            Default: ``None``.
+        h_loss_weight : float, optional
+            The weight of the neighborhood reconstruction loss term used in 
+            the adaptive decision score. Default: ``1.0``.
+        degree_loss_weight : float, optional
+            The weight of the node degree reconstruction loss term used in 
+            the adaptive decision score. Default: ``0.``.
+        feature_loss_weight : float, optional
+            The weight of the node feature reconstruction loss term used in 
+            the adaptive decision score. Default: ``2.5``.
+        loss_step : int, optional
+            The epoch interval to update the loss terms. Default: ``20``.
         """
 
         self.num_nodes, self.in_dim = data.x.shape
@@ -151,8 +174,7 @@ class GADNR(DeepDetector):
                                        weight_decay=self.weight_decay)
         
         min_loss = float('inf')
-        
-        arg_min_loss_per_node = None
+        self.arg_min_loss_per_node = None
 
         self.model.train()
         self.decision_score_ = torch.zeros(data.x.shape[0])
@@ -160,6 +182,9 @@ class GADNR(DeepDetector):
             start_time = time.time()
             epoch_loss = 0
             epoch_loss_per_node = torch.zeros(data.x.shape[0]) 
+            if epoch%loss_step==0:
+                self.model.lambda_loss2 = self.model.lambda_loss2 + 0.5
+                self.model.lambda_loss3 = self.model.lambda_loss3 / 2
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.n_id
@@ -167,10 +192,11 @@ class GADNR(DeepDetector):
                 loss, loss_per_node, h_loss, degree_loss, feature_loss = \
                                             self.forward_model(sampled_data)
                 
-                if real_loss:
+                if self.real_loss:
+                    # the orginal decision score from the loss
                     comp_loss = loss_per_node
                 else:
-                    # the adaptive loss
+                    # the adaptive decision score
                     h_loss_norm = h_loss / (torch.max(h_loss) - 
                                             torch.min(h_loss))
                     degree_loss_norm = degree_loss / \
@@ -181,7 +207,8 @@ class GADNR(DeepDetector):
                         + degree_loss_weight *  degree_loss_norm \
                             + feature_loss_weight * feature_loss_norm
                 
-                self.decision_score_[node_idx[:batch_size]] = comp_loss
+                self.decision_score_[node_idx[:batch_size]] = \
+                                                        comp_loss.squeeze(1)
 
                 if self.save_emb:
                     self.emb[node_idx[:batch_size]] = \
@@ -190,21 +217,19 @@ class GADNR(DeepDetector):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                
-                # TODO mean loss or total loss check
+
                 epoch_loss += loss.item() * batch_size
-                epoch_loss_per_node[node_idx[:batch_size]] = loss_per_node
+                epoch_loss_per_node[node_idx[:batch_size]] = \
+                                                    loss_per_node.squeeze(1)
             
             loss_value = epoch_loss / data.x.shape[0]
 
             if loss_value < min_loss:
                 min_loss = loss_value
-                arg_min_loss_per_node = epoch_loss_per_node
+                self.arg_min_loss_per_node = epoch_loss_per_node
             
             logger(epoch=epoch,
                    loss=loss_value,
-                   min_loss=min_loss,
-                   arg_min_loss_per_node=arg_min_loss_per_node,
                    score=self.decision_score_,
                    target=label,
                    time=time.time() - start_time,
@@ -213,3 +238,69 @@ class GADNR(DeepDetector):
 
         self._process_decision_score()
         return self
+    
+    def decision_function(self,
+                          data,
+                          label=None,
+                          h_loss_weight=1.0,
+                          degree_loss_weight=0.,
+                          feature_loss_weight=2.5):
+        """
+        Overwrite the decision fuction from the base model due to the unique
+        loss function and decision score from the GADNR paper.
+        The three loss term weights must be the same as the fit function if
+        ``real_loss`` is ``False``.
+        """
+        self.process_graph(data)
+        loader = NeighborLoader(data,
+                                self.num_neigh,
+                                batch_size=self.batch_size)
+
+        self.model.eval()
+        outlier_score = torch.zeros(data.x.shape[0])
+        if self.save_emb:
+            if type(self.hid_dim) is tuple:
+                self.emb = (torch.zeros(data.x.shape[0], self.hid_dim[0]),
+                            torch.zeros(data.x.shape[0], self.hid_dim[1]))
+            else:
+                self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
+        start_time = time.time()
+        for sampled_data in loader:
+            loss, loss_per_node, h_loss, degree_loss, feature_loss = \
+                            self.forward_model(sampled_data)
+            batch_size = sampled_data.batch_size
+            node_idx = sampled_data.n_id
+            if self.save_emb:
+                if type(self.hid_dim) is tuple:
+                    self.emb[0][node_idx[:batch_size]] = \
+                        self.model.emb[0][:batch_size].cpu()
+                    self.emb[1][node_idx[:batch_size]] = \
+                        self.model.emb[1][:batch_size].cpu()
+                else:
+                    self.emb[node_idx[:batch_size]] = \
+                        self.model.emb[:batch_size].cpu()
+
+            if self.real_loss:
+                # the orginal decision score from the loss
+                comp_loss = loss_per_node
+            else:
+                # the adaptive decision score
+                h_loss_norm = h_loss / (torch.max(h_loss) - 
+                                        torch.min(h_loss))
+                degree_loss_norm = degree_loss / \
+                    (torch.max(degree_loss) - torch.min(degree_loss))
+                feature_loss_norm = feature_loss / \
+                    (torch.max(feature_loss) - torch.min(feature_loss))
+                comp_loss = h_loss_weight * h_loss_norm \
+                    + degree_loss_weight *  degree_loss_norm \
+                        + feature_loss_weight * feature_loss_norm
+            
+            outlier_score[node_idx[:batch_size]] = comp_loss.squeeze(1)
+
+        logger(loss=loss.item() / data.x.shape[0],
+               score=outlier_score,
+               target=label,
+               time=time.time() - start_time,
+               verbose=self.verbose,
+               train=False)
+        return outlier_score
