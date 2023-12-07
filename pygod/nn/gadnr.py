@@ -154,13 +154,13 @@ class GADNRBase(nn.Module):
         self.sample_size = sample_size 
         self.emb = None
 
-    def sample_neighbors(self, indexes, neighbor_dict, gt_embeddings):
+    def sample_neighbors(self, input_id, neighbor_dict, gt_embeddings):
         """ Sample neighbors from neighbor set, if the length of neighbor set
             less than sample size, then do the padding.
         """
         sampled_embeddings_list = []
-        mark_len_list = []
-        for index in indexes:
+        mask_len_list = []
+        for index in input_id:
             sampled_embeddings = []
             neighbor_indexes = neighbor_dict[index]
             if len(neighbor_indexes) < self.sample_size:
@@ -177,9 +177,9 @@ class GADNRBase(nn.Module):
                     sampled_embeddings.append(torch.zeros(self.out_dim
                                                           ).tolist())
             sampled_embeddings_list.append(sampled_embeddings)
-            mark_len_list.append(mask_len)
+            mask_len_list.append(mask_len)
         
-        return sampled_embeddings_list, mark_len_list
+        return sampled_embeddings_list, mask_len_list
 
     def full_batch_neigh_recon(self, h1, h0, edge_index):
         """Computing the target neighbor distribution and 
@@ -235,23 +235,20 @@ class GADNRBase(nn.Module):
     
         return recon_info  
 
-    def mini_batch_neigh_recon(self,
-                               neighbor_dict,
-                               h1,
-                               h0):
+    def mini_batch_neigh_recon(self, h1, h0, input_id, neighbor_dict):
         """Computing the target neighbor distribution and 
         reconstructed neighbor distribution using mini_batch of the data
         and neigbor sampling.
         """
-        neighbor_indexes, gen_neighs, tar_neighs = [], [], []
+        gen_neighs, tar_neighs = [], [], []
         
-        for i, _ in enumerate(h1):
-            neighbor_indexes.append(i)
-        sampled_embeddings_list, _ = \
-            self.sample_neighbors(neighbor_indexes, neighbor_dict, h0)
-        for i, neighbor_embeddings1 in enumerate(sampled_embeddings_list):
+        sampled_embeddings_list, _ = self.sample_neighbors(input_id,
+                                                           neighbor_dict,
+                                                           h0)
+        for index, neighbor_embeddings in enumerate(sampled_embeddings_list):
             # Generating h^k_v, reparameterization trick
-            index = neighbor_indexes[i]
+            # the center node embeddings start from first row
+            # in the h1 embedding matrix
             mean = h1[index].repeat(self.sample_size, 1)
             mean = self.mlp_mean(mean)
             sigma = h1[index].repeat(self.sample_size, 1)
@@ -269,7 +266,7 @@ class GADNRBase(nn.Module):
             generated_neighbors = \
                 torch.unsqueeze(generated_neighbors, dim=0).to(self.device)
             target_neighbors = \
-                torch.unsqueeze(torch.FloatTensor(neighbor_embeddings1), 
+                torch.unsqueeze(torch.FloatTensor(neighbor_embeddings), 
                                 dim=0).to(self.device)
             
             gen_neighs.append(generated_neighbors)
@@ -280,7 +277,7 @@ class GADNRBase(nn.Module):
 
         return recon_info
 
-    def forward(self, x, edge_index, neighbor_dict):
+    def forward(self, x, edge_index, input_id=None, neighbor_dict=None):
         """
         Forward computation.
 
@@ -290,6 +287,17 @@ class GADNRBase(nn.Module):
             Input attribute embeddings.
         edge_index : torch.Tensor
             Edge index.
+        input_id : List
+            List of center node ids in the current batch. If ``input_id`` 
+            is not ``None``, the input data is a sampled mini_batch.
+            If ``input_id`` is ``None``, the input data is a full batch.
+            Default: ``None``.
+        neighbor_dict : Dict
+            Dictionary where nodes in current the batch as keys and their 
+            neighbor list as corresponding values. If ``neighbor_dict`` 
+            is not ``None``, the input data is a sampled mini_batch.
+            If ``neighbor_dict`` is ``None``, the input data is a full batch.
+            Default: ``None``.
 
         Returns
         ----------
@@ -311,11 +319,16 @@ class GADNRBase(nn.Module):
         # encode feature matrix
         h1 = self.shared_encoder(h0, edge_index)
         
-        # save embeddings
-        self.emb = h1
+        if input_id is None:
+            center_h1 = h1
+        else: # mini-batch mode
+            center_h1 = h1[input_id, :]
 
+        # save embeddings
+        self.emb = center_h1
+    
         # decode node degree
-        degree_logits = F.relu(self.degree_decoder(h1))
+        degree_logits = F.relu(self.degree_decoder(center_h1))
 
         # decode the node feature and neighbor distribution
         feat_recon_list = []
@@ -325,14 +338,15 @@ class GADNRBase(nn.Module):
             h0_prime = self.feature_decoder(h1)
             feat_recon_list.append(h0_prime)
             
-            if self.batch_size == 0: # full batch mode
+            if input_id is None: # full batch mode
                 neigh_recon_info = self.full_batch_neigh_recon(h1,
                                                                h0,
                                                                edge_index)
             else: # mini batch mode
-                neigh_recon_info = self.mini_batch_neigh_recon(neighbor_dict,
-                                                               h1,
-                                                               h0)
+                neigh_recon_info = self.mini_batch_neigh_recon(h1,
+                                                               h0,
+                                                               input_id,
+                                                               neighbor_dict)
             neigh_recon_list.append(neigh_recon_info)
 
         return h0, h1, degree_logits, feat_recon_list, neigh_recon_list
@@ -383,6 +397,8 @@ class GADNRBase(nn.Module):
         
         tot_nodes = h1.shape[0]
 
+
+        # TODO align the degree and feature reconstruction for minibatch
         # degree reconstruction loss
         ground_truth_degree_matrix = \
             torch.unsqueeze(ground_truth_degree_matrix, dim=1)
@@ -404,7 +420,8 @@ class GADNRBase(nn.Module):
             feature_loss_list.append(feature_losses_per_node)
             
             # neigbor distribution reconstruction loss
-            if self.batch_size == 0: # full batch neighbor reconsturction
+            if self.batch_size == tot_nodes:
+                # full batch neighbor reconsturction
                 det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
                                                         neigh_recon_list[t]
                 KL_loss = 0.5 * (torch.log(det_target_cov / 
@@ -456,7 +473,7 @@ class GADNRBase(nn.Module):
             degree_loss_per_node, feature_loss_per_node
 
     @staticmethod
-    def process_graph(self, data):
+    def process_graph(data):
         """
         Obtain the neighbor dictornary and number of neighbors per node list
 
@@ -464,6 +481,8 @@ class GADNRBase(nn.Module):
         ----------
         data : torch_geometric.data.Data
             Input graph.
+
+        TODO add return doctring
         """
         in_nodes = data.edge_index[0,:]
         out_nodes = data.edge_index[1,:]
