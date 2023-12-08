@@ -100,30 +100,32 @@ class GADNRBase(nn.Module):
         self.neigh_loss = neigh_loss
         self.device = device
 
-        self.neighbor_num_list = neighbor_num_list
-        self.tot_node = len(neighbor_num_list)
+        if neighbor_num_list is not None: # full batch mode
+            self.neighbor_num_list = neighbor_num_list
+            self.tot_node = len(neighbor_num_list)
 
-        # the normal distrubution used during 
-        # neighborhood distribution recontruction
-        self.m_fullbatch = torch.distributions.Normal(torch.zeros(sample_size,
-                                                                self.tot_node,
-                                                                hid_dim),
+            # the normal distrubution used during 
+            # neighborhood distribution recontruction
+            self.m_fullbatch = torch.distributions.Normal(
+                                            torch.zeros(sample_size,
+                                                        self.tot_node,
+                                                        hid_dim),
                                             torch.ones(sample_size,
                                                        self.tot_node,
                                                        hid_dim))
-        
-        self.m_minibatch = torch.distributions.Normal(torch.zeros(sample_size,
-                                                                  hid_dim),
-                                                      torch.ones(sample_size,
-                                                                 hid_dim))
+            self.mean_agg = SAGEConv(hid_dim, hid_dim,
+                                 aggr='mean', normalize = False)
+            self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],
+                               scalers=["identity"], deg=neighbor_num_list)
+        else: # mini batch mode
+            self.m_minibatch = torch.distributions.Normal(
+                                            torch.zeros(sample_size,
+                                                        hid_dim),
+                                            torch.ones(sample_size,
+                                                        hid_dim))
 
         self.mlp_mean = nn.Linear(hid_dim, hid_dim)
         self.mlp_sigma = nn.Linear(hid_dim, hid_dim)
-
-        self.mean_agg = SAGEConv(hid_dim, hid_dim,
-                                 aggr='mean', normalize = False)
-        self.std_agg = PNAConv(hid_dim, hid_dim, aggregators=["std"],
-                               scalers=["identity"], deg=neighbor_num_list)        
         self.mlp_gen = MLP_generator(hid_dim, hid_dim)
 
         # Encoder
@@ -154,7 +156,8 @@ class GADNRBase(nn.Module):
         self.sample_size = sample_size 
         self.emb = None
 
-    def sample_neighbors(self, input_id, neighbor_dict, gt_embeddings):
+    def sample_neighbors(self, input_id, neighbor_dict,
+                         id_mapping, gt_embeddings):
         """ Sample neighbors from neighbor set, if the length of neighbor set
             less than sample size, then do the padding.
         """
@@ -171,7 +174,8 @@ class GADNRBase(nn.Module):
                                                self.sample_size)
                 mask_len = self.sample_size
             for index in sample_indexes:
-                sampled_embeddings.append(gt_embeddings[index].tolist())
+                sampled_embeddings.append(gt_embeddings[
+                                            id_mapping[index]].tolist())
             if len(sampled_embeddings) < self.sample_size:
                 for _ in range(self.sample_size - len(sampled_embeddings)):
                     sampled_embeddings.append(torch.zeros(self.out_dim
@@ -235,15 +239,17 @@ class GADNRBase(nn.Module):
     
         return recon_info  
 
-    def mini_batch_neigh_recon(self, h1, h0, input_id, neighbor_dict):
+    def mini_batch_neigh_recon(self, h1, h0, input_id,
+                               neighbor_dict, id_mapping):
         """Computing the target neighbor distribution and 
         reconstructed neighbor distribution using mini_batch of the data
         and neigbor sampling.
         """
-        gen_neighs, tar_neighs = [], [], []
+        gen_neighs, tar_neighs = [], []
         
         sampled_embeddings_list, _ = self.sample_neighbors(input_id,
                                                            neighbor_dict,
+                                                           id_mapping,
                                                            h0)
         for index, neighbor_embeddings in enumerate(sampled_embeddings_list):
             # Generating h^k_v, reparameterization trick
@@ -277,7 +283,12 @@ class GADNRBase(nn.Module):
 
         return recon_info
 
-    def forward(self, x, edge_index, input_id=None, neighbor_dict=None):
+    def forward(self,
+                x,
+                edge_index,
+                input_id=None,
+                neighbor_dict=None,
+                id_mapping=None):
         """
         Forward computation.
 
@@ -293,10 +304,16 @@ class GADNRBase(nn.Module):
             If ``input_id`` is ``None``, the input data is a full batch.
             Default: ``None``.
         neighbor_dict : Dict
-            Dictionary where nodes in current the batch as keys and their 
+            Dictionary where nodes in the current batch as keys and their 
             neighbor list as corresponding values. If ``neighbor_dict`` 
             is not ``None``, the input data is a sampled mini_batch.
             If ``neighbor_dict`` is ``None``, the input data is a full batch.
+            Default: ``None``.
+        id_mapping : Dict
+            Dictionary where nodes in the urrent batch as keys and their
+            feature matrix id as the values. If ``id_mapping`` 
+            is not ``None``, the input data is a sampled mini_batch.
+            If ``id_mapping`` is ``None``, the input data is a full batch.
             Default: ``None``.
 
         Returns
@@ -320,9 +337,11 @@ class GADNRBase(nn.Module):
         h1 = self.shared_encoder(h0, edge_index)
         
         if input_id is None:
+            center_h0 = h0
             center_h1 = h1
         else: # mini-batch mode
-            center_h1 = h1[input_id, :]
+            center_h0 = h0[[id_mapping[i] for i in input_id], :]
+            center_h1 = h1[[id_mapping[i] for i in input_id], :]
 
         # save embeddings
         self.emb = center_h1
@@ -335,7 +354,7 @@ class GADNRBase(nn.Module):
         neigh_recon_list = []
         # sample multiple times to remove noises
         for _ in range(self.sample_time):
-            h0_prime = self.feature_decoder(h1)
+            h0_prime = self.feature_decoder(center_h1)
             feat_recon_list.append(h0_prime)
             
             if input_id is None: # full batch mode
@@ -346,10 +365,11 @@ class GADNRBase(nn.Module):
                 neigh_recon_info = self.mini_batch_neigh_recon(h1,
                                                                h0,
                                                                input_id,
-                                                               neighbor_dict)
+                                                               neighbor_dict,
+                                                               id_mapping)
             neigh_recon_list.append(neigh_recon_info)
 
-        return h0, h1, degree_logits, feat_recon_list, neigh_recon_list
+        return center_h0, h1, degree_logits, feat_recon_list, neigh_recon_list
 
     def loss_func(self,
                   h0,
@@ -397,8 +417,6 @@ class GADNRBase(nn.Module):
         
         tot_nodes = h1.shape[0]
 
-
-        # TODO align the degree and feature reconstruction for minibatch
         # degree reconstruction loss
         ground_truth_degree_matrix = \
             torch.unsqueeze(ground_truth_degree_matrix, dim=1)
@@ -431,13 +449,14 @@ class GADNRBase(nn.Module):
                 local_index_loss = torch.mean(KL_loss)
                 local_index_loss_per_node = KL_loss
             else: # mini batch neighbor reconstruction
+                local_index_loss = 0
                 local_index_loss_per_node = []
                 gen_neighs, tar_neighs = neigh_recon_list[t] 
                 for generated_neighbors, target_neighbors in \
-                                zip(gen_neighs, tar_neighs):
+                                                zip(gen_neighs, tar_neighs):
                     temp_loss = self.neighbor_loss(generated_neighbors,
-                                                target_neighbors,
-                                                self.device)
+                                                   target_neighbors,
+                                                   self.device)
                     local_index_loss += temp_loss
                     local_index_loss_per_node.append(temp_loss)
                                         
@@ -457,9 +476,9 @@ class GADNRBase(nn.Module):
                                            dim=0)
         feature_loss += torch.mean(torch.stack(feature_loss_list))
                 
-        h_loss_per_node = h_loss_per_node.reshape(tot_nodes,1)
-        degree_loss_per_node = degree_loss_per_node.reshape(tot_nodes,1)
-        feature_loss_per_node = feature_loss_per_node.reshape(tot_nodes,1)
+        h_loss_per_node = h_loss_per_node.reshape(self.batch_size,1)
+        degree_loss_per_node = degree_loss_per_node.reshape(self.batch_size,1)
+        feature_loss_per_node = feature_loss_per_node.reshape(self.batch_size,1)
         
         loss = self.lambda_loss1 * h_loss \
             + degree_loss * self.lambda_loss3 \
@@ -473,7 +492,7 @@ class GADNRBase(nn.Module):
             degree_loss_per_node, feature_loss_per_node
 
     @staticmethod
-    def process_graph(data):
+    def process_graph(data, input_id=None):
         """
         Obtain the neighbor dictornary and number of neighbors per node list
 
@@ -481,22 +500,39 @@ class GADNRBase(nn.Module):
         ----------
         data : torch_geometric.data.Data
             Input graph.
+        input_id : List
+            List of center node ids in the current batch. If ``input_id`` 
+            is not ``None``, the input data is a sampled mini_batch.
+            If ``input_id`` is ``None``, the input data is a full batch.
+            Default: ``None``.
 
         TODO add return doctring
         """
-        in_nodes = data.edge_index[0,:]
-        out_nodes = data.edge_index[1,:]
+
+        out_nodes = data.edge_index[0,:]
+        in_nodes = data.edge_index[1,:]
+        id_mapping = {}
+        
+        if input_id is None: # full batch of the data
+            input_id = torch.unique(data.edge_index).tolist()
+        else:  # reindexing the node id for mini-batch
+            for edge_id, node_id in enumerate(data.n_id.tolist()):
+                id_mapping[node_id] = edge_id
+            in_nodes = [data.n_id[i] for i in in_nodes]
+            out_nodes = [data.n_id[i] for i in out_nodes]
 
         neighbor_dict = {}
         for in_node, out_node in zip(in_nodes, out_nodes):
-            if in_node.item() not in neighbor_dict:
-                neighbor_dict[in_node.item()] = []
-            neighbor_dict[in_node.item()].append(out_node.item())
+            if in_node.item() in input_id:
+                if in_node.item() not in neighbor_dict:                                
+                    neighbor_dict[in_node.item()] = []
+                neighbor_dict[in_node.item()].append(out_node.item())
 
         neighbor_num_list = []
-        for i in neighbor_dict:
-            neighbor_num_list.append(len(neighbor_dict[i]))
+        for i in input_id:
+            if i in neighbor_dict:
+                neighbor_num_list.append(len(neighbor_dict[i]))
         
         neighbor_num_list = torch.tensor(neighbor_num_list)
 
-        return neighbor_dict, neighbor_num_list
+        return neighbor_dict, neighbor_num_list, id_mapping

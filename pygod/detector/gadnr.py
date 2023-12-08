@@ -82,11 +82,22 @@ class GADNR(DeepDetector):
         self.lambda_loss3 = lambda_loss3
         self.real_loss = real_loss
         self.neighbor_num_list = None
+        self.neighbor_dict = None
+        self.id_mapping = None
         self.verbose = verbose
 
     def process_graph(self, data):
-        _, self.neighbor_num_list = GADNRBase.process_graph(data)
-        self.neighbor_num_list = self.neighbor_num_list.to(self.device)
+        if self.batch_size != data.x.shape[0]: # mini-batch training
+            neighbor_dict, neighbor_num_list, id_mapping = \
+                                GADNRBase.process_graph(data,
+                                                        data.input_id.tolist())
+        else:
+            neighbor_dict, neighbor_num_list, id_mapping = \
+                                GADNRBase.process_graph(data)
+
+        self.neighbor_num_list = neighbor_num_list.to(self.device)
+        self.neighbor_dict = neighbor_dict
+        self.id_mapping = id_mapping
 
     def init_model(self, **kwargs):
         if self.save_emb:
@@ -108,16 +119,13 @@ class GADNR(DeepDetector):
                          device=self.device).to(self.device)
 
     def forward_model(self, data):
-        
         if 'input_id' in data: # mini-batch training
-            neighbor_dict, neighbor_num_list = GADNRBase.process_graph(data)
-            # TODO rebuild the neighbor degree list
-            self.neighbor_num_list = neighbor_num_list 
             h0, l1, degree_logits, feat_recon_list, neigh_recon_list = \
-                                                self.model(data.x,
-                                                           data.edge_index,
-                                                           data.input_id,
-                                                           neighbor_dict)
+                                            self.model(data.x,
+                                                        data.edge_index,
+                                                        data.input_id.tolist(),
+                                                        self.neighbor_dict,
+                                                        self.id_mapping)
         else: # full batch training
             h0, l1, degree_logits, feat_recon_list, neigh_recon_list = \
                                                 self.model(data.x,
@@ -192,10 +200,10 @@ class GADNR(DeepDetector):
         """
 
         self.num_nodes, self.in_dim = data.x.shape
-        self.process_graph(data)
-        if self.batch_size == 0:
+        if self.batch_size == 0: # full batch training
             self.batch_size = data.x.shape[0]
-        else:
+            self.process_graph(data)
+        else: # mini batch training
             loader = NeighborLoader(data,
                                     self.num_neigh,
                                     batch_size=self.batch_size)
@@ -253,6 +261,7 @@ class GADNR(DeepDetector):
                 for sampled_data in loader:
                     batch_size = sampled_data.batch_size
                     node_idx = sampled_data.n_id
+                    self.process_graph(sampled_data)
 
                     loss, loss_per_node, h_loss, degree_loss, feature_loss = \
                                             self.forward_model(sampled_data)
