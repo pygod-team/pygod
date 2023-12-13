@@ -41,9 +41,7 @@ class GADNRBase(nn.Module):
     sample_time : int, optional
         The number sample times to remove the noise during node feature and
         neighborhood distribution reconstruction. Default: ``3``.
-    batch_size : int, optional
-        Minibatch size, 0 for full batch training. Default: ``0``.
-    neighbor_num_list : List 
+    neighbor_num_list : List, optional 
         The number of neigbhors for each node used by the PNAConv model .
         Default: ``None``.
     lambda_loss1 : float, optional
@@ -77,7 +75,6 @@ class GADNRBase(nn.Module):
                  fea_dec_layers=3,
                  sample_size=2,
                  sample_time=3,
-                 batch_size=0,
                  neighbor_num_list=None,
                  neigh_loss='KL',
                  lambda_loss1=1e-2,
@@ -93,7 +90,6 @@ class GADNRBase(nn.Module):
         self.linear = nn.Linear(in_dim, hid_dim)
         self.out_dim = hid_dim
         self.sample_time = sample_time
-        self.batch_size = batch_size
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
@@ -247,10 +243,11 @@ class GADNRBase(nn.Module):
         """
         gen_neighs, tar_neighs = [], []
         
-        sampled_embeddings_list, _ = self.sample_neighbors(input_id,
-                                                           neighbor_dict,
-                                                           id_mapping,
-                                                           h0)
+        sampled_embeddings_list, mask_len_list = \
+                                        self.sample_neighbors(input_id,
+                                                              neighbor_dict,
+                                                              id_mapping,
+                                                              h0)
         for index, neighbor_embeddings in enumerate(sampled_embeddings_list):
             # Generating h^k_v, reparameterization trick
             # the center node embeddings start from first row
@@ -279,7 +276,7 @@ class GADNRBase(nn.Module):
             tar_neighs.append(target_neighbors)
         
         # the information needed for loss computation
-        recon_info = [gen_neighs, tar_neighs]
+        recon_info = [gen_neighs, tar_neighs, mask_len_list]
 
         return recon_info
 
@@ -415,6 +412,7 @@ class GADNRBase(nn.Module):
             compute the adaptive decision score (outlier score) of the node. 
         """
         
+        batch_size = h0.shape[0]
         tot_nodes = h1.shape[0]
 
         # degree reconstruction loss
@@ -438,7 +436,7 @@ class GADNRBase(nn.Module):
             feature_loss_list.append(feature_losses_per_node)
             
             # neigbor distribution reconstruction loss
-            if self.batch_size == tot_nodes:
+            if batch_size == tot_nodes:
                 # full batch neighbor reconsturction
                 det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
                                                         neigh_recon_list[t]
@@ -451,11 +449,12 @@ class GADNRBase(nn.Module):
             else: # mini batch neighbor reconstruction
                 local_index_loss = 0
                 local_index_loss_per_node = []
-                gen_neighs, tar_neighs = neigh_recon_list[t] 
-                for generated_neighbors, target_neighbors in \
-                                                zip(gen_neighs, tar_neighs):
+                gen_neighs, tar_neighs, mask_lens = neigh_recon_list[t] 
+                for generated_neighbors, target_neighbors, mask_len in \
+                                        zip(gen_neighs, tar_neighs, mask_lens):
                     temp_loss = self.neighbor_loss(generated_neighbors,
                                                    target_neighbors,
+                                                   mask_len,
                                                    self.device)
                     local_index_loss += temp_loss
                     local_index_loss_per_node.append(temp_loss)
@@ -476,9 +475,9 @@ class GADNRBase(nn.Module):
                                            dim=0)
         feature_loss += torch.mean(torch.stack(feature_loss_list))
                 
-        h_loss_per_node = h_loss_per_node.reshape(self.batch_size,1)
-        degree_loss_per_node = degree_loss_per_node.reshape(self.batch_size,1)
-        feature_loss_per_node = feature_loss_per_node.reshape(self.batch_size,1)
+        h_loss_per_node = h_loss_per_node.reshape(batch_size, 1)
+        degree_loss_per_node = degree_loss_per_node.reshape(batch_size, 1)
+        feature_loss_per_node = feature_loss_per_node.reshape(batch_size, 1)
         
         loss = self.lambda_loss1 * h_loss \
             + degree_loss * self.lambda_loss3 \

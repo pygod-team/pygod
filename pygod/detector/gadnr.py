@@ -84,16 +84,18 @@ class GADNR(DeepDetector):
         self.neighbor_num_list = None
         self.neighbor_dict = None
         self.id_mapping = None
+        self.tot_nodes = 0
         self.verbose = verbose
 
     def process_graph(self, data):
-        if self.batch_size != data.x.shape[0]: # mini-batch training
+        if self.batch_size != data.x.shape[0]: # mini-batch
             neighbor_dict, neighbor_num_list, id_mapping = \
                                 GADNRBase.process_graph(data,
                                                         data.input_id.tolist())
-        else:
+        else: # full batch
             neighbor_dict, neighbor_num_list, id_mapping = \
                                 GADNRBase.process_graph(data)
+            self.tot_nodes = data.x.shape[0]
 
         self.neighbor_num_list = neighbor_num_list.to(self.device)
         self.neighbor_dict = neighbor_dict
@@ -108,9 +110,9 @@ class GADNR(DeepDetector):
                          deg_dec_layers=self.deg_dec_layers,
                          fea_dec_layers=self.fea_dec_layers,
                          sample_size=self.sample_size,
-                         sample_time=self.sample_time,
-                         batch_size=self.batch_size, 
+                         sample_time=self.sample_time, 
                          neighbor_num_list=self.neighbor_num_list,
+                         tot_nodes=self.tot_nodes,
                          neigh_loss=self.neigh_loss,
                          lambda_loss1=self.lambda_loss1,
                          lambda_loss2=self.lambda_loss2,
@@ -312,18 +314,20 @@ class GADNR(DeepDetector):
                           h_loss_weight=1.0,
                           degree_loss_weight=0.,
                           feature_loss_weight=2.5):
-        """
-        TODO update the full batch and mini batch inference 
+        """ 
         Overwrite the decision fuction from the base model due to the unique
         loss function and decision score from the GADNR paper.
         The three loss term weights must be the same as the fit function if
         ``real_loss`` is ``False``.
         """
-        self.process_graph(data)
-        loader = NeighborLoader(data,
-                                self.num_neigh,
-                                batch_size=self.batch_size)
-
+        
+        if self.batch_size == 0: # full batch inference
+            self.batch_size = data.x.shape[0]
+            self.process_graph(data)
+        else: # mini batch inference
+            loader = NeighborLoader(data,
+                                    self.num_neigh,
+                                    batch_size=self.batch_size)
         self.model.eval()
         outlier_score = torch.zeros(data.x.shape[0])
         if self.save_emb:
@@ -333,37 +337,34 @@ class GADNR(DeepDetector):
             else:
                 self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
-        for sampled_data in loader:
+        if self.batch_size == data.x.shape[0]: # full batch inference
             loss, loss_per_node, h_loss, degree_loss, feature_loss = \
-                            self.forward_model(sampled_data)
-            batch_size = sampled_data.batch_size
-            node_idx = sampled_data.n_id
+                                            self.forward_model(data) 
+            comp_loss = self.comp_decision_score(loss_per_node,
+                                                 h_loss,
+                                                 degree_loss,
+                                                 feature_loss,
+                                                 h_loss_weight,
+                                                 degree_loss_weight,
+                                                 feature_loss_weight)
+            outlier_score = comp_loss.squeeze(1)
             if self.save_emb:
-                if type(self.hid_dim) is tuple:
-                    self.emb[0][node_idx[:batch_size]] = \
-                        self.model.emb[0][:batch_size].cpu()
-                    self.emb[1][node_idx[:batch_size]] = \
-                        self.model.emb[1][:batch_size].cpu()
-                else:
-                    self.emb[node_idx[:batch_size]] = \
-                        self.model.emb[:batch_size].cpu()
-
-            if self.real_loss:
-                # the orginal decision score from the loss
-                comp_loss = loss_per_node
-            else:
-                # the adaptive decision score
-                h_loss_norm = h_loss / (torch.max(h_loss) - 
-                                        torch.min(h_loss))
-                degree_loss_norm = degree_loss / \
-                    (torch.max(degree_loss) - torch.min(degree_loss))
-                feature_loss_norm = feature_loss / \
-                    (torch.max(feature_loss) - torch.min(feature_loss))
-                comp_loss = h_loss_weight * h_loss_norm \
-                    + degree_loss_weight *  degree_loss_norm \
-                        + feature_loss_weight * feature_loss_norm
-            
-            outlier_score[node_idx[:batch_size]] = comp_loss.squeeze(1)
+                self.emb = self.model.emb.cpu()
+        else: # mini batch inference
+            for sampled_data in loader:
+                batch_size = sampled_data.batch_size
+                node_idx = sampled_data.n_id
+                self.process_graph(sampled_data)
+                loss, loss_per_node, h_loss, degree_loss, feature_loss = \
+                                        self.forward_model(sampled_data)
+                comp_loss = self.comp_decision_score(loss_per_node,
+                                                     h_loss,
+                                                     degree_loss,
+                                                     feature_loss,
+                                                     h_loss_weight,
+                                                     degree_loss_weight,
+                                                     feature_loss_weight)
+                outlier_score[node_idx[:batch_size]] = comp_loss.squeeze(1)
 
         logger(loss=loss.item() / data.x.shape[0],
                score=outlier_score,

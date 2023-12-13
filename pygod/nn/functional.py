@@ -98,15 +98,15 @@ def double_recon_loss(x,
     return score
 
 
-def KL_neighbor_loss(predictions, targets, device):
+def KL_neighbor_loss(predictions, targets, mask_len, device):
     """
     The local neighor distribution KL divergence loss used in GAD-NR.
     Source:
     https://github.com/Graph-COM/GAD-NR/blob/master/GAD-NR_inj_cora.ipynb
     """
     
-    x1 = predictions.squeeze().cpu().detach()
-    x2 = targets.squeeze().cpu().detach()
+    x1 = predictions.squeeze().cpu().detach()[:mask_len, :]
+    x2 = targets.squeeze().cpu().detach()[:mask_len, :]
     
     mean_x1 = x1.mean(0)
     mean_x2 = x2.mean(0)
@@ -120,7 +120,8 @@ def KL_neighbor_loss(predictions, targets, device):
     eye = torch.eye(h_dim)
     cov_x1 = cov_x1 + eye
     cov_x2 = cov_x2 + eye
-    
+
+    # TODO figure out the extreme large value for x1 on Enron
     KL_loss = 0.5 * (math.log(torch.det(cov_x1) / torch.det(cov_x2)) - h_dim
     + torch.trace(torch.inverse(cov_x2).matmul(cov_x1)) + (mean_x2 - 
     mean_x1).reshape(1,-1).matmul(torch.inverse(cov_x2)).matmul(mean_x2 - 
@@ -128,24 +129,23 @@ def KL_neighbor_loss(predictions, targets, device):
     KL_loss = KL_loss.to(device)
     return KL_loss
 
-def W2_neighbor_loss(predictions, targets, device):
+def W2_neighbor_loss(predictions, targets, mask_len, device):
     """
     The local neighor distribution W2 loss used in GAD-NR.
     Source:
     https://github.com/Graph-COM/GAD-NR/blob/master/GAD-NR_inj_cora.ipynb
     """
     
-    x1 = predictions.squeeze().cpu().detach()
-    x2 = targets.squeeze().cpu().detach()
+    x1 = predictions.squeeze().cpu().detach()[:mask_len, :]
+    x2 = targets.squeeze().cpu().detach()[:mask_len, :]
     
     mean_x1 = x1.mean(0)
     mean_x2 = x2.mean(0)
 
     nn = x1.shape[0]
     
-    cov_x1 = (x1-mean_x1).transpose(1,0).matmul(x1-mean_x1) / (nn-1)
-    cov_x2 = (x2-mean_x2).transpose(1,0).matmul(x2-mean_x2) / (nn-1)
-    
+    cov_x1 = (x1-mean_x1).transpose(1,0).matmul(x1-mean_x1) / max((nn-1),1)
+    cov_x2 = (x2-mean_x2).transpose(1,0).matmul(x2-mean_x2) / max((nn-1),1)
 
     W2_loss = torch.square(mean_x1-mean_x2).sum() 
     + torch.trace(cov_x1 + cov_x2 
