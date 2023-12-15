@@ -109,18 +109,20 @@ class OCGNNBase(nn.Module):
             Outlier scores of shape :math:`N` with gradients.
         """
         if is_train:
-            with torch.no_grad():
-                self.c = torch.mean(emb, 0)
-                self.c[(abs(self.c) < self.eps) & (self.c < 0)] = -self.eps
-                self.c[(abs(self.c) < self.eps) & (self.c > 0)] = self.eps
+            if self.warmup > 0:
+                with torch.no_grad():
+                    self.c = torch.mean(emb, 0)
+                    self.c[(abs(self.c) < self.eps) & (self.c < 0)] = -self.eps
+                    self.c[(abs(self.c) < self.eps) & (self.c > 0)] = self.eps
 
         dist = torch.sum(torch.pow(emb - self.c, 2), 1)
         score = dist - self.r ** 2
         loss = self.r ** 2 + 1 / self.beta * torch.mean(torch.relu(score))
 
         if is_train:
-            with torch.no_grad():
-                self.r = torch.quantile(torch.sqrt(dist), 1 - self.beta)
+            if self.warmup > 0:
+                with torch.no_grad():
+                    self.r = torch.quantile(torch.sqrt(dist), 1 - self.beta)
 
         # if self.warmup > 0:
         #     with torch.no_grad():

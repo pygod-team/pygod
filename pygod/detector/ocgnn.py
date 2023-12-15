@@ -9,7 +9,7 @@ from torch_geometric.nn import GCN
 
 from . import DeepDetector
 from ..nn import OCGNNBase
-
+import math
 
 class OCGNN(DeepDetector):
     """
@@ -58,7 +58,7 @@ class OCGNN(DeepDetector):
         The weight between the reconstruction loss and radius.
         Default: ``0.5``.
     warmup : int, optional
-        The number of epochs for warm-up training. Default: ``2``.
+        The number of epochs for warm-up training. Default: ``inf``.
     eps : float, optional
         The slack variable. Default: ``0.001``.
     verbose : int, optional
@@ -109,7 +109,7 @@ class OCGNN(DeepDetector):
                  batch_size=0,
                  num_neigh=-1,
                  beta=0.5,
-                 warmup=2,
+                 warmup=math.inf,
                  eps=0.001,
                  verbose=0,
                  save_emb=False,
