@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GCN
-
+import math
 
 class OCGNNBase(nn.Module):
     """
@@ -35,7 +35,7 @@ class OCGNNBase(nn.Module):
         The weight between the reconstruction loss and radius.
         Default: ``0.5``.
     warmup : int, optional
-        The number of epochs for warm-up training. Default: ``2``.
+        The number of epochs for warm-up training. Default: ``inf``.
     eps : float, optional
         The slack variable. Default: ``0.001``.
     **kwargs
@@ -50,7 +50,7 @@ class OCGNNBase(nn.Module):
                  act=torch.nn.functional.relu,
                  backbone=GCN,
                  beta=0.5,
-                 warmup=2,
+                 warmup=math.inf,
                  eps=0.001,
                  **kwargs):
         super(OCGNNBase, self).__init__()
@@ -123,13 +123,5 @@ class OCGNNBase(nn.Module):
             if self.warmup > 0:
                 with torch.no_grad():
                     self.r = torch.quantile(torch.sqrt(dist), 1 - self.beta)
-
-        # if self.warmup > 0:
-        #     with torch.no_grad():
-        #         self.warmup -= 1
-        #         self.r = torch.quantile(torch.sqrt(dist), 1 - self.beta)
-        #         self.c = torch.mean(emb, 0)
-        #         self.c[(abs(self.c) < self.eps) & (self.c < 0)] = -self.eps
-        #         self.c[(abs(self.c) < self.eps) & (self.c > 0)] = self.eps
 
         return loss, score
