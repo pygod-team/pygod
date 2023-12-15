@@ -155,13 +155,16 @@ class OCGNN(DeepDetector):
                          backbone=self.backbone,
                          **kwargs).to(self.device)
 
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
         batch_size = data.batch_size
 
         x = data.x.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
         emb = self.model(x, edge_index)
-        loss, score = self.model.loss_func(emb[:batch_size])
+        if 'active_mask' in data.keys():
+            loss, score = self.model.loss_func(emb[:batch_size][data.active_mask, :], is_train=is_train)
+        else:
+            loss, score = self.model.loss_func(emb[:batch_size], is_train=is_train)
 
         return loss, score.detach().cpu()

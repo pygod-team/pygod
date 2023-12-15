@@ -473,15 +473,23 @@ class DeepDetector(Detector, ABC):
                     else:
                         self.emb[node_idx[:batch_size]] = \
                             self.model.emb[:batch_size].cpu()
-                self.decision_score_[node_idx[:batch_size]] = score
+                if 'active_mask' in data.keys():
+                    self.decision_score_[node_idx[:batch_size][data.active_mask]] = score
+                else:
+                    self.decision_score_[node_idx[:batch_size]] = score
 
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-
-            loss_value = epoch_loss / data.x.shape[0]
+            if 'active_mask' in data.keys():
+                loss_value = epoch_loss / data.x[data.active_mask, :].shape[0]
+            else:
+                loss_value = epoch_loss / data.x.shape[0]
             if self.gan:
-                loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
+                if 'active_mask' in data.keys():
+                    loss_value = (self.epoch_loss_g / data.x[data.active_mask, :].shape[0], loss_value)
+                else:
+                    loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
             logger(epoch=epoch,
                    loss=loss_value,
                    score=self.decision_score_,
@@ -489,7 +497,8 @@ class DeepDetector(Detector, ABC):
                    time=time.time() - start_time,
                    verbose=self.verbose,
                    train=True)
-
+        if 'active_mask' in data.keys():
+            self.decision_score_ = self.decision_score_[data.active_mask]
         self._process_decision_score()
         return self
 
@@ -510,7 +519,7 @@ class DeepDetector(Detector, ABC):
                 self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
         for sampled_data in loader:
-            loss, score = self.forward_model(sampled_data)
+            loss, score = self.forward_model(sampled_data, is_train=False)
             batch_size = sampled_data.batch_size
             node_idx = sampled_data.n_id
             if self.save_emb:
@@ -522,15 +531,26 @@ class DeepDetector(Detector, ABC):
                 else:
                     self.emb[node_idx[:batch_size]] = \
                         self.model.emb[:batch_size].cpu()
-
-            outlier_score[node_idx[:batch_size]] = score
-
-        logger(loss=loss.item() / data.x.shape[0],
-               score=outlier_score,
-               target=label,
-               time=time.time() - start_time,
-               verbose=self.verbose,
-               train=False)
+            if 'active_mask' in data.keys():
+                outlier_score[node_idx[:batch_size][data.active_mask]] = score
+            else:
+                outlier_score[node_idx[:batch_size]] = score
+        if 'active_mask' in data.keys():
+            logger(loss=loss.item() / data.x[data.active_mask, :].shape[0],
+                   score=outlier_score,
+                   target=label,
+                   time=time.time() - start_time,
+                   verbose=self.verbose,
+                   train=False)
+        else:
+            logger(loss=loss.item() / data.x.shape[0],
+                   score=outlier_score,
+                   target=label,
+                   time=time.time() - start_time,
+                   verbose=self.verbose,
+                   train=False)
+        if 'active_mask' in data.keys():
+            outlier_score = outlier_score[data.active_mask]
         return outlier_score
 
     def predict(self,
@@ -629,7 +649,7 @@ class DeepDetector(Detector, ABC):
         """
 
     @abstractmethod
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
         """
         Forward pass of the neural network detector.
 
