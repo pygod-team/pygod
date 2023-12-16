@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch_geometric.nn import GIN, SAGEConv, PNAConv
+from torch_geometric.utils import to_undirected, add_self_loops
 
 from .nn import MLP_generator, FNN_GAD_NR
 from .functional import KL_neighbor_loss, W2_neighbor_loss
@@ -41,9 +42,11 @@ class GADNRBase(nn.Module):
     sample_time : int, optional
         The number sample times to remove the noise during node feature and
         neighborhood distribution reconstruction. Default: ``3``.
-    neighbor_num_list : List, optional 
-        The number of neigbhors for each node used by the PNAConv model .
-        Default: ``None``.
+    neighbor_num_list : torch.Tensor
+        The node degree tensor used by the PNAConv model.
+    neigh_loss : str, optional
+        The neighbor reconstruction loss. ``KL`` represents the KL divergence
+        loss, ``W2`` represents the W2 loss. Defualt: ``KL``.
     lambda_loss1 : float, optional
         The weight of the neighborhood reconstruction loss term.
         Default: ``1e-2``.
@@ -205,8 +208,8 @@ class GADNRBase(nn.Module):
         var = generated_mean + generated_sigma.exp() * std_z
         nhij = self.mlp_gen(var)
         
-        generated_mean = torch.mean(nhij,dim=0)
-        generated_std = torch.std(nhij,dim=0)
+        generated_mean = torch.mean(nhij, dim=0)
+        generated_std = torch.std(nhij, dim=0)
         generated_cov = torch.bmm(generated_std.unsqueeze(dim=-1),
                                   generated_std.unsqueeze(dim=1))/ \
                                   self.sample_size
@@ -307,7 +310,7 @@ class GADNRBase(nn.Module):
             If ``neighbor_dict`` is ``None``, the input data is a full batch.
             Default: ``None``.
         id_mapping : Dict
-            Dictionary where nodes in the urrent batch as keys and their
+            Dictionary where nodes in the current batch as keys and their
             feature matrix id as the values. If ``id_mapping`` 
             is not ``None``, the input data is a sampled mini_batch.
             If ``id_mapping`` is ``None``, the input data is a full batch.
@@ -505,8 +508,28 @@ class GADNRBase(nn.Module):
             If ``input_id`` is ``None``, the input data is a full batch.
             Default: ``None``.
 
-        TODO add return doctring
+        Returns
+        ----------
+        data : torch_geometric.data.Data
+            Preprocessed input graph.
+        neighbor_dict : Dict
+            Dictionary where nodes in the input_id list as keys and their 
+            neighbor list as corresponding values.
+        neighbor_num_list : torch.Tensor
+            A n*1 tensor where its value represents the corresponding node
+            degree for the nodes in input_id list.
+        id_mapping : Dict
+            Dictionary where nodes in the input_id list as keys and their
+            feature matrix id as the values.
         """
+        
+        # row normalize
+        data.x = F.normalize(data.x, p=1, dim=1)
+        # convert to undirected graph
+        data.edge_index = to_undirected(data.edge_index)
+        # add self loops
+        new_edge_index, _= add_self_loops(data.edge_index)
+        data.edge_index = new_edge_index 
 
         out_nodes = data.edge_index[0,:]
         in_nodes = data.edge_index[1,:]
@@ -534,4 +557,4 @@ class GADNRBase(nn.Module):
         
         neighbor_num_list = torch.tensor(neighbor_num_list)
 
-        return neighbor_dict, neighbor_num_list, id_mapping
+        return data, neighbor_dict, neighbor_num_list, id_mapping
