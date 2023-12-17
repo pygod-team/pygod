@@ -19,9 +19,9 @@ from ..utils import logger
 
 class GADNR(DeepDetector):
     """
-    The GAD-NR model
+    The GAD-NR model.
     
-    See XXXX (add citations)
+    See :cite:`roy2023gadnr` for details.
     
     Parameters
     ----------

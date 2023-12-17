@@ -14,15 +14,15 @@ from .functional import KL_neighbor_loss, W2_neighbor_loss
 
 class GADNRBase(nn.Module):
     """
-    Deep Anomaly Detection on Attributed Networks
+    GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction
 
-    DOMINANT is an anomaly detector consisting of a shared graph
-    convolutional encoder, a structure reconstruction decoder, and an
-    attribute reconstruction decoder. The reconstruction mean squared
-    error of the decoders are defined as structure anomaly score and
-    attribute anomaly score, respectively.
+    GAD-NR, is a new type of GAE based on neighborhood reconstruction
+    for graph anomaly detection. GAD-NR aims to reconstruct the entire
+    neighborhood (including local structure, self attributes, and 
+    neighbors attributes) around a node based on the corresponding node
+    representation.
 
-    See :cite:`ding2019deep` for details.
+    See :cite:`roy2023gadnr` for details.
 
     Parameters
     ----------
