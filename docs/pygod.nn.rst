@@ -12,6 +12,8 @@ pygod.nn
     ~pygod.nn.DOMINANTBase
     ~pygod.nn.DONEBase
     ~pygod.nn.GAANBase
+    ~pygod.nn.GADNRBase
     ~pygod.nn.GAEBase
     ~pygod.nn.GUIDEBase
     ~pygod.nn.OCGNNBase
+    

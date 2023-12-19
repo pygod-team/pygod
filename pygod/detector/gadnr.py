@@ -6,10 +6,11 @@
 # License: BSD 2 clause
 
 import time
+import warnings
 import torch
 import torch.nn.functional as F
 from torch_geometric.loader import NeighborLoader
-from torch_geometric.nn import GIN
+from torch_geometric.nn import GCN
 from torch_geometric import compile
 
 from . import DeepDetector
@@ -28,7 +29,7 @@ class GADNR(DeepDetector):
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
-        Total number of layers in the backbone encoder model. Default: ``4``.
+        Total number of layers in the backbone encoder model. Default: ``1``.
     deg_dec_layers : int, optional
         The number of layers for the node degree decoder. Default: ``4``.
     fea_dec_layers : int, optional
@@ -57,15 +58,15 @@ class GADNR(DeepDetector):
     real_loss : bool, optional
         Whether using the original loss proposed in the paper as the
         decision score, if not, using the proposed weighted decision score.
-        Default: ``False``.
+        Default: ``True``.
     lr : float, optional
-        Learning rate. Default: ``0.004``.
+        Learning rate. Default: ``0.01``.
     epoch : int, optional
         Maximum number of training epoch. Default: ``100``.    
     dropout : float, optional
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
-        Weight decay (L2 penalty). Default: ``0.``.
+        Weight decay (L2 penalty). Default: ``0.0003``.
     act : callable activation function or None, optional
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
@@ -119,18 +120,18 @@ class GADNR(DeepDetector):
                  num_layers=1,
                  deg_dec_layers=4,
                  fea_dec_layers=3,
-                 backbone=GIN,
+                 backbone=GCN,
                  sample_size=2,
                  sample_time=3,
                  neigh_loss='KL',
-                 lambda_loss1=0.01,
-                 lambda_loss2=0.1,
-                 lambda_loss3=0.8,
-                 real_loss=False,
-                 lr=0.01,
-                 epoch=500,
+                 lambda_loss1=1e-2,
+                 lambda_loss2=1e-1,
+                 lambda_loss3=8e-1,
+                 real_loss=True,
+                 lr=1e-2,
+                 epoch=100,
                  dropout=0.,
-                 weight_decay=0.0003,
+                 weight_decay=3e-4,
                  act=F.relu,
                  gpu=-1,
                  batch_size=0,
@@ -171,6 +172,7 @@ class GADNR(DeepDetector):
         self.neighbor_num_list = None
         self.neighbor_dict = None
         self.id_mapping = None
+        self.full_batch = None
         self.tot_nodes = 0
         self.verbose = verbose
 
@@ -206,25 +208,25 @@ class GADNR(DeepDetector):
                          lambda_loss1=self.lambda_loss1,
                          lambda_loss2=self.lambda_loss2,
                          lambda_loss3=self.lambda_loss3,
+                         full_batch=self.full_batch,
                          backbone=self.backbone,
                          device=self.device).to(self.device)
 
     def forward_model(self, data):
-        if 'input_id' in data: # mini-batch training
-            h0, l1, degree_logits, feat_recon_list, neigh_recon_list = \
+        if not self.full_batch: # mini-batch training
+            h0, degree_logits, feat_recon_list, neigh_recon_list = \
                                             self.model(data.x,
                                                        data.edge_index,
                                                        data.input_id.tolist(),
                                                        self.neighbor_dict,
                                                        self.id_mapping)
         else: # full batch training
-            h0, l1, degree_logits, feat_recon_list, neigh_recon_list = \
+            h0, degree_logits, feat_recon_list, neigh_recon_list = \
                                                 self.model(data.x,
                                                            data.edge_index)
         
         loss, loss_per_node, h_loss, degree_loss, feature_loss = \
                                 self.model.loss_func(h0,
-                                                     l1,
                                                      degree_logits,
                                                      feat_recon_list,
                                                      neigh_recon_list,
@@ -294,10 +296,12 @@ class GADNR(DeepDetector):
         if self.batch_size == 0: # full batch training
             self.batch_size = data.x.shape[0]
             data = self.process_graph(data)
+            self.full_batch = True
         else: # mini batch training
             loader = NeighborLoader(data,
                                     self.num_neigh,
                                     batch_size=self.batch_size)
+            self.full_batch = False
         self.model = self.init_model(**self.kwargs)
         if self.compile_model:
             self.model = compile(self.model)
@@ -325,7 +329,7 @@ class GADNR(DeepDetector):
                 self.model.lambda_loss3 = self.model.lambda_loss3 / 2
             
             # full batch training
-            if self.batch_size == data.x.shape[0]:
+            if self.full_batch:
                 loss, loss_per_node, h_loss, degree_loss, feature_loss = \
                                                 self.forward_model(data) 
 
@@ -409,9 +413,13 @@ class GADNR(DeepDetector):
         The three loss term weights must be the same as the fit function if
         ``real_loss`` is ``False``.
         """
-        
-        if self.batch_size == 0: # full batch inference
-            self.batch_size = data.x.shape[0]
+         
+        if self.full_batch: # full batch inference
+            assert self.batch_size == data.x.shape[0], """
+                The test data should have the same number of nodes as the 
+                training data under the full batch mode. To test on the data 
+                with different number of nodes, please use the mini-batch mode.
+                """
             data = self.process_graph(data)
         else: # mini batch inference
             loader = NeighborLoader(data,

@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.multiprocessing as mp
-from torch_geometric.nn import GIN, SAGEConv, PNAConv
+from torch_geometric.nn import GCN, SAGEConv, PNAConv
 from torch_geometric.utils import to_undirected, add_self_loops
 
 from .nn import MLP_generator, FNN_GAD_NR
@@ -31,7 +31,7 @@ class GADNRBase(nn.Module):
     hid_dim : int
         Hidden dimension of model. Default: ``64``.
     encoder_layers : int, optional
-        The number of layers for the graph encoder. Default: ``2``.
+        The number of layers for the graph encoder. Default: ``1``.
     deg_dec_layers : int, optional
         The number of layers for the node degree decoder. Default: ``4``.
     fea_dec_layers : int, optional
@@ -56,6 +56,9 @@ class GADNRBase(nn.Module):
     lambda_loss3 : float, optional
         The weight of the node degree reconstruction loss term.
         Default: ``1e-4``.
+    full_batch : bool, optional
+        Whether in the full batch or the mini-batch training/inference mode.
+        Default: ``True``.
     dropout : float, optional
        Dropout rate. Default: ``0.``.
     act : callable activation function or None, optional
@@ -63,7 +66,7 @@ class GADNRBase(nn.Module):
        Default: ``torch.nn.functional.relu``.
     backbone : torch.nn.Module, optional
         The backbone of the deep detector implemented in PyG.
-        Default: ``torch_geometric.nn.GIN``.
+        Default: ``torch_geometric.nn.GCN``.
     device : string, optinal
         The device used by the model. Default: ``cpu``.
     **kwargs : optional
@@ -73,7 +76,7 @@ class GADNRBase(nn.Module):
     def __init__(self,
                  in_dim,
                  hid_dim=64,
-                 encoder_layers=2,
+                 encoder_layers=1,
                  deg_dec_layers=4,
                  fea_dec_layers=3,
                  sample_size=2,
@@ -83,9 +86,10 @@ class GADNRBase(nn.Module):
                  lambda_loss1=1e-2,
                  lambda_loss2=1e-3,
                  lambda_loss3=1e-4,
+                 full_batch=True,
                  dropout=0.,
                  act=torch.nn.functional.relu,
-                 backbone=GIN,
+                 backbone=GCN,
                  device='cpu',
                  **kwargs):
         super(GADNRBase, self).__init__()
@@ -96,10 +100,11 @@ class GADNRBase(nn.Module):
         self.lambda_loss1 = lambda_loss1
         self.lambda_loss2 = lambda_loss2
         self.lambda_loss3 = lambda_loss3
+        self.full_batch = full_batch
         self.neigh_loss = neigh_loss
         self.device = device
 
-        if neighbor_num_list is not None: # full batch mode
+        if self.full_batch: # full batch mode
             self.neighbor_num_list = neighbor_num_list
             self.tot_node = len(neighbor_num_list)
 
@@ -320,8 +325,6 @@ class GADNRBase(nn.Module):
         ----------
         h0 : torch.Tensor
             Node feature initial embeddings.
-        h1 : torch.Tensor
-            Node embedding after encoder.
         degree_logits : torch.Tensor
             Reconstructed node degree logits.
         feat_recon_list : List[torch.Tensor]
@@ -336,7 +339,7 @@ class GADNRBase(nn.Module):
         # encode feature matrix
         h1 = self.shared_encoder(h0, edge_index)
         
-        if input_id is None:
+        if self.full_batch:
             center_h0 = h0
             center_h1 = h1
         else: # mini-batch mode
@@ -357,7 +360,7 @@ class GADNRBase(nn.Module):
             h0_prime = self.feature_decoder(center_h1)
             feat_recon_list.append(h0_prime)
             
-            if input_id is None: # full batch mode
+            if self.full_batch: # full batch mode
                 neigh_recon_info = self.full_batch_neigh_recon(h1,
                                                                h0,
                                                                edge_index)
@@ -369,11 +372,10 @@ class GADNRBase(nn.Module):
                                                                id_mapping)
             neigh_recon_list.append(neigh_recon_info)
 
-        return center_h0, h1, degree_logits, feat_recon_list, neigh_recon_list
+        return center_h0, degree_logits, feat_recon_list, neigh_recon_list
 
     def loss_func(self,
                   h0,
-                  h1,
                   degree_logits,
                   feat_recon_list,
                   neigh_recon_list,
@@ -385,8 +387,6 @@ class GADNRBase(nn.Module):
         ----------
         h0 : torch.Tensor
             Node feature initial embeddings.
-        h1 : torch.Tensor
-            Node embedding after encoder.
         degree_logits : torch.Tensor
             Reconstructed node degree logits.
         feat_recon_list : List[torch.Tensor]
@@ -416,7 +416,6 @@ class GADNRBase(nn.Module):
         """
         
         batch_size = h0.shape[0]
-        tot_nodes = h1.shape[0]
 
         # degree reconstruction loss
         ground_truth_degree_matrix = \
@@ -439,7 +438,7 @@ class GADNRBase(nn.Module):
             feature_loss_list.append(feature_losses_per_node)
             
             # neigbor distribution reconstruction loss
-            if batch_size == tot_nodes:
+            if self.full_batch:
                 # full batch neighbor reconsturction
                 det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
                                                         neigh_recon_list[t]
