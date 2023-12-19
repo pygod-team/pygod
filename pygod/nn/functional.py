@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Funtional Interface for PyGOD"""
+"""Functional Interface for PyGOD"""
 # Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
@@ -26,14 +26,14 @@ def double_recon_loss(x,
     The first dimension is kept for outlier scores of each node.
 
     For feature reconstruction, we use mean squared error loss:
-    :math:`\symbf{E_a} = \|\symbf{X}-\symbf{X}'\odot H\|`,
+    :math:`\symbf{E_a} = \|\symbf{X}-\symbf{X}'\|\odot H`,
     where :math:`H=\begin{cases}1 - \eta &
     \text{if }x_{ij}=0\\ \eta & \text{if }x_{ij}>0\end{cases}`, and
     :math:`\eta` is the positive weight for feature.
 
     For structure reconstruction, we use mean squared error loss by
-    default: :math:`\symbf{E_s} = \|\symbf{S}-\symbf{S}'\odot
-    \Theta\|`, where :math:`\Theta=\begin{cases}1 -
+    default: :math:`\symbf{E_s} = \|\symbf{S}-\symbf{S}'\|\odot
+    \Theta`, where :math:`\Theta=\begin{cases}1 -
     \theta & \text{if }s_{ij}=0\\ \theta & \text{if }s_{ij}>0
     \end{cases}`, and :math:`\theta` is the positive weight for
     structure. Alternatively, we can use binary cross entropy loss

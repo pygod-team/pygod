@@ -21,7 +21,7 @@ def main(args):
             score = model.decision_function(data.x)
         else:
             model.fit(data)
-            score = model.decision_scores_
+            score = model.decision_score_
 
         yc = data.y >> 0 & 1
         ys = data.y >> 1 & 1

@@ -40,7 +40,7 @@ setup(name='pygod',
       setup_requires=['setuptools>=38.6.0'],
       license='BSD-2',
       classifiers=[
-          'Development Status :: 2 - Pre-Alpha',
+          'Development Status :: 3 - Alpha',
           'Intended Audience :: Education',
           'Intended Audience :: Financial and Insurance Industry',
           'Intended Audience :: Science/Research',
@@ -50,6 +50,7 @@ setup(name='pygod',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
           'License :: OSI Approved :: BSD License'
       ],
 )

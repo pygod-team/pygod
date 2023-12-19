@@ -3,7 +3,7 @@ import torch
 import argparse
 import warnings
 from pygod.metric import *
-from pygod.utils.utility import load_data
+from pygod.utils import load_data
 from utils import init_model
 
 
@@ -19,7 +19,7 @@ def main(args):
             score = model.decision_function(data.x)
         else:
             model.fit(data)
-            score = model.decision_scores_
+            score = model.decision_score_
 
         y = data.y.bool()
         k = sum(y)
@@ -31,6 +31,10 @@ def main(args):
         auc.append(eval_roc_auc(y, score))
         ap.append(eval_average_precision(y, score))
         rec.append(eval_recall_at_k(y, score, k))
+
+    auc = torch.tensor(auc)
+    ap = torch.tensor(ap)
+    rec = torch.tensor(rec)
 
     print(args.dataset + " " + model.__class__.__name__ + " " +
           "AUC: {:.4f}±{:.4f} ({:.4f})\t"
