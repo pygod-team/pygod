@@ -69,6 +69,7 @@ detector = DOMINANT(hid_dim=64, num_layers=4, epoch=100)
 # To train the detector with the loaded data, simply feed the
 # ``torch_geometric.data.Data`` object into the detector via ``fit``.
 
+# To train the model with train_mask only, use `data.active_mask = data.train_mask`
 
 detector.fit(data)
 

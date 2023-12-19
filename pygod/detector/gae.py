@@ -151,7 +151,7 @@ class GAE(DeepDetector):
                        backbone=self.backbone,
                        **kwargs).to(self.device)
 
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
 
         batch_size = data.batch_size
         node_idx = data.n_id
@@ -165,9 +165,14 @@ class GAE(DeepDetector):
         h = self.model(x, edge_index)
 
         target = s if self.recon_s else x
-        score = torch.mean(self.model.loss_func(target[:batch_size],
-                                                h[:batch_size],
-                                                reduction='none'), dim=1)
+        if 'active_mask' in data.keys():
+            score = torch.mean(self.model.loss_func(target[:batch_size][data.active_mask,:],
+                                                    h[:batch_size][data.active_mask,:],
+                                                    reduction='none'), dim=1)
+        else:
+            score = torch.mean(self.model.loss_func(target[:batch_size],
+                                                    h[:batch_size],
+                                                    reduction='none'), dim=1)
 
         loss = torch.mean(score)
 

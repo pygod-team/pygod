@@ -184,7 +184,7 @@ class GUIDE(DeepDetector):
                          act=self.act,
                          **kwargs).to(self.device)
 
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
 
         batch_size = data.batch_size
 
@@ -193,12 +193,18 @@ class GUIDE(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         x_, s_ = self.model(x, s, edge_index)
-
-        score = self.model.loss_func(x[:batch_size],
-                                     x_[:batch_size],
-                                     s[:batch_size],
-                                     s_[:batch_size],
-                                     self.alpha)
+        if 'active_mask' in data.keys():
+            score = self.model.loss_func(x[:batch_size][data.active_mask, :],
+                                         x_[:batch_size][data.active_mask, :],
+                                         s[:batch_size][data.active_mask, :],
+                                         s_[:batch_size][data.active_mask, :],
+                                         self.alpha)
+        else:
+            score = self.model.loss_func(x[:batch_size],
+                                         x_[:batch_size],
+                                         s[:batch_size],
+                                         s_[:batch_size],
+                                         self.alpha)
 
         loss = torch.mean(score)
 

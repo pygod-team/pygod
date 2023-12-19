@@ -185,7 +185,7 @@ class CONAD(DeepDetector):
                             backbone=self.backbone,
                             **kwargs).to(self.device)
 
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
         batch_size = data.batch_size
         node_idx = data.n_id
 
@@ -204,12 +204,18 @@ class CONAD(DeepDetector):
 
         x_, s_ = self.model(x, edge_index)
         h = self.model.emb
-
-        score = self.model.loss_func(x[:batch_size],
-                                     x_[:batch_size],
-                                     s[:batch_size, node_idx],
-                                     s_[:batch_size],
-                                     self.weight)
+        if 'active_mask' in data.keys():
+            score = self.model.loss_func(x[:batch_size][data.active_mask, :],
+                                         x_[:batch_size][data.active_mask, :],
+                                         s[:batch_size, node_idx][data.active_mask, :],
+                                         s_[:batch_size][data.active_mask, :],
+                                         self.weight)
+        else:
+            score = self.model.loss_func(x[:batch_size],
+                                         x_[:batch_size],
+                                         s[:batch_size, node_idx],
+                                         s_[:batch_size],
+                                         self.weight)
 
         if self.model.training:
             margin_loss = self.margin_loss_func(h, h, h_aug) * label_aug

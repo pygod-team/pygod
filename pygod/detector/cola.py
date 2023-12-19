@@ -137,7 +137,7 @@ class CoLA(DeepDetector):
                         backbone=self.backbone,
                         **kwargs).to(self.device)
 
-    def forward_model(self, data):
+    def forward_model(self, data, is_train=True):
         batch_size = data.batch_size
 
         x = data.x.to(self.device)
