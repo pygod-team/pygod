@@ -2,11 +2,10 @@
 import os
 import unittest
 from numpy.testing import assert_equal
-from numpy.testing import assert_warns
 from numpy.testing import assert_raises
 
 import torch
-from torch_geometric.nn import GIN, GCN
+from torch_geometric.nn import GCN
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
@@ -83,12 +82,11 @@ class TestGADNR(unittest.TestCase):
                         num_neigh=1,
                         contamination=0.2,
                         verbose=3,
-                        save_emb=True,
-                        act_first=True)
+                        save_emb=True)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
-        # TODO: assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
+        assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
 
         pred, score, conf, emb = detector.predict(self.test_data,
                                                   return_pred=True,
@@ -97,7 +95,7 @@ class TestGADNR(unittest.TestCase):
                                                   return_emb=True)
 
         assert_equal(pred.shape[0], self.test_data.y.shape[0])
-        # TODO: assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
+        assert (eval_roc_auc(self.test_data.y, score) >= self.roc_floor)
         assert_equal(conf.shape[0], self.test_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
@@ -124,8 +122,3 @@ class TestGADNR(unittest.TestCase):
             detector.predict(self.test_data,
                              return_prob=True,
                              prob_method='something')
-
-    def test_params(self):
-        with assert_warns(UserWarning):
-            detector = GADNR(num_neigh=1, backbone=GIN)
-            detector.fit(self.test_data)
