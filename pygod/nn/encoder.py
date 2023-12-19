@@ -17,13 +17,13 @@ class GNA(nn.Module):
 
     Parameters
     ----------
-    in_dim : int
+    in_channels : int
         Input dimension of node features.
-    hid_dim :  int
+    hidden_channels :  int
         Hidden dimension of the model.
     num_layers : int
         Number of layers in the model.
-    out_dim : int
+    out_channels : int
         Output dimension of the model.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
@@ -32,19 +32,19 @@ class GNA(nn.Module):
         Default: ``torch.nn.functional.relu``.
     """
     def __init__(self,
-                 in_dim,
-                 hid_dim,
+                 in_channels,
+                 hidden_channels,
                  num_layers,
-                 out_dim,
+                 out_channels,
                  dropout=0.,
                  act=torch.nn.functional.relu):
         super().__init__()
         self.layers = nn.ModuleList()
-        self.layers.append(GNAConv(in_dim, hid_dim))
+        self.layers.append(GNAConv(in_channels, hidden_channels))
         for layer in range(num_layers - 2):
-            self.layers.append(GNAConv(hid_dim,
-                                       hid_dim))
-        self.layers.append(GNAConv(hid_dim, out_dim))
+            self.layers.append(GNAConv(hidden_channels,
+                                       hidden_channels))
+        self.layers.append(GNAConv(hidden_channels, out_channels))
 
         self.dropout = dropout
         self.act = act
