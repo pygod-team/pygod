@@ -8,6 +8,10 @@ from .gae import GAEBase
 from .guide import GUIDEBase
 from .ocgnn import OCGNNBase
 from .gadnr import GADNRBase
+from . import conv
+from . import decoder
+from . import encoder
+from . import functional
 
 __all__ = [
     "AdONEBase", "AnomalyDAEBase", "CoLABase", "DOMINANTBase", "DONEBase",

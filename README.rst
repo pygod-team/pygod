@@ -105,12 +105,12 @@ Installation
 ^^^^^^^^^^^^
 
 **Note on PyG and PyTorch Installation**\ :
-PyGOD depends on `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ and `PyTorch <https://pytorch.org/>`_.
+PyGOD depends on `torch <https://https://pytorch.org/get-started/locally/>`_ and `torch_geometric (including its optional dependencies) <https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html#>`_.
 To streamline the installation, PyGOD does **NOT** install these libraries for you.
 Please install them from the above links for running PyGOD:
 
 * torch>=2.0.0
-* pytorch_geometric>=2.3.0
+* torch_geometric>=2.3.0
 
 It is recommended to use **pip** for installation.
 Please make sure **the latest version** is installed, as PyGOD is updated frequently:
@@ -130,7 +130,7 @@ Alternatively, you could clone and run setup.py file:
 
 **Required Dependencies**\ :
 
-* Python 3.8+
+* python>=3.8
 * numpy>=1.24.3
 * scikit-learn>=1.2.2
 * scipy>=1.10.1
@@ -145,19 +145,16 @@ API Cheatsheet & Reference
 
 Full API Reference: (https://docs.pygod.org). API cheatsheet for all detectors:
 
-* **fit(data)**\ : Fit detector.
-* **decision_function(data)**\ : Predict raw anomaly score of PyG data using the fitted detector.
+* **fit(data)**\ : Fit the detector with train data.
+* **predict(data)**\ : Predict on test data (train data if not provided) using the fitted detector.
 
 Key Attributes of a fitted detector:
 
 * **decision_score_**\ : The outlier scores of the input data. Outliers tend to have higher scores.
 * **label_**\ : The binary labels of the input data. 0 stands for inliers and 1 for outliers.
+* **threshold_**\ : The determined threshold for binary classification. Scores above the threshold are outliers.
 
-For the inductive setting:
-
-* **predict(data)**\ : Predict if nodes in PyG data G is an outlier or not using the fitted detector.
-
-**Input of PyGOD**: Please pass in a `PyTorch Geometric (PyG) <https://www.pyg.org/>`_ data object.
+**Input of PyGOD**: Please pass in a `PyG Data object <https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.Data.html#torch_geometric.data.Data>`_.
 See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
 
 
@@ -177,7 +174,7 @@ DONE                2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]
 AdONE               2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
 AnomalyDAE          2020   GNN+AE       Yes          [#Fan2020AnomalyDAE]_
 GAAN                2020   GAN          Yes          [#Chen2020Generative]_
-OCGNN               2021   GNN+AE       Yes          [#Wang2021One]_
+OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
 CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
