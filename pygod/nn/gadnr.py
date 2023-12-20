@@ -154,7 +154,7 @@ class GADNRBase(nn.Module):
         elif self.neigh_loss == 'W2': 
             self.neighbor_loss = W2_neighbor_loss
         else:
-            raise ValueError('The loss should be either KL or W2')
+            raise ValueError(self.neigh_loss, 'should be either KL or W2')
         self.pool = mp.Pool(4)
         self.in_dim = in_dim
         self.sample_size = sample_size 
