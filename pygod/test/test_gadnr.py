@@ -22,19 +22,22 @@ class TestGADNR(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = GADNR(epoch=5, num_layers=3)
+        detector = GADNR(epoch=5, num_layers=3, save_emb=True)
         detector.fit(self.train_data)
 
-        pred, score, conf = detector.predict(self.train_data,
+        pred, score, conf, emb = detector.predict(self.train_data,
                                              return_pred=True,
                                              return_score=True,
-                                             return_conf=True)
+                                             return_conf=True,
+                                             return_emb=True)
 
         assert_equal(pred.shape[0], self.train_data.y.shape[0])
         assert (eval_roc_auc(self.train_data.y, score) >= self.roc_floor)
         assert_equal(conf.shape[0], self.train_data.y.shape[0])
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
+        assert_equal(emb.shape[0], self.train_data.y.shape[0])
+        assert_equal(emb.shape[1], detector.hid_dim)
 
         prob = detector.predict(self.train_data,
                                 return_pred=False,
@@ -70,7 +73,7 @@ class TestGADNR(unittest.TestCase):
                         deg_dec_layers=4,
                         fea_dec_layers=3,
                         backbone=GCN,
-                        sample_size=2,
+                        sample_size=3,
                         sample_time=3,
                         neigh_loss='KL',
                         lambda_loss1=0.01,
@@ -78,7 +81,7 @@ class TestGADNR(unittest.TestCase):
                         lambda_loss3=0.8,
                         real_loss=True,
                         lr=0.01,
-                        epoch=2,
+                        epoch=25,
                         dropout=0.1,
                         weight_decay=0.01,
                         act=torch.nn.functional.relu,
@@ -169,7 +172,25 @@ class TestGADNR(unittest.TestCase):
         assert (conf.min() >= 0)
         assert (conf.max() <= 1)
     
+    def test_mlp(self):
+        detector = GADNR(epoch=5, num_layers=3, deg_dec_layers=1)
+        detector.fit(self.train_data)
+
+        pred, score, conf = detector.predict(self.train_data,
+                                             return_pred=True,
+                                             return_score=True,
+                                             return_conf=True)
+
+        assert_equal(pred.shape[0], self.train_data.y.shape[0])
+        assert_equal(conf.shape[0], self.train_data.y.shape[0])
+        assert (conf.min() >= 0)
+        assert (conf.max() <= 1)
+
     def test_params(self):
         with assert_raises(ValueError):
             detector = GADNR(epoch=5, num_layers=3, neigh_loss='something')
+            detector.fit(self.test_data)
+
+        with assert_raises(ValueError):
+            detector = GADNR(epoch=5, num_layers=3, deg_dec_layers=0)
             detector.fit(self.test_data)
