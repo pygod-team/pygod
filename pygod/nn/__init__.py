@@ -4,6 +4,7 @@ from .cola import CoLABase
 from .dominant import DOMINANTBase
 from .done import DONEBase
 from .gaan import GAANBase
+from .gadnr import GADNRBase
 from .gae import GAEBase
 from .guide import GUIDEBase
 from .ocgnn import OCGNNBase
@@ -14,5 +15,5 @@ from . import functional
 
 __all__ = [
     "AdONEBase", "AnomalyDAEBase", "CoLABase", "DOMINANTBase", "DONEBase",
-    "GAANBase", "GAEBase", "GUIDEBase", "OCGNNBase"
+    "GAANBase", "GADNRBase", "GAEBase", "GUIDEBase", "OCGNNBase"
 ]
