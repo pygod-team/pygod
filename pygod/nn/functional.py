@@ -120,7 +120,6 @@ def KL_neighbor_loss(predictions, targets, mask_len, device):
     cov_x1 = cov_x1 + eye
     cov_x2 = cov_x2 + eye
 
-    # TODO figure out the extreme large value for x1 on Enron
     KL_loss = 0.5 * (math.log(torch.det(cov_x1) / torch.det(cov_x2)) - h_dim
     + torch.trace(torch.inverse(cov_x2).matmul(cov_x1)) + (mean_x2 - 
     mean_x1).reshape(1,-1).matmul(torch.inverse(cov_x2)).matmul(mean_x2 - 
