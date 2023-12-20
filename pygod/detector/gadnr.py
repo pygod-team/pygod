@@ -414,12 +414,12 @@ class GADNR(DeepDetector):
         ``real_loss`` is ``False``.
         """
          
-        if self.full_batch: # full batch inference
-            assert self.batch_size == data.x.shape[0], """
-                The test data should have the same number of nodes as the 
-                training data under the full batch mode. To test on the data 
-                with different number of nodes, please use the mini-batch mode.
-                """
+        if self.batch_size != data.x.shape[0]:
+            raise ValueError(data, 'should have the same number of nodes '
+                                   'as the training data under the full '
+                                   'batch mode. To test on the data with '
+                                   'different number of nodes, please use '
+                                   'the mini-batch mode.')
             data = self.process_graph(data)
         else: # mini batch inference
             loader = NeighborLoader(data,
