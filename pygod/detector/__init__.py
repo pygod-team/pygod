@@ -15,9 +15,10 @@ from .ocgnn import OCGNN
 from .one import ONE
 from .radar import Radar
 from .scan import SCAN
+from .gadnr import GADNR
 
 __all__ = [
     "Detector", "DeepDetector", "AdONE", "ANOMALOUS", "AnomalyDAE", "CoLA",
     "CONAD", "DOMINANT", "DONE", "GAAN", "GAE", "GUIDE", "OCGNN", "ONE",
-    "Radar", "SCAN"
+    "Radar", "SCAN", "GADNR"
 ]
