@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Functional Interface for PyGOD"""
-# Author: Kay Liu <zliu234@uic.edu>
+# Author: Kay Liu <zliu234@uic.edu>, Yingtong Dou <ytongdou@gmail.com>
 # License: BSD 2 clause
 
 import torch
 import torch.nn.functional as F
+from scipy.linalg import sqrtm
+import math
 
 
 def double_recon_loss(x,
@@ -94,3 +96,60 @@ def double_recon_loss(x,
     score = weight * attr_error + (1 - weight) * stru_error
 
     return score
+
+def KL_neighbor_loss(predictions, targets, mask_len, device):
+    """
+    The local neighor distribution KL divergence loss used in GAD-NR.
+    Source:
+    https://github.com/Graph-COM/GAD-NR/blob/master/GAD-NR_inj_cora.ipynb
+    """
+
+    x1 = predictions.squeeze().cpu().detach()[:mask_len, :]
+    x2 = targets.squeeze().cpu().detach()[:mask_len, :]
+
+    mean_x1 = x1.mean(0)
+    mean_x2 = x2.mean(0)
+
+    nn = x1.shape[0]
+    h_dim = x1.shape[1]
+
+    cov_x1 = (x1-mean_x1).transpose(1,0).matmul(x1-mean_x1) / max((nn-1),1)
+    cov_x2 = (x2-mean_x2).transpose(1,0).matmul(x2-mean_x2) / max((nn-1),1)
+
+    eye = torch.eye(h_dim)
+    cov_x1 = cov_x1 + eye
+    cov_x2 = cov_x2 + eye
+
+    # TODO figure out the extreme large value for x1 on Enron
+    KL_loss = 0.5 * (math.log(torch.det(cov_x1) / torch.det(cov_x2)) - h_dim
+    + torch.trace(torch.inverse(cov_x2).matmul(cov_x1)) + (mean_x2 - 
+    mean_x1).reshape(1,-1).matmul(torch.inverse(cov_x2)).matmul(mean_x2 - 
+                                                                mean_x1))
+    KL_loss = KL_loss.to(device)
+    return KL_loss
+
+def W2_neighbor_loss(predictions, targets, mask_len, device):
+    """
+    The local neighor distribution W2 loss used in GAD-NR.
+    Source:
+    https://github.com/Graph-COM/GAD-NR/blob/master/GAD-NR_inj_cora.ipynb
+    """
+
+    x1 = predictions.squeeze().cpu().detach()[:mask_len, :]
+    x2 = targets.squeeze().cpu().detach()[:mask_len, :]
+
+    mean_x1 = x1.mean(0)
+    mean_x2 = x2.mean(0)
+
+    nn = x1.shape[0]
+
+    cov_x1 = (x1-mean_x1).transpose(1,0).matmul(x1-mean_x1) / max((nn-1),1)
+    cov_x2 = (x2-mean_x2).transpose(1,0).matmul(x2-mean_x2) / max((nn-1),1)
+
+    W2_loss = torch.square(mean_x1-mean_x2).sum() 
+    + torch.trace(cov_x1 + cov_x2 
+    + 2 * sqrtm(sqrtm(cov_x1) @ (cov_x2.numpy()) @ (sqrtm(cov_x1))))
+
+    W2_loss = W2_loss.to(device)
+
+    return W2_loss
