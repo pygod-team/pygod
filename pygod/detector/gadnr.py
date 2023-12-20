@@ -408,18 +408,18 @@ class GADNR(DeepDetector):
                           degree_loss_weight=0.,
                           feature_loss_weight=2.5):
         """ 
-        Overwrite the decision fuction from the base model due to the unique
+        Overwrite the decision function from the base model due to the unique
         loss function and decision score from the GADNR paper.
         The three loss term weights must be the same as the fit function if
         ``real_loss`` is ``False``.
         """
-         
-        if self.batch_size != data.x.shape[0]:
-            raise ValueError(data, 'should have the same number of nodes '
-                                   'as the training data under the full '
-                                   'batch mode. To test on the data with '
-                                   'different number of nodes, please use '
-                                   'the mini-batch mode.')
+        if self.full_batch: # full batch inference 
+            if self.batch_size != data.x.shape[0]:
+                raise ValueError(data, 'should have the same number of nodes '
+                                       'as the training data under the full '
+                                       'batch mode. To test on the data with '
+                                       'different number of nodes, please use '
+                                       'the mini-batch mode.')
             data = self.process_graph(data)
         else: # mini batch inference
             loader = NeighborLoader(data,
