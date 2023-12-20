@@ -14,6 +14,7 @@ pygod.detector
     ~pygod.detector.DOMINANT
     ~pygod.detector.DONE
     ~pygod.detector.GAAN
+    ~pygod.detector.GADNR
     ~pygod.detector.GAE
     ~pygod.detector.GUIDE
     ~pygod.detector.OCGNN
