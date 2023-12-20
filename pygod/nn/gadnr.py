@@ -46,7 +46,7 @@ class GADNRBase(nn.Module):
         The node degree tensor used by the PNAConv model.
     neigh_loss : str, optional
         The neighbor reconstruction loss. ``KL`` represents the KL divergence
-        loss, ``W2`` represents the W2 loss. Defualt: ``KL``.
+        loss, ``W2`` represents the W2 loss. Default: ``KL``.
     lambda_loss1 : float, optional
         The weight of the neighborhood reconstruction loss term.
         Default: ``1e-2``.
@@ -67,7 +67,7 @@ class GADNRBase(nn.Module):
     backbone : torch.nn.Module, optional
         The backbone of the deep detector implemented in PyG.
         Default: ``torch_geometric.nn.GCN``.
-    device : string, optinal
+    device : string, optional
         The device used by the model. Default: ``cpu``.
     **kwargs : optional
         Additional arguments for the backbone.
@@ -163,7 +163,7 @@ class GADNRBase(nn.Module):
     def sample_neighbors(self, input_id, neighbor_dict,
                          id_mapping, gt_embeddings):
         """ Sample neighbors from neighbor set, if the length of neighbor set
-            less than sample size, then do the padding.
+            less than the sample size, then do the padding.
         """
         sampled_embeddings_list = []
         mask_len_list = []
@@ -247,7 +247,7 @@ class GADNRBase(nn.Module):
                                neighbor_dict, id_mapping):
         """Computing the target neighbor distribution and 
         reconstructed neighbor distribution using mini_batch of the data
-        and neigbor sampling.
+        and neighbor sampling.
         """
         gen_neighs, tar_neighs = [], []
         
@@ -394,7 +394,7 @@ class GADNRBase(nn.Module):
         neigh_recon_list : List[torch.Tensor]
             Reconstructed neighbor distributions.
         ground_truth_degree_matrix : torch.Tensor
-            The ground trurh degree of the input nodes.
+            The ground truth degree of the input nodes.
 
         Returns
         ----------
@@ -432,14 +432,14 @@ class GADNRBase(nn.Module):
         feature_loss_list = []
         # Sample multiple times to remove noise
         for t in range(self.sample_time):
-            # feature reconstrcution loss 
+            # feature reconstruction loss 
             h0_prime = feat_recon_list[t]
             feature_losses_per_node = (h0-h0_prime).pow(2).mean(1)
             feature_loss_list.append(feature_losses_per_node)
             
             # neigbor distribution reconstruction loss
             if self.full_batch:
-                # full batch neighbor reconsturction
+                # full batch neighbor reconstruction
                 det_target_cov, det_generated_cov, h_dim, trace_mat, z = \
                                                         neigh_recon_list[t]
                 KL_loss = 0.5 * (torch.log(det_target_cov / 
@@ -495,7 +495,7 @@ class GADNRBase(nn.Module):
     @staticmethod
     def process_graph(data, input_id=None):
         """
-        Obtain the neighbor dictornary and number of neighbors per node list
+        Preprocess the input graph and obtain the required data for future use.
 
         Parameters
         ----------
