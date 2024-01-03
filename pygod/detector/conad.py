@@ -228,7 +228,7 @@ class CONAD(DeepDetector):
             Attribute, disproportionate
             Structure, high-degree
             Structure, outlying
-
+        
         Parameters
         -----------
         data : torch_geometric.data.Data
