@@ -198,13 +198,13 @@ class DONE(DeepDetector):
 
         x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
         loss, oa, os, oc = self.model.loss_func(x[:batch_size],
-                                                    x_[:batch_size],
-                                                    s[:batch_size],
-                                                    s_[:batch_size],
-                                                    h_a[:batch_size],
-                                                    h_s[:batch_size],
-                                                    dna[:batch_size],
-                                                    dns[:batch_size])
+                                                x_[:batch_size],
+                                                s[:batch_size],
+                                                s_[:batch_size],
+                                                h_a[:batch_size],
+                                                h_s[:batch_size],
+                                                dna[:batch_size],
+                                                dns[:batch_size])
 
         self.attribute_score_[node_idx[:batch_size]] = oa.detach().cpu()
         self.structural_score_[node_idx[:batch_size]] = os.detach().cpu()

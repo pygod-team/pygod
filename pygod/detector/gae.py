@@ -166,8 +166,8 @@ class GAE(DeepDetector):
 
         target = s if self.recon_s else x
         score = torch.mean(self.model.loss_func(target[:batch_size],
-                                                    h[:batch_size],
-                                                    reduction='none'), dim=1)
+                                                h[:batch_size],
+                                                reduction='none'), dim=1)
 
         loss = torch.mean(score)
 

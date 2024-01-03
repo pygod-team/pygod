@@ -194,10 +194,10 @@ class GUIDE(DeepDetector):
 
         x_, s_ = self.model(x, s, edge_index)
         score = self.model.loss_func(x[:batch_size],
-                                         x_[:batch_size],
-                                         s[:batch_size],
-                                         s_[:batch_size],
-                                         self.alpha)
+                                     x_[:batch_size],
+                                     s[:batch_size],
+                                     s_[:batch_size],
+                                     self.alpha)
 
         loss = torch.mean(score)
 

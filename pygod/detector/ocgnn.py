@@ -57,7 +57,7 @@ class OCGNN(DeepDetector):
         The weight between the reconstruction loss and radius.
         Default: ``0.5``.
     warmup : int, optional
-        The number of epochs for warm-up training. Default: ``inf``.
+        The number of epochs for warm-up training. Default: ``2``.
     eps : float, optional
         The slack variable. Default: ``0.001``.
     verbose : int, optional
@@ -161,7 +161,6 @@ class OCGNN(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         emb = self.model(x, edge_index)
-
         loss, score = self.model.loss_func(emb[:batch_size])
 
         return loss, score.detach().cpu()

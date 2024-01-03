@@ -160,10 +160,10 @@ class DOMINANT(DeepDetector):
 
         x_, s_ = self.model(x, edge_index)
         score = self.model.loss_func(x[:batch_size],
-                                         x_[:batch_size],
-                                         s[:batch_size, node_idx],
-                                         s_[:batch_size],
-                                         self.weight)
+                                     x_[:batch_size],
+                                     s[:batch_size, node_idx],
+                                     s_[:batch_size],
+                                     self.weight)
 
         loss = torch.mean(score)
 

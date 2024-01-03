@@ -205,10 +205,10 @@ class CONAD(DeepDetector):
         x_, s_ = self.model(x, edge_index)
         h = self.model.emb
         score = self.model.loss_func(x[:batch_size],
-                                         x_[:batch_size],
-                                         s[:batch_size, node_idx],
-                                         s_[:batch_size],
-                                         self.weight)
+                                     x_[:batch_size],
+                                     s[:batch_size, node_idx],
+                                     s_[:batch_size],
+                                     self.weight)
 
         if self.model.training:
             margin_loss = self.margin_loss_func(h, h, h_aug) * label_aug

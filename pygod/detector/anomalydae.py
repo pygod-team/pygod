@@ -182,12 +182,12 @@ class AnomalyDAE(DeepDetector):
         pos_weight_a = self.eta / (1 + self.eta)
         pos_weight_s = self.theta / (1 + self.theta)
         score = self.model.loss_func(x[:batch_size],
-                                         x_[:batch_size],
-                                         s[:batch_size, node_idx],
-                                         s_[:batch_size],
-                                         weight,
-                                         pos_weight_a,
-                                         pos_weight_s)
+                                     x_[:batch_size],
+                                     s[:batch_size, node_idx],
+                                     s_[:batch_size],
+                                     weight,
+                                     pos_weight_a,
+                                     pos_weight_s)
 
         loss = torch.mean(score)
 

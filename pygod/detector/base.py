@@ -478,6 +478,7 @@ class DeepDetector(Detector, ABC):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
             loss_value = epoch_loss / data.x.shape[0]
             if self.gan:
                 loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
@@ -488,6 +489,7 @@ class DeepDetector(Detector, ABC):
                    time=time.time() - start_time,
                    verbose=self.verbose,
                    train=True)
+
         self._process_decision_score()
         return self
 
@@ -520,13 +522,15 @@ class DeepDetector(Detector, ABC):
                 else:
                     self.emb[node_idx[:batch_size]] = \
                         self.model.emb[:batch_size].cpu()
+
             outlier_score[node_idx[:batch_size]] = score
+
         logger(loss=loss.item() / data.x.shape[0],
-                   score=outlier_score,
-                   target=label,
-                   time=time.time() - start_time,
-                   verbose=self.verbose,
-                   train=False)
+               score=outlier_score,
+               target=label,
+               time=time.time() - start_time,
+               verbose=self.verbose,
+               train=False)
         return outlier_score
 
     def predict(self,
