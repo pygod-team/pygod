@@ -160,7 +160,7 @@ class GAAN(DeepDetector):
                         act=self.act,
                         **kwargs).to(self.device)
 
-    def forward_model(self, data, is_train=True):
+    def forward_model(self, data):
         batch_size = data.batch_size
         node_idx = data.n_id
 

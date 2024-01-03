@@ -9,7 +9,6 @@ from torch_geometric.nn import GCN
 
 from . import DeepDetector
 from ..nn import OCGNNBase
-import math
 
 class OCGNN(DeepDetector):
     """
@@ -109,7 +108,7 @@ class OCGNN(DeepDetector):
                  batch_size=0,
                  num_neigh=-1,
                  beta=0.5,
-                 warmup=math.inf,
+                 warmup=2,
                  eps=0.001,
                  verbose=0,
                  save_emb=False,
@@ -155,16 +154,14 @@ class OCGNN(DeepDetector):
                          backbone=self.backbone,
                          **kwargs).to(self.device)
 
-    def forward_model(self, data, is_train=True):
+    def forward_model(self, data):
         batch_size = data.batch_size
 
         x = data.x.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
         emb = self.model(x, edge_index)
-        if 'active_mask' in data.keys():
-            loss, score = self.model.loss_func(emb[:batch_size][data.active_mask, :], is_train=is_train)
-        else:
-            loss, score = self.model.loss_func(emb[:batch_size], is_train=is_train)
+
+        loss, score = self.model.loss_func(emb[:batch_size])
 
         return loss, score.detach().cpu()

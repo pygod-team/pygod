@@ -150,7 +150,7 @@ class DOMINANT(DeepDetector):
                             backbone=self.backbone,
                             **kwargs).to(self.device)
 
-    def forward_model(self, data, is_train=True):
+    def forward_model(self, data):
         batch_size = data.batch_size
         node_idx = data.n_id
 
@@ -159,14 +159,7 @@ class DOMINANT(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         x_, s_ = self.model(x, edge_index)
-        if 'active_mask' in data.keys():
-            score = self.model.loss_func(x[:batch_size][data.active_mask, :],
-                                         x_[:batch_size][data.active_mask, :],
-                                         s[:batch_size, node_idx][data.active_mask, :],
-                                         s_[:batch_size][data.active_mask, :],
-                                         self.weight)
-        else:
-            score = self.model.loss_func(x[:batch_size],
+        score = self.model.loss_func(x[:batch_size],
                                          x_[:batch_size],
                                          s[:batch_size, node_idx],
                                          s_[:batch_size],

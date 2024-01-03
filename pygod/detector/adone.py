@@ -189,7 +189,7 @@ class AdONE(DeepDetector):
                          w5=self.w5,
                          **kwargs).to(self.device)
 
-    def forward_model(self, data, is_train=True):
+    def forward_model(self, data):
         batch_size = data.batch_size
         node_idx = data.n_id
 
@@ -198,19 +198,7 @@ class AdONE(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         x_, s_, h_a, h_s, dna, dns, dis_a, dis_s = self.model(x, s, edge_index)
-        if 'active_mask' in data.keys():
-            loss, oa, os, oc = self.model.loss_func(x[:batch_size][data.active_mask, :],
-                                                    x_[:batch_size][data.active_mask, :],
-                                                    s[:batch_size][data.active_mask, :],
-                                                    s_[:batch_size][data.active_mask, :],
-                                                    h_a[:batch_size][data.active_mask, :],
-                                                    h_s[:batch_size][data.active_mask, :],
-                                                    dna[:batch_size][data.active_mask, :],
-                                                    dns[:batch_size][data.active_mask, :],
-                                                    dis_a[:batch_size][data.active_mask, :],
-                                                    dis_s[:batch_size][data.active_mask, :])
-        else:
-            loss, oa, os, oc = self.model.loss_func(x[:batch_size],
+        loss, oa, os, oc = self.model.loss_func(x[:batch_size],
                                                     x_[:batch_size],
                                                     s[:batch_size],
                                                     s_[:batch_size],
