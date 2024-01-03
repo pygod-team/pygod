@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GCN
 
+
 class OCGNNBase(nn.Module):
     """
     One-Class Graph Neural Networks for Anomaly Detection in

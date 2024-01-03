@@ -193,6 +193,7 @@ class GUIDE(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         x_, s_ = self.model(x, s, edge_index)
+
         score = self.model.loss_func(x[:batch_size],
                                      x_[:batch_size],
                                      s[:batch_size],

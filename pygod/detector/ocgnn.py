@@ -10,6 +10,7 @@ from torch_geometric.nn import GCN
 from . import DeepDetector
 from ..nn import OCGNNBase
 
+
 class OCGNN(DeepDetector):
     """
     One-Class Graph Neural Networks for Anomaly Detection in

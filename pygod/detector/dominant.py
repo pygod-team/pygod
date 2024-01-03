@@ -159,6 +159,7 @@ class DOMINANT(DeepDetector):
         edge_index = data.edge_index.to(self.device)
 
         x_, s_ = self.model(x, edge_index)
+
         score = self.model.loss_func(x[:batch_size],
                                      x_[:batch_size],
                                      s[:batch_size, node_idx],
