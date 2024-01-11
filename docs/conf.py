@@ -20,7 +20,7 @@ root_dir = dirname(dirname(abspath(__file__)))
 # -- Project information -----------------------------------------------------
 
 project = 'PyGOD'
-copyright = '2023 PyGOD Team'
+copyright = '2024 PyGOD Team'
 author = 'PyGOD Team'
 
 version_path = os.path.join(root_dir, 'pygod', 'version.py')
