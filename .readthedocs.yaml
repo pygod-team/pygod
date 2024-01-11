@@ -8,6 +8,11 @@ build:
   tools:
     python: "3.8"
 
+formats:
+   - pdf
+   - epub
+   - htmlzip
+
 python:
   install:
     - requirements: docs/requirements.txt
