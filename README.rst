@@ -140,6 +140,16 @@ Alternatively, you could clone and run setup.py file:
 ----
 
 
+Quick Start for Outlier Detection with PyGOD
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`"A Blitz Introduction" <https://docs.pygod.org/en/latest/tutorials/1_intro.html#sphx-glr-tutorials-1-intro-py>`_
+demonstrates the basic API of PyGOD using the DOMINANT detector. **It is noted that the API across all other algorithms are consistent/similar**.
+
+
+----
+
+
 API Cheatsheet & Reference
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -181,15 +191,6 @@ CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
 GADNR               2023   GNN+AE       Yes          [#Roy2023Gadnr]_
 ==================  =====  ===========  ===========  ========================================
 
-
-----
-
-
-Quick Start for Outlier Detection with PyGOD
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-`"A Blitz Introduction" <https://docs.pygod.org/en/latest/tutorials/intro.html>`_
-demonstrates the basic API of PyGOD using the dominant detector. **It is noted that the API across all other algorithms are consistent/similar**.
 
 ----
 
