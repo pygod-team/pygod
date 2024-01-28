@@ -82,7 +82,7 @@ class GAAN(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -124,7 +124,7 @@ class GAAN(DeepDetector):
             warnings.warn('MLP in GAAN does not use neighbor information.')
             num_neigh = 0
 
-        if backbone != None:
+        if backbone is not None:
             warnings.warn('GAAN can only use MLP as the backbone.')
 
         super(GAAN, self).__init__(
@@ -161,9 +161,7 @@ class GAAN(DeepDetector):
                         **kwargs).to(self.device)
 
     def forward_model(self, data):
-        batch_size = data.batch_size
         node_idx = data.n_id
-
         x = data.x.to(self.device)
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
@@ -173,16 +171,9 @@ class GAAN(DeepDetector):
         x_, a, a_ = self.model(x, noise)
 
         loss_g = self.model.loss_func_g(a_[edge_index[0], edge_index[1]])
-
-        self.opt_g.zero_grad()
-        loss_g.backward()
-        self.opt_g.step()
-
-        self.epoch_loss_g += loss_g.item() * batch_size
-
-        loss = self.model.loss_func_ed(a[edge_index[0], edge_index[1]],
-                                       a_[edge_index[0], edge_index[
-                                           1]].detach())
+        loss_d = self.model.loss_func_ed(a[edge_index[0], edge_index[1]],
+                                         a_[edge_index[0], edge_index[
+                                             1]].detach())
 
         score = self.model.score_func(x=x,
                                       x_=x_,
@@ -192,4 +183,4 @@ class GAAN(DeepDetector):
                                       pos_weight_s=1,
                                       bce_s=True)
 
-        return loss, score.detach().cpu()
+        return (loss_g, loss_d), score.detach().cpu()

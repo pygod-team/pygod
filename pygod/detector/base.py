@@ -41,7 +41,7 @@ class Detector(ABC):
 
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
 
@@ -354,7 +354,7 @@ class DeepDetector(Detector, ABC):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -439,15 +439,15 @@ class DeepDetector(Detector, ABC):
         self.model = self.init_model(**self.kwargs)
         if self.compile_model:
             self.model = compile(self.model)
-        if not self.gan:
-            optimizer = torch.optim.Adam(self.model.parameters(),
-                                         lr=self.lr,
-                                         weight_decay=self.weight_decay)
+        if self.gan:
+            opt_g = torch.optim.Adam(self.model.generator.parameters(),
+                                     lr=self.lr,
+                                     weight_decay=self.weight_decay)
+            opt_d = torch.optim.Adam(self.model.discriminator.parameters(),
+                                     lr=self.lr,
+                                     weight_decay=self.weight_decay)
         else:
-            self.opt_g = torch.optim.Adam(self.model.generator.parameters(),
-                                          lr=self.lr,
-                                          weight_decay=self.weight_decay)
-            optimizer = torch.optim.Adam(self.model.discriminator.parameters(),
+            optimizer = torch.optim.Adam(self.model.parameters(),
                                          lr=self.lr,
                                          weight_decay=self.weight_decay)
 
@@ -455,17 +455,25 @@ class DeepDetector(Detector, ABC):
         self.decision_score_ = torch.zeros(data.x.shape[0])
         for epoch in range(self.epoch):
             start_time = time.time()
-            epoch_loss = 0
             if self.gan:
-                self.epoch_loss_g = 0
+                epoch_loss_g = 0
+                epoch_loss_d = 0
+            else:
+                epoch_loss = 0
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.n_id
 
                 loss, score = self.forward_model(sampled_data)
-                epoch_loss += loss.item() * batch_size
+
+                if self.gan:
+                    epoch_loss_g += loss[0].item() * batch_size
+                    epoch_loss_d += loss[1].item() * batch_size
+                else:
+                    epoch_loss += loss.item() * batch_size
+
                 if self.save_emb:
-                    if type(self.emb) == tuple:
+                    if type(self.emb) is tuple:
                         self.emb[0][node_idx[:batch_size]] = \
                             self.model.emb[0][:batch_size].cpu()
                         self.emb[1][node_idx[:batch_size]] = \
@@ -475,13 +483,23 @@ class DeepDetector(Detector, ABC):
                             self.model.emb[:batch_size].cpu()
                 self.decision_score_[node_idx[:batch_size]] = score
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                if self.gan:
+                    opt_g.zero_grad()
+                    loss[0].backward()
+                    opt_g.step()
+                    opt_d.zero_grad()
+                    loss[0].backward()
+                    opt_d.step()
+                else:
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
 
-            loss_value = epoch_loss / data.x.shape[0]
             if self.gan:
-                loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
+                loss_value = (self.epoch_loss_g / data.x.shape[0],
+                              self.epoch_loss_d / data.x.shape[0])
+            else:
+                loss_value = epoch_loss / data.x.shape[0]
             logger(epoch=epoch,
                    loss=loss_value,
                    score=self.decision_score_,
@@ -509,6 +527,12 @@ class DeepDetector(Detector, ABC):
             else:
                 self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
+        if self.gan:
+            test_loss_g = 0
+            test_loss_d = 0
+        else:
+            test_loss = 0
+
         for sampled_data in loader:
             loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
@@ -523,9 +547,21 @@ class DeepDetector(Detector, ABC):
                     self.emb[node_idx[:batch_size]] = \
                         self.model.emb[:batch_size].cpu()
 
+            if self.gan:
+                test_loss_g += loss[0].item() * batch_size
+                test_loss_d = loss[1].item() * batch_size
+            else:
+                test_loss = loss.item() * batch_size
+
             outlier_score[node_idx[:batch_size]] = score
 
-        logger(loss=loss.item() / data.x.shape[0],
+        if self.gan:
+            loss = (test_loss_g / data.x.shape[0],
+                    test_loss_d / data.x.shape[0])
+        else:
+            loss = test_loss / data.x.shape[0],
+
+        logger(loss=loss,
                score=outlier_score,
                target=label,
                time=time.time() - start_time,
@@ -610,7 +646,7 @@ class DeepDetector(Detector, ABC):
                                                    prob_method,
                                                    return_conf)
         if return_emb:
-            if type(output) == tuple:
+            if type(output) is tuple:
                 output += (self.emb,)
             else:
                 output = (output, self.emb)

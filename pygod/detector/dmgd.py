@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
-"""Anomaly Detection on Attributed Networks via Contrastive
-Self-Supervised Learning (CoLA)"""
-# Author: Canyu Chen <cchen151@hawk.iit.edu>, Kay Liu <zliu234@uic.edu>
+""" One-Class Graph Neural Networks for Anomaly Detection in Attributed
+Networks"""
+# Author: Xueying Ding <xding2@andrew.cmu.edu>
 # License: BSD 2 clause
 
 import torch
 from torch_geometric.nn import GCN
 
-from .base import DeepDetector
-from ..nn import CoLABase
+from . import DeepDetector
+from ..nn import OCGNNBase
 
 
-class CoLA(DeepDetector):
+class OCGNN(DeepDetector):
     """
-    Anomaly Detection on Attributed Networks via Contrastive
-    Self-Supervised Learning
+    One-Class Graph Neural Networks for Anomaly Detection in
+    Attributed Networks
 
-    CoLA is a contrastive self-supervised learning based method for
-    graph anomaly detection. This implementation is base on random
-    neighbor sampling instead of random walk sampling in the original
-    paper.
+    OCGNN is an anomaly detector that measures the
+    distance of anomaly to the centroid, in a similar fashion to the
+    support vector machine, but in the embedding space after feeding
+    towards several layers of GCN.
 
-    See :cite:`liu2021anomaly` for details.
+    See :cite:`wang2021one` for details.
 
     Parameters
     ----------
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
-        Total number of layers in model. Default: ``4``.
+        Total number of layers in model. Default: ``2``.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
@@ -54,6 +54,13 @@ class CoLA(DeepDetector):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
+    beta : float, optional
+        The weight between the reconstruction loss and radius.
+        Default: ``0.5``.
+    warmup : int, optional
+        The number of epochs for warm-up training. Default: ``2``.
+    eps : float, optional
+        The slack variable. Default: ``0.001``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -63,7 +70,7 @@ class CoLA(DeepDetector):
         Whether to compile the model with ``torch_geometric.compile``.
         Default: ``False``.
     **kwargs
-        Other parameters for the backbone.
+        Other parameters for the backbone model.
 
     Attributes
     ----------
@@ -73,7 +80,7 @@ class CoLA(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N \\times` ``contamination`` most abnormal samples in
+        :math:`N`*``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -90,7 +97,7 @@ class CoLA(DeepDetector):
 
     def __init__(self,
                  hid_dim=64,
-                 num_layers=4,
+                 num_layers=2,
                  dropout=0.,
                  weight_decay=0.,
                  act=torch.nn.functional.relu,
@@ -101,26 +108,33 @@ class CoLA(DeepDetector):
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
+                 beta=0.5,
+                 warmup=2,
+                 eps=0.001,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
                  **kwargs):
-        super(CoLA, self).__init__(hid_dim=hid_dim,
-                                   num_layers=num_layers,
-                                   dropout=dropout,
-                                   weight_decay=weight_decay,
-                                   act=act,
-                                   backbone=backbone,
-                                   contamination=contamination,
-                                   lr=lr,
-                                   epoch=epoch,
-                                   gpu=gpu,
-                                   batch_size=batch_size,
-                                   num_neigh=num_neigh,
-                                   verbose=verbose,
-                                   save_emb=save_emb,
-                                   compile_model=compile_model,
-                                   **kwargs)
+        super(OCGNN, self).__init__(hid_dim=hid_dim,
+                                    num_layers=num_layers,
+                                    dropout=dropout,
+                                    weight_decay=weight_decay,
+                                    act=act,
+                                    backbone=backbone,
+                                    contamination=contamination,
+                                    lr=lr,
+                                    epoch=epoch,
+                                    gpu=gpu,
+                                    batch_size=batch_size,
+                                    num_neigh=num_neigh,
+                                    verbose=verbose,
+                                    save_emb=save_emb,
+                                    compile_model=compile_model,
+                                    **kwargs)
+
+        self.beta = beta
+        self.warmup = warmup
+        self.eps = eps
 
     def process_graph(self, data):
         pass
@@ -129,13 +143,17 @@ class CoLA(DeepDetector):
         if self.save_emb:
             self.emb = torch.zeros(self.num_nodes,
                                    self.hid_dim)
-        return CoLABase(in_dim=self.in_dim,
-                        hid_dim=self.hid_dim,
-                        num_layers=self.num_layers,
-                        dropout=self.dropout,
-                        act=self.act,
-                        backbone=self.backbone,
-                        **kwargs).to(self.device)
+
+        return OCGNNBase(in_dim=self.in_dim,
+                         hid_dim=self.hid_dim,
+                         num_layers=self.num_layers,
+                         dropout=self.dropout,
+                         act=self.act,
+                         beta=self.beta,
+                         warmup=self.warmup,
+                         eps=self.eps,
+                         backbone=self.backbone,
+                         **kwargs).to(self.device)
 
     def forward_model(self, data):
         batch_size = data.batch_size
@@ -143,14 +161,7 @@ class CoLA(DeepDetector):
         x = data.x.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        pos_logits, neg_logits = self.model(x, edge_index)
-        logits = torch.cat([pos_logits[:batch_size],
-                            neg_logits[:batch_size]])
-        con_label = torch.cat([torch.ones(batch_size),
-                               torch.zeros(batch_size)]).to(self.device)
-
-        loss = self.model.loss_func(logits, con_label)
-
-        score = neg_logits[:batch_size] - pos_logits[:batch_size]
+        emb = self.model(x, edge_index)
+        loss, score = self.model.loss_func(emb[:batch_size])
 
         return loss, score.detach().cpu()

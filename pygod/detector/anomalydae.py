@@ -89,7 +89,7 @@ class AnomalyDAE(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
