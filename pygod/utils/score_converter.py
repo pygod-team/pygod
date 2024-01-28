@@ -40,4 +40,4 @@ def to_graph_score(score):
         The graph score.
     """
 
-    return score.mean()
+    return score.mean(dim=-1)
