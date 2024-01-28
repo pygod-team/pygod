@@ -72,18 +72,18 @@ class AdONEBase(torch.nn.Module):
         self.w4 = w4
         self.w5 = w5
 
-        self.done = DONEBase(x_dim=x_dim,
-                             s_dim=s_dim,
-                             hid_dim=hid_dim,
-                             num_layers=num_layers,
-                             dropout=dropout,
-                             act=act,
-                             w1=self.w1,
-                             w2=self.w2,
-                             w3=self.w3,
-                             w4=self.w4,
-                             w5=self.w5,
-                             **kwargs)
+        self.generator = DONEBase(x_dim=x_dim,
+                                  s_dim=s_dim,
+                                  hid_dim=hid_dim,
+                                  num_layers=num_layers,
+                                  dropout=dropout,
+                                  act=act,
+                                  w1=self.w1,
+                                  w2=self.w2,
+                                  w3=self.w3,
+                                  w4=self.w4,
+                                  w5=self.w5,
+                                  **kwargs)
 
         self.discriminator = MLP(in_channels=hid_dim,
                                  hidden_channels=int(hid_dim / 2),
@@ -125,7 +125,7 @@ class AdONEBase(torch.nn.Module):
         dis_s : torch.Tensor
             Structure discriminator score.
         """
-        x_, s_, h_a, h_s, dna, dns = self.done(x, s, edge_index)
+        x_, s_, h_a, h_s, dna, dns = self.generator(x, s, edge_index)
         dis_a = torch.sigmoid(self.discriminator(h_a))
         dis_s = torch.sigmoid(self.discriminator(h_s))
         self.emb = (h_a, h_s)
@@ -200,7 +200,7 @@ class AdONEBase(torch.nn.Module):
 
         # equation 12
         loss_alg = torch.mean(torch.log(torch.pow(oc, -1))
-                              * (-torch.log(1 - dis_a) - torch.log(dis_s)))
+                              * (torch.log(1 - dis_a) + torch.log(dis_s)))
 
         # equation 13
         loss = self.w3 * loss_prox_a + \
