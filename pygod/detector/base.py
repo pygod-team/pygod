@@ -532,7 +532,6 @@ class DeepDetector(Detector, ABC):
             test_loss_d = 0
         else:
             test_loss = 0
-
         for sampled_data in loader:
             loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
@@ -556,12 +555,12 @@ class DeepDetector(Detector, ABC):
             outlier_score[node_idx[:batch_size]] = score
 
         if self.gan:
-            loss = (test_loss_g / data.x.shape[0],
+            loss_value = (test_loss_g / data.x.shape[0],
                     test_loss_d / data.x.shape[0])
         else:
-            loss = test_loss / data.x.shape[0],
+            loss_value = test_loss / data.x.shape[0]
 
-        logger(loss=loss,
+        logger(loss=loss_value,
                score=outlier_score,
                target=label,
                time=time.time() - start_time,
