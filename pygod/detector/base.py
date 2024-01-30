@@ -428,8 +428,8 @@ class DeepDetector(Detector, ABC):
 
     def fit(self, data, label=None):
 
-        self.num_nodes, self.in_dim = data.x.shape
         self.process_graph(data)
+        self.num_nodes, self.in_dim = data.x.shape
         if self.batch_size == 0:
             self.batch_size = data.x.shape[0]
         loader = NeighborLoader(data,
@@ -654,7 +654,7 @@ class DeepDetector(Detector, ABC):
         return output
 
     @abstractmethod
-    def init_model(self):
+    def init_model(self, **kwargs):
         """
         Initialize the neural network detector.
 

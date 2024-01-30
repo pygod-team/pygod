@@ -184,6 +184,7 @@ DONE                2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]
 AdONE               2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
 AnomalyDAE          2020   GNN+AE       Yes          [#Fan2020AnomalyDAE]_
 GAAN                2020   GAN          Yes          [#Chen2020Generative]_
+DMGD                2020   GNN+AE       Yes          [#Bandyopadhyay2020Integrating]_
 OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
@@ -247,6 +248,8 @@ Reference
 .. [#Fan2020AnomalyDAE] Fan, H., Zhang, F. and Li, Z., 2020, May. AnomalyDAE: Dual autoencoder for anomaly detection on attributed networks. In Proceedings of the IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP).
 
 .. [#Chen2020Generative] Chen, Z., Liu, B., Wang, M., Dai, P., Lv, J. and Bo, L., 2020, October. Generative adversarial attributed network anomaly detection. In Proceedings of the 29th ACM International Conference on Information & Knowledge Management (CIKM).
+
+.. [#Bandyopadhyay2020Integrating] Bandyopadhyay, S., Vishal Vivek, S. and Murty, M.N., 2020. Integrating network embedding and community outlier detection via multiclass graph description. Frontiers in Artificial Intelligence and Applications, (FAIA).
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 

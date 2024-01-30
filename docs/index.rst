@@ -100,6 +100,7 @@ DONE                2020   MLP+AE       Yes          :class:`pygod.detector.DONE
 AdONE               2020   MLP+AE       Yes          :class:`pygod.detector.AdONE`
 AnomalyDAE          2020   GNN+AE       Yes          :class:`pygod.detector.AnomalyDAE`
 GAAN                2020   GAN          Yes          :class:`pygod.detector.GAAN`
+DMGD                2020   GNN+AE       Yes          :class:`pygod.detector.DMGD`
 OCGNN               2021   GNN          Yes          :class:`pygod.detector.OCGNN`
 CoLA                2021   GNN+AE+SSL   Yes          :class:`pygod.detector.CoLA`
 GUIDE               2021   GNN+AE       Yes          :class:`pygod.detector.GUIDE`

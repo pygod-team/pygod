@@ -134,7 +134,7 @@ class DONE(DeepDetector):
                  **kwargs):
 
         if backbone is not None:
-            warnings.warn("Backbone is not used in AdONE.")
+            warnings.warn("Backbone is not used in DONE.")
 
         super(DONE, self).__init__(hid_dim=hid_dim,
                                    num_layers=1,

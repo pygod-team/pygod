@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-""" One-Class Graph Neural Networks for Anomaly Detection in Attributed
-Networks"""
-# Author: Xueying Ding <xding2@andrew.cmu.edu>
+""" Deep Multiclass Graph Description (DMGD)"""
+# Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
 import torch
-from torch_geometric.nn import GCN
+import warnings
+from torch_geometric.nn import MLP, GCN
 
 from . import DeepDetector
-from ..nn import OCGNNBase
+from ..nn import DMGDBase
 
 
-class OCGNN(DeepDetector):
+class DMGD(DeepDetector):
     """
-    One-Class Graph Neural Networks for Anomaly Detection in
-    Attributed Networks
+    Deep Multiclass Graph Description
 
-    OCGNN is an anomaly detector that measures the
-    distance of anomaly to the centroid, in a similar fashion to the
-    support vector machine, but in the embedding space after feeding
-    towards several layers of GCN.
+    DMGD is a support vector based multiclass outlier detector. Its
+    backbone is an autoencoder that reconstructs the adjacency matrix
+    of the graph with MSE loss and homophily loss. It applies k-means
+    to cluster the nodes embedding and then uses support vector to
+    detect outliers.
 
-    See :cite:`wang2021one` for details.
+    See :cite:`bandyopadhyay2020integrating` for details.
 
     Parameters
     ----------
@@ -54,13 +54,16 @@ class OCGNN(DeepDetector):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
+    alpha : float, optional
+        Weight of the radius loss. Default: ``1``.
     beta : float, optional
-        The weight between the reconstruction loss and radius.
-        Default: ``0.5``.
+        Weight of the reconstruction loss. Default: ``1``.
+    gamma : float, optional
+        Weight of the homophily loss. Default: ``1``.
     warmup : int, optional
         The number of epochs for warm-up training. Default: ``2``.
-    eps : float, optional
-        The slack variable. Default: ``0.001``.
+    k : int, optional
+        The number of clusters. Default: ``2``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -80,7 +83,7 @@ class OCGNN(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -108,52 +111,63 @@ class OCGNN(DeepDetector):
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
-                 beta=0.5,
+                 alpha=1,
+                 beta=1,
+                 gamma=1,
                  warmup=2,
-                 eps=0.001,
+                 k=2,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
                  **kwargs):
-        super(OCGNN, self).__init__(hid_dim=hid_dim,
-                                    num_layers=num_layers,
-                                    dropout=dropout,
-                                    weight_decay=weight_decay,
-                                    act=act,
-                                    backbone=backbone,
-                                    contamination=contamination,
-                                    lr=lr,
-                                    epoch=epoch,
-                                    gpu=gpu,
-                                    batch_size=batch_size,
-                                    num_neigh=num_neigh,
-                                    verbose=verbose,
-                                    save_emb=save_emb,
-                                    compile_model=compile_model,
-                                    **kwargs)
 
+        if num_neigh != 0 and backbone == MLP:
+            warnings.warn('MLP does not use neighbor information.')
+            num_neigh = 0
+
+        self.alpha = alpha
         self.beta = beta
+        self.gamma = gamma
         self.warmup = warmup
-        self.eps = eps
+        self.k = k
+
+        super(DMGD, self).__init__(hid_dim=hid_dim,
+                                   num_layers=num_layers,
+                                   dropout=dropout,
+                                   weight_decay=weight_decay,
+                                   act=act,
+                                   backbone=backbone,
+                                   contamination=contamination,
+                                   lr=lr,
+                                   epoch=epoch,
+                                   gpu=gpu,
+                                   batch_size=batch_size,
+                                   num_neigh=num_neigh,
+                                   verbose=verbose,
+                                   save_emb=save_emb,
+                                   compile_model=compile_model,
+                                   **kwargs)
 
     def process_graph(self, data):
-        pass
+        DMGDBase.process_graph(data)
 
     def init_model(self, **kwargs):
         if self.save_emb:
             self.emb = torch.zeros(self.num_nodes,
                                    self.hid_dim)
 
-        return OCGNNBase(in_dim=self.in_dim,
-                         hid_dim=self.hid_dim,
-                         num_layers=self.num_layers,
-                         dropout=self.dropout,
-                         act=self.act,
-                         beta=self.beta,
-                         warmup=self.warmup,
-                         eps=self.eps,
-                         backbone=self.backbone,
-                         **kwargs).to(self.device)
+        return DMGDBase(in_dim=self.in_dim,
+                        hid_dim=self.hid_dim,
+                        num_layers=self.num_layers,
+                        dropout=self.dropout,
+                        act=self.act,
+                        backbone=self.backbone,
+                        alpha=self.alpha,
+                        beta=self.beta,
+                        gamma=self.gamma,
+                        warmup=self.warmup,
+                        k=self.k,
+                        **kwargs).to(self.device)
 
     def forward_model(self, data):
         batch_size = data.batch_size
@@ -161,7 +175,17 @@ class OCGNN(DeepDetector):
         x = data.x.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        emb = self.model(x, edge_index)
-        loss, score = self.model.loss_func(emb[:batch_size])
+        x_, nd, emb = self.model(x, edge_index)
+        loss, score = self.model.loss_func(x[:batch_size],
+                                           x_[:batch_size],
+                                           nd[:batch_size],
+                                           emb[:batch_size])
 
         return loss, score.detach().cpu()
+
+    def decision_function(self, data, label=None):
+        if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
+            self.fit(data, label)
+        return self.decision_score_
