@@ -19,9 +19,15 @@ from ..utils import logger
 
 class GADNR(DeepDetector):
     """
-    The GAD-NR model.
+    Graph Anomaly Detection via Neighborhood Reconstruction
+
+    GAD-NR is a new type of GAE based on neighborhood reconstruction
+    for graph anomaly detection. GAD-NR aims to reconstruct the entire
+    neighborhood (including local structure, self attributes, and
+    neighbors attributes) around a node based on the corresponding node
+    representation.
     
-    See :cite:`roy2023gadnr` for details.
+    See :cite:`roy2024gadnr` for details.
     
     Parameters
     ----------
