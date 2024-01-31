@@ -161,6 +161,7 @@ class GAAN(DeepDetector):
                         **kwargs).to(self.device)
 
     def forward_model(self, data):
+        batch_size = data.batch_size
         node_idx = data.n_id
         x = data.x.to(self.device)
         s = data.s.to(self.device)
@@ -171,9 +172,15 @@ class GAAN(DeepDetector):
         x_, a, a_ = self.model(x, noise)
 
         loss_g = self.model.loss_func_g(a_[edge_index[0], edge_index[1]])
-        loss_d = self.model.loss_func_ed(a[edge_index[0], edge_index[1]],
-                                         a_[edge_index[0], edge_index[
-                                             1]].detach())
+        self.opt_in.zero_grad()
+        loss_g.backward()
+        self.opt_in.step()
+
+        self.epoch_loss_in += loss_g.item() * batch_size
+
+        loss = self.model.loss_func_ed(a[edge_index[0], edge_index[1]],
+                                       a_[edge_index[0], edge_index[
+                                           1]].detach())
 
         score = self.model.score_func(x=x,
                                       x_=x_,
@@ -183,4 +190,4 @@ class GAAN(DeepDetector):
                                       pos_weight_s=1,
                                       bce_s=True)
 
-        return (loss_g, loss_d), score.detach().cpu()
+        return loss, score.detach().cpu()

@@ -74,6 +74,9 @@ class GAANBase(torch.nn.Module):
         self.emb = None
         self.score_func = double_recon_loss
 
+        self.inner = self.generator
+        self.outer = self.discriminator
+
     def forward(self, x, noise):
         """
         Forward computation.

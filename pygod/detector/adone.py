@@ -198,27 +198,31 @@ class AdONE(DeepDetector):
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        x_, s_, h_a, h_s, dna, dns, dis_a, dis_s = self.model(x, s, edge_index)
+        x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
 
-        loss_d = - torch.mean(torch.log(1 - dis_a[:batch_size])
-                              + torch.log(dis_s[:batch_size]))
+        loss_d = self.model.loss_func_d(h_a[:batch_size].detach(),
+                                        h_s[:batch_size].detach())
 
-        loss_g, oa, os, oc = self.model.loss_func(x[:batch_size],
-                                                  x_[:batch_size],
-                                                  s[:batch_size],
-                                                  s_[:batch_size],
-                                                  h_a[:batch_size],
-                                                  h_s[:batch_size],
-                                                  dna[:batch_size],
-                                                  dns[:batch_size],
-                                                  dis_a[:batch_size],
-                                                  dis_s[:batch_size])
+        self.opt_in.zero_grad()
+        loss_d.backward()
+        self.opt_in.step()
+
+        self.epoch_loss_in += loss_d.item() * batch_size
+
+        loss_g, oa, os, oc = self.model.loss_func_g(x[:batch_size],
+                                                    x_[:batch_size],
+                                                    s[:batch_size],
+                                                    s_[:batch_size],
+                                                    h_a[:batch_size],
+                                                    h_s[:batch_size],
+                                                    dna[:batch_size],
+                                                    dns[:batch_size])
 
         self.attribute_score_[node_idx[:batch_size]] = oa.detach().cpu()
         self.structural_score_[node_idx[:batch_size]] = os.detach().cpu()
         self.combined_score_[node_idx[:batch_size]] = oc.detach().cpu()
 
-        return (loss_g, loss_d), ((oa + os + oc) / 3).detach().cpu()
+        return loss_g, ((oa + os + oc) / 3).detach().cpu()
 
     def decision_function(self, data, label=None):
         if data is not None:
