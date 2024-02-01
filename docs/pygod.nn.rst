@@ -9,6 +9,7 @@ pygod.nn
     ~pygod.nn.AdONEBase
     ~pygod.nn.AnomalyDAEBase
     ~pygod.nn.CoLABase
+    ~pygod.nn.DMGDBase
     ~pygod.nn.DOMINANTBase
     ~pygod.nn.DONEBase
     ~pygod.nn.GAANBase

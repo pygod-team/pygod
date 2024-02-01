@@ -72,18 +72,18 @@ class AdONEBase(torch.nn.Module):
         self.w4 = w4
         self.w5 = w5
 
-        self.done = DONEBase(x_dim=x_dim,
-                             s_dim=s_dim,
-                             hid_dim=hid_dim,
-                             num_layers=num_layers,
-                             dropout=dropout,
-                             act=act,
-                             w1=self.w1,
-                             w2=self.w2,
-                             w3=self.w3,
-                             w4=self.w4,
-                             w5=self.w5,
-                             **kwargs)
+        self.generator = DONEBase(x_dim=x_dim,
+                                  s_dim=s_dim,
+                                  hid_dim=hid_dim,
+                                  num_layers=num_layers,
+                                  dropout=dropout,
+                                  act=act,
+                                  w1=self.w1,
+                                  w2=self.w2,
+                                  w3=self.w3,
+                                  w4=self.w4,
+                                  w5=self.w5,
+                                  **kwargs)
 
         self.discriminator = MLP(in_channels=hid_dim,
                                  hidden_channels=int(hid_dim / 2),
@@ -92,6 +92,8 @@ class AdONEBase(torch.nn.Module):
                                  dropout=dropout,
                                  act=torch.tanh)
         self.emb = None
+        self.inner = self.discriminator
+        self.outer = self.generator
 
     def forward(self, x, s, edge_index):
         """
@@ -125,16 +127,14 @@ class AdONEBase(torch.nn.Module):
         dis_s : torch.Tensor
             Structure discriminator score.
         """
-        x_, s_, h_a, h_s, dna, dns = self.done(x, s, edge_index)
-        dis_a = torch.sigmoid(self.discriminator(h_a))
-        dis_s = torch.sigmoid(self.discriminator(h_s))
+        x_, s_, h_a, h_s, dna, dns = self.generator(x, s, edge_index)
         self.emb = (h_a, h_s)
 
-        return x_, s_, h_a, h_s, dna, dns, dis_a, dis_s
+        return x_, s_, h_a, h_s, dna, dns
 
-    def loss_func(self, x, x_, s, s_, h_a, h_s, dna, dns, dis_a, dis_s):
+    def loss_func_g(self, x, x_, s, s_, h_a, h_s, dna, dns):
         """
-        Loss function for AdONE.
+        Generator loss function for AdONE.
 
         Parameters
         ----------
@@ -154,10 +154,6 @@ class AdONEBase(torch.nn.Module):
             Attribute neighbor distance.
         dns : torch.Tensor
             Structure neighbor distance.
-        dis_a : torch.Tensor
-            Attribute discriminator score.
-        dis_s : torch.Tensor
-            Structure discriminator score.
 
         Returns
         -------
@@ -198,9 +194,11 @@ class AdONEBase(torch.nn.Module):
         # equation 3
         loss_hom_s = torch.mean(torch.log(torch.pow(os, -1)) * dns)
 
+        dis_a = torch.sigmoid(self.discriminator(h_a))
+        dis_s = torch.sigmoid(self.discriminator(h_s))
         # equation 12
         loss_alg = torch.mean(torch.log(torch.pow(oc, -1))
-                              * (-torch.log(1 - dis_a) - torch.log(dis_s)))
+                              * (torch.log(1 - dis_a) + torch.log(dis_s)))
 
         # equation 13
         loss = self.w3 * loss_prox_a + \
@@ -210,6 +208,28 @@ class AdONEBase(torch.nn.Module):
                self.w5 * loss_alg
 
         return loss, oa, os, oc
+
+    def loss_func_d(self, h_a, h_s):
+        """
+        Discriminator loss function for AdONE.
+
+        Parameters
+        ----------
+        h_a : torch.Tensor
+            Attribute hidden embeddings.
+        h_s : torch.Tensor
+            Structure hidden embeddings.
+
+        Returns
+        -------
+        loss : torch.Tensor
+            Loss value.
+        """
+        # equation 11
+        dis_a = torch.sigmoid(self.discriminator(h_a))
+        dis_s = torch.sigmoid(self.discriminator(h_s))
+        loss = - torch.mean(torch.log(1 - dis_a) + torch.log(dis_s))
+        return loss
 
     @staticmethod
     def process_graph(data):

@@ -14,15 +14,15 @@ from .functional import KL_neighbor_loss, W2_neighbor_loss
 
 class GADNRBase(nn.Module):
     """
-    GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction
+    Graph Anomaly Detection via Neighborhood Reconstruction
 
-    GAD-NR, is a new type of GAE based on neighborhood reconstruction
+    GAD-NR is a new type of GAE based on neighborhood reconstruction
     for graph anomaly detection. GAD-NR aims to reconstruct the entire
     neighborhood (including local structure, self attributes, and 
     neighbors attributes) around a node based on the corresponding node
     representation.
 
-    See :cite:`roy2023gadnr` for details.
+    See :cite:`roy2024gadnr` for details.
 
     Parameters
     ----------

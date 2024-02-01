@@ -6,6 +6,7 @@ from .anomalous import ANOMALOUS
 from .anomalydae import AnomalyDAE
 from .cola import CoLA
 from .conad import CONAD
+from .dmgd import DMGD
 from .dominant import DOMINANT
 from .done import DONE
 from .gaan import GAAN
@@ -19,6 +20,6 @@ from .scan import SCAN
 
 __all__ = [
     "Detector", "DeepDetector", "AdONE", "ANOMALOUS", "AnomalyDAE", "CoLA",
-    "CONAD", "DOMINANT", "DONE", "GAAN", "GADNR", "GAE", "GUIDE", "OCGNN", "ONE",
-    "Radar", "SCAN"
+    "CONAD", "DMGD", "DOMINANT", "DONE", "GAAN", "GADNR", "GAE", "GUIDE",
+    "OCGNN", "ONE", "Radar", "SCAN"
 ]

@@ -1,41 +1,34 @@
 # -*- coding: utf-8 -*-
-"""Generative Adversarial Attributed Network Anomaly Detection (GAAN)"""
-# Author: Ruitong Zhang <rtzhang@buaa.edu.cn>, Kay Liu <zliu234@uic.edu>
+""" Deep Multiclass Graph Description (DMGD)"""
+# Author: Kay Liu <zliu234@uic.edu>
 # License: BSD 2 clause
 
 import torch
 import warnings
-import torch.nn.functional as F
-from torch_geometric.nn import MLP
-from torch_geometric.utils import to_dense_adj
+from torch_geometric.nn import MLP, GCN
 
-from ..nn import GAANBase
 from . import DeepDetector
+from ..nn import DMGDBase
 
 
-class GAAN(DeepDetector):
+class DMGD(DeepDetector):
     """
-    Generative Adversarial Attributed Network Anomaly Detection
+    Deep Multiclass Graph Description
 
-    GAAN is a generative adversarial attribute network anomaly
-    detection framework, including a generator module, an encoder
-    module, a discriminator module, and uses anomaly evaluation
-    measures that consider sample reconstruction error and real sample
-    recognition confidence to make predictions. This model is
-    transductive only.
+    DMGD is a support vector based multiclass outlier detector. Its
+    backbone is an autoencoder that reconstructs the adjacency matrix
+    of the graph with MSE loss and homophily loss. It applies k-means
+    to cluster the nodes embedding and then uses support vector to
+    detect outliers.
 
-    See :cite:`chen2020generative` for details.
+    See :cite:`bandyopadhyay2020integrating` for details.
 
     Parameters
     ----------
-    noise_dim :  int, optional
-        Input dimension of the Gaussian random noise. Defaults: ``16``.
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
-       Total number of layers in model. A half (floor) of the layers
-       are for the generator, the other half (ceil) of the layers are
-       for encoder. Default: ``4``.
+        Total number of layers in model. Default: ``2``.
     dropout : float, optional
         Dropout rate. Default: ``0.``.
     weight_decay : float, optional
@@ -44,8 +37,8 @@ class GAAN(DeepDetector):
         Activation function if not None.
         Default: ``torch.nn.functional.relu``.
     backbone : torch.nn.Module
-        The backbone of GAAN is fixed to be MLP. Changing of this
-        parameter will not affect the model. Default: ``None``.
+        The backbone of the deep detector implemented in PyG.
+        Default: ``torch_geometric.nn.GCN``.
     contamination : float, optional
         The amount of contamination of the dataset in (0., 0.5], i.e.,
         the proportion of outliers in the dataset. Used when fitting to
@@ -61,9 +54,16 @@ class GAAN(DeepDetector):
     num_neigh : int, optional
         Number of neighbors in sampling, -1 for all neighbors.
         Default: ``-1``.
-    weight : float, optional
-        Weight between reconstruction of node feature and structure.
-        Default: ``0.5``.
+    alpha : float, optional
+        Weight of the radius loss. Default: ``1``.
+    beta : float, optional
+        Weight of the reconstruction loss. Default: ``1``.
+    gamma : float, optional
+        Weight of the homophily loss. Default: ``1``.
+    warmup : int, optional
+        The number of epochs for warm-up training. Default: ``2``.
+    k : int, optional
+        The number of clusters. Default: ``2``.
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -73,7 +73,7 @@ class GAAN(DeepDetector):
         Whether to compile the model with ``torch_geometric.compile``.
         Default: ``False``.
     **kwargs
-        Other parameters for the backbone.
+        Other parameters for the backbone model.
 
     Attributes
     ----------
@@ -99,95 +99,93 @@ class GAAN(DeepDetector):
     """
 
     def __init__(self,
-                 noise_dim=16,
                  hid_dim=64,
-                 num_layers=4,
+                 num_layers=2,
                  dropout=0.,
                  weight_decay=0.,
-                 act=F.relu,
-                 backbone=None,
+                 act=torch.nn.functional.relu,
+                 backbone=GCN,
                  contamination=0.1,
                  lr=4e-3,
                  epoch=100,
                  gpu=-1,
                  batch_size=0,
                  num_neigh=-1,
-                 weight=0.5,
+                 alpha=1,
+                 beta=1,
+                 gamma=1,
+                 warmup=2,
+                 k=2,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
                  **kwargs):
 
-        self.noise_dim = noise_dim
-        self.weight = weight
+        if num_neigh != 0 and backbone == MLP:
+            warnings.warn('MLP does not use neighbor information.')
+            num_neigh = 0
 
-        # self.num_layers is 1 for sample one hop neighbors
-        # In GAAN, self.model_layers is for model layers
-        self.model_layers = num_layers
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.warmup = warmup
+        self.k = k
 
-        if backbone is not None:
-            warnings.warn('GAAN can only use MLP as the backbone.')
-
-        super(GAAN, self).__init__(
-            hid_dim=hid_dim,
-            num_layers=1,
-            dropout=dropout,
-            weight_decay=weight_decay,
-            act=act,
-            contamination=contamination,
-            lr=lr,
-            epoch=epoch,
-            gpu=gpu,
-            batch_size=batch_size,
-            num_neigh=num_neigh,
-            verbose=verbose,
-            gan=True,
-            save_emb=save_emb,
-            compile_model=compile_model,
-            **kwargs)
+        super(DMGD, self).__init__(hid_dim=hid_dim,
+                                   num_layers=num_layers,
+                                   dropout=dropout,
+                                   weight_decay=weight_decay,
+                                   act=act,
+                                   backbone=backbone,
+                                   contamination=contamination,
+                                   lr=lr,
+                                   epoch=epoch,
+                                   gpu=gpu,
+                                   batch_size=batch_size,
+                                   num_neigh=num_neigh,
+                                   verbose=verbose,
+                                   save_emb=save_emb,
+                                   compile_model=compile_model,
+                                   **kwargs)
 
     def process_graph(self, data):
-        GAANBase.process_graph(data)
+        DMGDBase.process_graph(data)
 
     def init_model(self, **kwargs):
         if self.save_emb:
             self.emb = torch.zeros(self.num_nodes,
                                    self.hid_dim)
-        return GAANBase(in_dim=self.in_dim,
-                        noise_dim=self.noise_dim,
+
+        return DMGDBase(in_dim=self.in_dim,
                         hid_dim=self.hid_dim,
-                        num_layers=self.model_layers,
+                        num_layers=self.num_layers,
                         dropout=self.dropout,
                         act=self.act,
+                        backbone=self.backbone,
+                        alpha=self.alpha,
+                        beta=self.beta,
+                        gamma=self.gamma,
+                        warmup=self.warmup,
+                        k=self.k,
                         **kwargs).to(self.device)
 
     def forward_model(self, data):
         batch_size = data.batch_size
-        node_idx = data.n_id
+
         x = data.x.to(self.device)
-        s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        noise = torch.randn(x.shape[0], self.noise_dim).to(self.device)
-
-        x_, a, a_ = self.model(x, noise)
-
-        loss_g = self.model.loss_func_g(a_[edge_index])
-        self.opt_in.zero_grad()
-        loss_g.backward()
-        self.opt_in.step()
-
-        self.epoch_loss_in += loss_g.item() * batch_size
-
-        loss = self.model.loss_func_ed(a[edge_index],
-                                       a_[edge_index].detach())
-
-        score = self.model.score_func(x=x[:batch_size],
-                                      x_=x_[:batch_size],
-                                      s=s[:batch_size, node_idx],
-                                      s_=a[:batch_size],
-                                      weight=self.weight,
-                                      pos_weight_s=1,
-                                      bce_s=True)
+        x_, nd, emb = self.model(x, edge_index)
+        loss, score = self.model.loss_func(x[:batch_size],
+                                           x_[:batch_size],
+                                           nd[:batch_size],
+                                           emb[:batch_size])
 
         return loss, score.detach().cpu()
+
+    def decision_function(self, data, label=None):
+        if data is not None:
+            warnings.warn("This detector is transductive only. "
+                          "Training from scratch with the input data.")
+            self.fit(data, label)
+        return self.decision_score_

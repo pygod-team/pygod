@@ -11,6 +11,7 @@ pygod.detector
     ~pygod.detector.AnomalyDAE
     ~pygod.detector.CoLA
     ~pygod.detector.CONAD
+    ~pygod.detector.DMGD
     ~pygod.detector.DOMINANT
     ~pygod.detector.DONE
     ~pygod.detector.GAAN

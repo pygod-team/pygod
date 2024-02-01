@@ -41,7 +41,7 @@ class Detector(ABC):
 
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
 
@@ -354,7 +354,7 @@ class DeepDetector(Detector, ABC):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -428,8 +428,8 @@ class DeepDetector(Detector, ABC):
 
     def fit(self, data, label=None):
 
-        self.num_nodes, self.in_dim = data.x.shape
         self.process_graph(data)
+        self.num_nodes, self.in_dim = data.x.shape
         if self.batch_size == 0:
             self.batch_size = data.x.shape[0]
         loader = NeighborLoader(data,
@@ -444,10 +444,10 @@ class DeepDetector(Detector, ABC):
                                          lr=self.lr,
                                          weight_decay=self.weight_decay)
         else:
-            self.opt_g = torch.optim.Adam(self.model.generator.parameters(),
-                                          lr=self.lr,
-                                          weight_decay=self.weight_decay)
-            optimizer = torch.optim.Adam(self.model.discriminator.parameters(),
+            self.opt_in = torch.optim.Adam(self.model.inner.parameters(),
+                                           lr=self.lr,
+                                           weight_decay=self.weight_decay)
+            optimizer = torch.optim.Adam(self.model.outer.parameters(),
                                          lr=self.lr,
                                          weight_decay=self.weight_decay)
 
@@ -457,7 +457,7 @@ class DeepDetector(Detector, ABC):
             start_time = time.time()
             epoch_loss = 0
             if self.gan:
-                self.epoch_loss_g = 0
+                self.epoch_loss_in = 0
             for sampled_data in loader:
                 batch_size = sampled_data.batch_size
                 node_idx = sampled_data.n_id
@@ -465,7 +465,7 @@ class DeepDetector(Detector, ABC):
                 loss, score = self.forward_model(sampled_data)
                 epoch_loss += loss.item() * batch_size
                 if self.save_emb:
-                    if type(self.emb) == tuple:
+                    if type(self.emb) is tuple:
                         self.emb[0][node_idx[:batch_size]] = \
                             self.model.emb[0][:batch_size].cpu()
                         self.emb[1][node_idx[:batch_size]] = \
@@ -481,7 +481,7 @@ class DeepDetector(Detector, ABC):
 
             loss_value = epoch_loss / data.x.shape[0]
             if self.gan:
-                loss_value = (self.epoch_loss_g / data.x.shape[0], loss_value)
+                loss_value = (self.epoch_loss_in / data.x.shape[0], loss_value)
             logger(epoch=epoch,
                    loss=loss_value,
                    score=self.decision_score_,
@@ -509,6 +509,7 @@ class DeepDetector(Detector, ABC):
             else:
                 self.emb = torch.zeros(data.x.shape[0], self.hid_dim)
         start_time = time.time()
+        test_loss = 0
         for sampled_data in loader:
             loss, score = self.forward_model(sampled_data)
             batch_size = sampled_data.batch_size
@@ -523,9 +524,14 @@ class DeepDetector(Detector, ABC):
                     self.emb[node_idx[:batch_size]] = \
                         self.model.emb[:batch_size].cpu()
 
+            test_loss = loss.item() * batch_size
             outlier_score[node_idx[:batch_size]] = score
 
-        logger(loss=loss.item() / data.x.shape[0],
+        loss_value = test_loss / data.x.shape[0]
+        if self.gan:
+            loss_value = (self.epoch_loss_in / data.x.shape[0], loss_value)
+
+        logger(loss=loss_value,
                score=outlier_score,
                target=label,
                time=time.time() - start_time,
@@ -610,7 +616,7 @@ class DeepDetector(Detector, ABC):
                                                    prob_method,
                                                    return_conf)
         if return_emb:
-            if type(output) == tuple:
+            if type(output) is tuple:
                 output += (self.emb,)
             else:
                 output = (output, self.emb)
@@ -618,7 +624,7 @@ class DeepDetector(Detector, ABC):
         return output
 
     @abstractmethod
-    def init_model(self):
+    def init_model(self, **kwargs):
         """
         Initialize the neural network detector.
 

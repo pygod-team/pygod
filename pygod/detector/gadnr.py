@@ -6,7 +6,6 @@
 # License: BSD 2 clause
 
 import time
-import warnings
 import torch
 import torch.nn.functional as F
 from torch_geometric.loader import NeighborLoader
@@ -20,9 +19,15 @@ from ..utils import logger
 
 class GADNR(DeepDetector):
     """
-    The GAD-NR model.
+    Graph Anomaly Detection via Neighborhood Reconstruction
+
+    GAD-NR is a new type of GAE based on neighborhood reconstruction
+    for graph anomaly detection. GAD-NR aims to reconstruct the entire
+    neighborhood (including local structure, self attributes, and
+    neighbors attributes) around a node based on the corresponding node
+    representation.
     
-    See :cite:`roy2023gadnr` for details.
+    See :cite:`roy2024gadnr` for details.
     
     Parameters
     ----------
@@ -100,7 +105,7 @@ class GADNR(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -272,6 +277,7 @@ class GADNR(DeepDetector):
         """
         Overwrite the base model fit function since GAD-NR uses 
         multiple personalized loss functions.
+
         Parameters
         ----------
         data : torch_geometric.data.Data

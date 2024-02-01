@@ -184,11 +184,12 @@ DONE                2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]
 AdONE               2020   MLP+AE       Yes          [#Bandyopadhyay2020Outlier]_
 AnomalyDAE          2020   GNN+AE       Yes          [#Fan2020AnomalyDAE]_
 GAAN                2020   GAN          Yes          [#Chen2020Generative]_
+DMGD                2020   GNN+AE       Yes          [#Bandyopadhyay2020Integrating]_
 OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
 CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
-GADNR               2023   GNN+AE       Yes          [#Roy2023Gadnr]_
+GADNR               2024   GNN+AE       Yes          [#Roy2024Gadnr]_
 ==================  =====  ===========  ===========  ========================================
 
 
@@ -248,6 +249,8 @@ Reference
 
 .. [#Chen2020Generative] Chen, Z., Liu, B., Wang, M., Dai, P., Lv, J. and Bo, L., 2020, October. Generative adversarial attributed network anomaly detection. In Proceedings of the 29th ACM International Conference on Information & Knowledge Management (CIKM).
 
+.. [#Bandyopadhyay2020Integrating] Bandyopadhyay, S., Vishal Vivek, S. and Murty, M.N., 2020. Integrating network embedding and community outlier detection via multiclass graph description. Frontiers in Artificial Intelligence and Applications, (FAIA).
+
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
@@ -256,4 +259,4 @@ Reference
 
 .. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).
 
-.. [#Roy2023Gadnr] Roy, A., Shu, J., Li, J., Yang, C., Elshocht, O., Smeets, J. and Li, P., 2023. GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (WSDM).
+.. [#Roy2024Gadnr] Roy, A., Shu, J., Li, J., Yang, C., Elshocht, O., Smeets, J. and Li, P., 2024. GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (WSDM).

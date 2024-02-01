@@ -74,6 +74,9 @@ class GAANBase(torch.nn.Module):
         self.emb = None
         self.score_func = double_recon_loss
 
+        self.inner = self.generator
+        self.outer = self.discriminator
+
     def forward(self, x, noise):
         """
         Forward computation.
@@ -106,7 +109,6 @@ class GAANBase(torch.nn.Module):
 
     @staticmethod
     def loss_func_g(a_):
-
         loss_g = F.binary_cross_entropy(a_, torch.ones_like(a_))
         return loss_g
 

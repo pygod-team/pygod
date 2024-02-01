@@ -89,7 +89,7 @@ class AdONE(DeepDetector):
         fitted.
     threshold_ : float
         The threshold is based on ``contamination``. It is the
-        :math:`N`*``contamination`` most abnormal samples in
+        :math:`N \\times` ``contamination`` most abnormal samples in
         ``decision_score_``. The threshold is calculated for generating
         binary outlier labels.
     label_ : torch.Tensor
@@ -148,6 +148,7 @@ class AdONE(DeepDetector):
                                     batch_size=batch_size,
                                     num_neigh=num_neigh,
                                     verbose=verbose,
+                                    gan=True,
                                     save_emb=save_emb,
                                     compile_model=compile_model,
                                     **kwargs)
@@ -197,23 +198,31 @@ class AdONE(DeepDetector):
         s = data.s.to(self.device)
         edge_index = data.edge_index.to(self.device)
 
-        x_, s_, h_a, h_s, dna, dns, dis_a, dis_s = self.model(x, s, edge_index)
-        loss, oa, os, oc = self.model.loss_func(x[:batch_size],
-                                                x_[:batch_size],
-                                                s[:batch_size],
-                                                s_[:batch_size],
-                                                h_a[:batch_size],
-                                                h_s[:batch_size],
-                                                dna[:batch_size],
-                                                dns[:batch_size],
-                                                dis_a[:batch_size],
-                                                dis_s[:batch_size])
+        x_, s_, h_a, h_s, dna, dns = self.model(x, s, edge_index)
+
+        loss_d = self.model.loss_func_d(h_a[:batch_size].detach(),
+                                        h_s[:batch_size].detach())
+
+        self.opt_in.zero_grad()
+        loss_d.backward()
+        self.opt_in.step()
+
+        self.epoch_loss_in += loss_d.item() * batch_size
+
+        loss_g, oa, os, oc = self.model.loss_func_g(x[:batch_size],
+                                                    x_[:batch_size],
+                                                    s[:batch_size],
+                                                    s_[:batch_size],
+                                                    h_a[:batch_size],
+                                                    h_s[:batch_size],
+                                                    dna[:batch_size],
+                                                    dns[:batch_size])
 
         self.attribute_score_[node_idx[:batch_size]] = oa.detach().cpu()
         self.structural_score_[node_idx[:batch_size]] = os.detach().cpu()
         self.combined_score_[node_idx[:batch_size]] = oc.detach().cpu()
 
-        return loss, ((oa + os + oc) / 3).detach().cpu()
+        return loss_g, ((oa + os + oc) / 3).detach().cpu()
 
     def decision_function(self, data, label=None):
         if data is not None:
