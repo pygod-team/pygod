@@ -119,4 +119,4 @@ class TestDMGD(unittest.TestCase):
 
     def test_params(self):
         with assert_warns(UserWarning):
-            DMGD(backbone=MLP, num_neigh=0)
+            DMGD(backbone=MLP, num_neigh=5)
