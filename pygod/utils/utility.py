@@ -226,7 +226,7 @@ def logger(epoch=0,
                 print("Test: ", end='')
 
             if isinstance(loss, tuple):
-                print("Loss G {:.4f} | Loss D {:.4f} | "
+                print("Loss I {:.4f} | Loss O {:.4f} | "
                       .format(loss[0], loss[1]), end='')
             else:
                 print("Loss {:.4f} | ".format(loss), end='')
