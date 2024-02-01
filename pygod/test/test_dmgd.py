@@ -4,7 +4,7 @@ import unittest
 from numpy.testing import assert_equal, assert_raises, assert_warns
 
 import torch
-from torch_geometric.nn import GraphSAGE
+from torch_geometric.nn import GraphSAGE, MLP
 from torch_geometric.seed import seed_everything
 
 from pygod.metric import eval_roc_auc
@@ -21,7 +21,7 @@ class TestDMGD(unittest.TestCase):
         self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
 
     def test_full(self):
-        detector = DMGD(epoch=10, num_layers=2)
+        detector = DMGD(epoch=10, num_layers=2, backbone=MLP)
         with assert_warns(UserWarning):
             detector.fit(self.train_data)
 
@@ -116,3 +116,7 @@ class TestDMGD(unittest.TestCase):
         with assert_raises(ValueError):
             detector.predict(return_prob=True,
                              prob_method='something')
+
+    def test_params(self):
+        with assert_warns(UserWarning):
+            DMGD(backbone=MLP, num_neigh=0)
