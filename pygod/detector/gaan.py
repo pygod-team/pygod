@@ -7,6 +7,7 @@ import torch
 import warnings
 import torch.nn.functional as F
 from torch_geometric.nn import MLP
+from torch_geometric.utils import to_dense_adj
 
 from ..nn import GAANBase
 from . import DeepDetector
@@ -110,7 +111,7 @@ class GAAN(DeepDetector):
                  epoch=100,
                  gpu=-1,
                  batch_size=0,
-                 num_neigh=0,
+                 num_neigh=-1,
                  weight=0.5,
                  verbose=0,
                  save_emb=False,
@@ -120,16 +121,16 @@ class GAAN(DeepDetector):
         self.noise_dim = noise_dim
         self.weight = weight
 
-        if num_neigh != 0:
-            warnings.warn('MLP in GAAN does not use neighbor information.')
-            num_neigh = 0
+        # self.num_layers is 1 for sample one hop neighbors
+        # In GAAN, self.model_layers is for model layers
+        self.model_layers = num_layers
 
         if backbone is not None:
             warnings.warn('GAAN can only use MLP as the backbone.')
 
         super(GAAN, self).__init__(
             hid_dim=hid_dim,
-            num_layers=num_layers,
+            num_layers=1,
             dropout=dropout,
             weight_decay=weight_decay,
             act=act,
@@ -155,7 +156,7 @@ class GAAN(DeepDetector):
         return GAANBase(in_dim=self.in_dim,
                         noise_dim=self.noise_dim,
                         hid_dim=self.hid_dim,
-                        num_layers=self.num_layers,
+                        num_layers=self.model_layers,
                         dropout=self.dropout,
                         act=self.act,
                         **kwargs).to(self.device)
@@ -171,21 +172,20 @@ class GAAN(DeepDetector):
 
         x_, a, a_ = self.model(x, noise)
 
-        loss_g = self.model.loss_func_g(a_[edge_index[0], edge_index[1]])
+        loss_g = self.model.loss_func_g(a_[edge_index])
         self.opt_in.zero_grad()
         loss_g.backward()
         self.opt_in.step()
 
         self.epoch_loss_in += loss_g.item() * batch_size
 
-        loss = self.model.loss_func_ed(a[edge_index[0], edge_index[1]],
-                                       a_[edge_index[0], edge_index[
-                                           1]].detach())
+        loss = self.model.loss_func_ed(a[edge_index],
+                                       a_[edge_index].detach())
 
-        score = self.model.score_func(x=x,
-                                      x_=x_,
-                                      s=s[:, node_idx],
-                                      s_=a,
+        score = self.model.score_func(x=x[:batch_size],
+                                      x_=x_[:batch_size],
+                                      s=s[:batch_size, node_idx],
+                                      s_=a[:batch_size],
                                       weight=self.weight,
                                       pos_weight_s=1,
                                       bce_s=True)

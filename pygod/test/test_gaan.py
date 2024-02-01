@@ -119,6 +119,3 @@ class TestGAAN(unittest.TestCase):
     def test_params(self):
         with assert_warns(UserWarning):
             GAAN(backbone=GIN)
-
-        with assert_warns(UserWarning):
-            GAAN(num_neigh=2)

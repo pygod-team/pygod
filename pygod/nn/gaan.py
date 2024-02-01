@@ -109,7 +109,6 @@ class GAANBase(torch.nn.Module):
 
     @staticmethod
     def loss_func_g(a_):
-
         loss_g = F.binary_cross_entropy(a_, torch.ones_like(a_))
         return loss_g
 
