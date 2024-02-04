@@ -120,6 +120,7 @@ GADNR               2024   GNN+AE       Yes          :class:`pygod.detector.GADN
    install
    tutorials/index
    api_cc
+   minibatch
 
 .. toctree::
    :maxdepth: 3

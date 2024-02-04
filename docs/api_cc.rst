@@ -10,7 +10,7 @@ Key Attributes of a fitted detector:
 
 * :attr:`pygod.detector.Detector.decision_score_`: The outlier scores of the input data. Outliers tend to have higher scores.
 * :attr:`pygod.detector.Detector.label_`: The binary labels of the input data. 0 stands for inliers and 1 for outliers.
-* :attr:`threshold_` : The determined threshold for binary classification. Scores above the threshold are outliers.
+* :attr:`pygod.detector.Detector.threshold_` : The determined threshold for binary classification. Scores above the threshold are outliers.
 
 **Input of PyGOD**: Please pass in a `PyG Data object <https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.data.Data.html#torch_geometric.data.Data>`_.
 See `PyG data processing examples <https://pytorch-geometric.readthedocs.io/en/latest/notes/introduction.html#data-handling-of-graphs>`_.
