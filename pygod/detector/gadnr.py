@@ -208,7 +208,6 @@ class GADNR(DeepDetector):
                          sample_size=self.sample_size,
                          sample_time=self.sample_time, 
                          neighbor_num_list=self.neighbor_num_list,
-                         tot_nodes=self.tot_nodes,
                          neigh_loss=self.neigh_loss,
                          lambda_loss1=self.lambda_loss1,
                          lambda_loss2=self.lambda_loss2,

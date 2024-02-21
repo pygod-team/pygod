@@ -76,8 +76,7 @@ class TestAnomalyDAE(unittest.TestCase):
                               batch_size=16,
                               num_neigh=1,
                               verbose=3,
-                              save_emb=True,
-                              act_first=True)
+                              save_emb=True)
         detector.fit(self.train_data)
 
         score = detector.predict(return_pred=False, return_score=True)
