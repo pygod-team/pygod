@@ -20,11 +20,11 @@
    :target: https://docs.pygod.org/en/latest/?badge=latest
    :alt: Documentation status
 
-.. |badge_stars| image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
+.. |badge_stars| image:: https://img.shields.io/github/stars/pygod-team/pygod?style=flat
    :target: https://github.com/pygod-team/pygod/stargazers
    :alt: GitHub stars
 
-.. |badge_forks| image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
+.. |badge_forks| image:: https://img.shields.io/github/forks/pygod-team/pygod?style=flat
    :target: https://github.com/pygod-team/pygod/network
    :alt: GitHub forks
 
