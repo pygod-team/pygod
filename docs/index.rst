@@ -10,36 +10,37 @@
 
 ----
 
+|badge_pypi| |badge_docs| |badge_stars| |badge_forks| |badge_downloads| |badge_testing| |badge_coverage| |badge_license|
 
-.. image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
+.. |badge_pypi| image:: https://img.shields.io/pypi/v/pygod.svg?color=brightgreen
    :target: https://pypi.org/project/pygod/
    :alt: PyPI version
 
-.. image:: https://readthedocs.org/projects/pygod/badge/?version=latest
+.. |badge_docs| image:: https://readthedocs.org/projects/py-god/badge/?version=latest
    :target: https://docs.pygod.org/en/latest/?badge=latest
    :alt: Documentation status
 
-.. image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
+.. |badge_stars| image:: https://img.shields.io/github/stars/pygod-team/pygod.svg
    :target: https://github.com/pygod-team/pygod/stargazers
    :alt: GitHub stars
 
-.. image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
+.. |badge_forks| image:: https://img.shields.io/github/forks/pygod-team/pygod.svg?color=blue
    :target: https://github.com/pygod-team/pygod/network
    :alt: GitHub forks
 
-.. image:: https://static.pepy.tech/personalized-badge/pygod?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads
+.. |badge_downloads| image:: https://static.pepy.tech/personalized-badge/pygod?period=total&units=international_system&left_color=grey&right_color=blue&left_text=Downloads
    :target: https://pepy.tech/project/pygod
    :alt: PyPI downloads
 
-.. image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
+.. |badge_testing| image:: https://github.com/pygod-team/pygod/actions/workflows/testing.yml/badge.svg
    :target: https://github.com/pygod-team/pygod/actions/workflows/testing.yml
    :alt: testing
 
-.. image:: https://coveralls.io/repos/github/pygod-team/pygod/badge.svg?branch=main
+.. |badge_coverage| image:: https://coveralls.io/repos/github/pygod-team/pygod/badge.svg?branch=main
    :target: https://coveralls.io/github/pygod-team/pygod?branch=main
    :alt: Coverage Status
 
-.. image:: https://img.shields.io/github/license/pygod-team/pygod.svg
+.. |badge_license| image:: https://img.shields.io/github/license/pygod-team/pygod.svg
    :target: https://github.com/pygod-team/pygod/blob/master/LICENSE
    :alt: License
 
