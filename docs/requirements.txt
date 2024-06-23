@@ -1,12 +1,12 @@
 # dependencies required for documentation
 furo
-https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-linux_x86_64.whl
+https://download.pytorch.org/whl/cpu/torch-2.3.1%2Bcpu-cp312-cp312-linux_x86_64.whl
 torch_geometric
-https://data.pyg.org/whl/torch-2.2.0%2Bcpu/pyg_lib-0.4.0%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
-https://data.pyg.org/whl/torch-2.2.0%2Bcpu/torch_cluster-1.6.3%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
-https://data.pyg.org/whl/torch-2.2.0%2Bcpu/torch_scatter-2.1.2%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
-https://data.pyg.org/whl/torch-2.2.0%2Bcpu/torch_sparse-0.6.18%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
-https://data.pyg.org/whl/torch-2.2.0%2Bcpu/torch_spline_conv-1.2.2%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
+https://data.pyg.org/whl/torch-2.3.0%2Bcpu/pyg_lib-0.4.0%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
+https://data.pyg.org/whl/torch-2.3.0%2Bcpu/torch_cluster-1.6.3%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
+https://data.pyg.org/whl/torch-2.3.0%2Bcpu/torch_scatter-2.1.2%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
+https://data.pyg.org/whl/torch-2.3.0%2Bcpu/torch_sparse-0.6.18%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
+https://data.pyg.org/whl/torch-2.3.0%2Bcpu/torch_spline_conv-1.2.2%2Bpt22cpu-cp312-cp312-linux_x86_64.whl
 setuptools
 sphinxcontrib-bibtex
 matplotlib
