@@ -11,3 +11,4 @@ setuptools
 sphinxcontrib-bibtex
 matplotlib
 sphinx_gallery
+scikit-learn
