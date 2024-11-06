@@ -126,21 +126,21 @@ class CARDBase(nn.Module):
         ori_loss = self.disc_loss_func(logits, con_label)
         diff_loss = self.disc_loss_func(diff_logits, con_label)
         logit_loss = (ori_loss + diff_loss) / 2
-        batch_size = logits.shape[0] / 2
+        batch_size = int(logits.shape[0] / 2)
         h_1 = normalize(logits[:batch_size], dim=0, p=2)
         h_2 = normalize(diff_logits[:batch_size], dim=0, p=2)
         inter_logit_loss = 2 - 2 * (h_1 * h_2).sum(dim=-1).mean()
 
-        rec_loss = double_recon_loss(x, x_, 0, 0, 1)
-        local_rec_loss = double_recon_loss(x, local_x_, 0, 0, 1)
+        rec_loss = double_recon_loss(x, x_, x, x, 1)
+        local_rec_loss = double_recon_loss(x, local_x_, x, x, 1)
         constra_loss = torch.mean(logit_loss) + \
             inter_logit_loss + self.gama * torch.mean(local_rec_loss)
 
         final_loss = (1 - self.fp) * constra_loss + \
             self.fp * torch.mean(rec_loss)  # + 0.5 * kl
 
-        constra_score = ((logits[1, :] - logits[0, :]) +
-                         (diff_logits[1, :] - diff_logits[0, :])) / 2
+        constra_score = ((logits[batch_size:] - logits[:batch_size]) +
+                         (diff_logits[batch_size:] - diff_logits[:batch_size])) / 2
 
         score = (1 - self.fp) * (constra_score + self.gama *
                                  local_rec_loss) + self.fp * rec_loss
@@ -159,7 +159,7 @@ class CARDBase(nn.Module):
             i = 0
             while len(community_idx) < self.hid_dim:
                 community_idx.append(subgraph.n_id[i])
-                i = (i + 1) % len(community_idx)
+                i = (i + 1) % len(subgraph.n_id)
 
             community_adj = (
                 self.community_adj[subgraph.n_id][:, community_idx])

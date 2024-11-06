@@ -25,3 +25,6 @@ pred, score, conf = detector.predict(test_data,
                                      return_pred=True,
                                      return_score=True,
                                      return_conf=True)
+auc = eval_roc_auc(test_data.y, score)
+
+print(auc)
