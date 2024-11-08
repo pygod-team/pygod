@@ -271,4 +271,4 @@ Reference
 
 .. [#Roy2024Gadnr] Roy, A., Shu, J., Li, J., Yang, C., Elshocht, O., Smeets, J. and Li, P., 2024. GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (WSDM).
 
-.. [#Wang2024Card] Wang Y., Wang X., He C., Chen X., Luo Z., Duan L., Zuo J., 2024. Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for Anomaly Detection on Attributed Networks.  Database Systems for Advanced Applications, (DASFAA).
+.. [#Wang2024Card] Wang Y., Wang X., He C., Chen X., Luo Z., Duan L., Zuo J., 2024. Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for Anomaly Detection on Attributed Networks. Database Systems for Advanced Applications (DASFAA).
