@@ -198,8 +198,8 @@ OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
 CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
-CARD                2024   GNN+SSL+AE   Yes          [#Wang2024Card]_
 GADNR               2024   GNN+AE       Yes          [#Roy2024Gadnr]_
+CARD                2024   GNN+SSL+AE   Yes          [#Wang2024Card]_
 ==================  =====  ===========  ===========  ========================================
 
 
@@ -263,8 +263,6 @@ Reference
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
 
-.. [#Wang2024Card] Wang Y., Wang X., He C., Chen X., Luo Z., Duan L., Zuo J., 2024. Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for Anomaly Detection on Attributed Networks.  Database Systems for Advanced Applications, (DASFAA).
-
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
 
 .. [#Yuan2021Higher] Yuan, X., Zhou, N., Yu, S., Huang, H., Chen, Z. and Xia, F., 2021, December. Higher-order Structure Based Anomaly Detection on Attributed Networks. In 2021 IEEE International Conference on Big Data (Big Data).
@@ -272,3 +270,5 @@ Reference
 .. [#Xu2022Contrastive] Xu, Z., Huang, X., Zhao, Y., Dong, Y., and Li, J., 2022. Contrastive Attributed Network Anomaly Detection with Data Augmentation. In Proceedings of the 26th Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD).
 
 .. [#Roy2024Gadnr] Roy, A., Shu, J., Li, J., Yang, C., Elshocht, O., Smeets, J. and Li, P., 2024. GAD-NR: Graph Anomaly Detection via Neighborhood Reconstruction. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (WSDM).
+
+.. [#Wang2024Card] Wang Y., Wang X., He C., Chen X., Luo Z., Duan L., Zuo J., 2024. Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for Anomaly Detection on Attributed Networks.  Database Systems for Advanced Applications, (DASFAA).
