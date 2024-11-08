@@ -198,6 +198,7 @@ OCGNN               2021   GNN          Yes          [#Wang2021One]_
 CoLA                2021   GNN+AE+SSL   Yes          [#Liu2021Anomaly]_
 GUIDE               2021   GNN+AE       Yes          [#Yuan2021Higher]_
 CONAD               2022   GNN+AE+SSL   Yes          [#Xu2022Contrastive]_
+CARD                2024   GNN+SSL+AE   Yes          [#Wang2024Card]_
 GADNR               2024   GNN+AE       Yes          [#Roy2024Gadnr]_
 ==================  =====  ===========  ===========  ========================================
 
@@ -261,6 +262,8 @@ Reference
 .. [#Bandyopadhyay2020Integrating] Bandyopadhyay, S., Vishal Vivek, S. and Murty, M.N., 2020. Integrating network embedding and community outlier detection via multiclass graph description. Frontiers in Artificial Intelligence and Applications, (FAIA).
 
 .. [#Wang2021One] Wang, X., Jin, B., Du, Y., Cui, P., Tan, Y. and Yang, Y., 2021. One-class graph neural networks for anomaly detection in attributed networks. Neural computing and applications.
+
+.. [#Wang2024Card] Wang Y., Wang X., He C., Chen X., Luo Z., Duan L., Zuo J., 2024. Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for Anomaly Detection on Attributed Networks.  Database Systems for Advanced Applications, (DASFAA).
 
 .. [#Liu2021Anomaly] Liu, Y., Li, Z., Pan, S., Gong, C., Zhou, C. and Karypis, G., 2021. Anomaly detection on attributed networks via contrastive self-supervised learning. IEEE transactions on neural networks and learning systems (TNNLS).
 
