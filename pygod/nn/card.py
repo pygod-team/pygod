@@ -10,7 +10,7 @@ from .functional import double_recon_loss
 
 
 class CARDBase(nn.Module):
-    '''
+    """
     Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for 
     Anomaly Detection on Attributed Networks.
 
@@ -51,7 +51,6 @@ class CARDBase(nn.Module):
     **kwargs
         Other parameters for the backbone.
     """
-    '''
 
     def __init__(self,
                  in_dim,
@@ -155,7 +154,8 @@ class CARDBase(nn.Module):
 
         perm_idx = torch.randperm(
             self.disc_emb.shape[0]).to(self.disc_emb.device)
-        neg_logits = self.discriminator(self.disc_emb[perm_idx], self.emb)
+        neg_logits = self.discriminator(
+            self.disc_emb[perm_idx], self.emb)
 
         local_x_ = self.local_feat_decoder(self.emb)
 
@@ -192,7 +192,7 @@ class CARDBase(nn.Module):
         score: torch.Tensor
             The anomaly score for each node.
         """
-        
+
         ori_loss = self.disc_loss_func(logits, con_label)
         diff_loss = self.disc_loss_func(diff_logits, con_label)
         logit_loss = (ori_loss + diff_loss) / 2
@@ -234,7 +234,7 @@ class CARDBase(nn.Module):
         disc_emb: torch.Tensor
             Target node embedding.
         """
-        
+
         res_emb = []
         disc_emb = []
 

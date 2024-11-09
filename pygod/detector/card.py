@@ -12,19 +12,19 @@ from ..nn import CARDBase
 
 
 class CARD(DeepDetector):
-    '''
+    """
     Community-Guided Contrastive Learning with Anomaly-Aware Reconstruction for 
     Anomaly Detection on Attributed Networks.
-    
+
     CARD is a contrastive learning based method and utilizes mask reconstruction and community
     information to make anomalies more distinct. This model is train with contrastive loss and 
     local and global attribute reconstruction loss. Random neighbor sampling instead of random walk 
     sampling is used to sample the subgraph corresponding to each node. Since random neighbor sampling 
     cannot accurately control the number of neighbors for each sampling, it may run slower compared to 
     the method implementation in the original paper.
-    
+
     See:cite:`Wang2024Card` for details.
-    
+
     Parameters
     ----------
     hid_dim :  int, optional
@@ -75,7 +75,7 @@ class CARD(DeepDetector):
         Default: ``False``.
     **kwargs
         Other parameters for the backbone.
-        
+
     Attributes
     ----------
     decision_score_ : torch.Tensor
@@ -97,7 +97,8 @@ class CARD(DeepDetector):
         is ``True``. When the detector has not been fitted, ``emb`` is
         ``None``. When the detector has multiple embeddings,
         ``emb`` is a tuple of torch.Tensor.
-    '''
+    """
+
     def __init__(self,
                  hid_dim=64,
                  num_layers=2,
