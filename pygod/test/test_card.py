@@ -18,8 +18,8 @@ class TestCARD(unittest.TestCase):
     def setUp(self):
         self.roc_floor = 0.55
 
-        self.train_data = torch.load(os.path.join('pygod/test/train_graph.pt'))
-        self.test_data = torch.load(os.path.join('pygod/test/test_graph.pt'))
+        self.train_data = torch.load(os.path.join('./train_graph.pt'))
+        self.test_data = torch.load(os.path.join('./test_graph.pt'))
 
     def test_full(self):
         detector = CARD(epoch=10, num_layers=2, hid_dim=8)
@@ -62,7 +62,7 @@ class TestCARD(unittest.TestCase):
                              prob_method='something')
 
     def test_sample(self):
-        detector = CARD(hid_dim=32,
+        detector = CARD(hid_dim=8,
                         num_layers=2,
                         dropout=0.5,
                         weight_decay=0.001,
@@ -70,7 +70,7 @@ class TestCARD(unittest.TestCase):
                         backbone=GCN,
                         contamination=0.2,
                         lr=0.001,
-                        epoch=3,
+                        epoch=10,
                         batch_size=16,
                         num_neigh=1,
                         verbose=3,
