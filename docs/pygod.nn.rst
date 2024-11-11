@@ -8,6 +8,7 @@ pygod.nn
 
     ~pygod.nn.AdONEBase
     ~pygod.nn.AnomalyDAEBase
+    ~pygod.nn.CARDBase
     ~pygod.nn.CoLABase
     ~pygod.nn.DMGDBase
     ~pygod.nn.DOMINANTBase

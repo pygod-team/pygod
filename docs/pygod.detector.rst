@@ -9,6 +9,7 @@ pygod.detector
     ~pygod.detector.AdONE
     ~pygod.detector.ANOMALOUS
     ~pygod.detector.AnomalyDAE
+    ~pygod.detector.CARD
     ~pygod.detector.CoLA
     ~pygod.detector.CONAD
     ~pygod.detector.DMGD
