@@ -107,6 +107,7 @@ CoLA                2021   GNN+AE+SSL   Yes          :class:`pygod.detector.CoLA
 GUIDE               2021   GNN+AE       Yes          :class:`pygod.detector.GUIDE`
 CONAD               2022   GNN+AE+SSL   Yes          :class:`pygod.detector.CONAD`
 GADNR               2024   GNN+AE       Yes          :class:`pygod.detector.GADNR`
+CARD                2024   GNN+SSL+AE   Yes          :class:`pygod.detector.CARD`
 ==================  =====  ===========  ===========  ==============================================
 
 
