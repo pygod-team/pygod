@@ -36,6 +36,9 @@ class CARDBase(nn.Module):
     gama: float, optional
         The proportion of the local reconstruction in contrastive learning module.
         Default: ``0.5``
+    alpha: float, optional
+        The proprotion of the community embedding in the conbine_encoder.
+        Default: ``0.1``
     hid_dim :  int, optional
         Hidden dimension of model. Default: ``64``.
     num_layers : int, optional
@@ -54,9 +57,9 @@ class CARDBase(nn.Module):
 
     def __init__(self,
                  in_dim,
+                 subgraph_num_neigh=4,
                  fp=0.6,
                  gama=0.4,
-                 subgraph_num_neigh=4,
                  alpha=0.1,
                  hid_dim=64,
                  num_layers=4,
@@ -171,18 +174,18 @@ class CARDBase(nn.Module):
 
         Parameters
         ----------
-        logits : _type_
-            _description_
-        diff_logits : _type_
-            _description_
-        x_ : _type_
-            _description_
-        local_x_ : _type_
-            _description_
-        x : _type_
-            _description_
-        con_label : _type_
-            _description_
+        logits : torch.Tensor
+            Discriminator logits of positive subgraphs batch.
+        diff_logits : torch.Tensor
+            Discriminator logits of negative subgraphs batch.
+        x_ : torch.Tensor
+            Global reconstructed attribute embeddings.
+        local_x_ : torch.Tensor
+            Local reconstructed attribute embeddings.
+        x : torch.Tensor
+            Input attribute embeddings.
+        con_label : torch.Tensor
+            Contrastive learning pseudo label
 
         Returns
         -------
@@ -253,13 +256,6 @@ class CARDBase(nn.Module):
             subgraph.x[0, :] = 0
             x = subgraph.x
             edge_index = subgraph.edge_index
-
-            # diff_subgraphs = NeighborLoader(
-            #      self.diff, num_neighbors=[-1] * self.num_layers)
-            # diff_subgraph = diff_subgraphs([index])
-            # diff_subgraph.x[0, :] = 0
-            # diff_x = diff_subgraph.x.to(self.device)
-            # diff_edge_index = diff_subgraph.edge_index.to(self.device)
 
             ori_emb = self.encoder(x, edge_index)
             community_emb = self.community_encoder(community_adj)

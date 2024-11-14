@@ -65,6 +65,9 @@ class CARD(DeepDetector):
     gama: float, optional
         The proportion of the local reconstruction in contrastive learning module.
         Default: ``0.5``
+    alpha: float, optional
+        The proprotion of the community embedding in the conbine_encoder.
+        Default: ``0.1``
     verbose : int, optional
         Verbosity mode. Range in [0, 3]. Larger value for printing out
         more log information. Default: ``0``.
@@ -115,6 +118,7 @@ class CARD(DeepDetector):
                  subgraph_num_neigh=4,
                  fp=0.6,
                  gama=0.5,
+                 alpha=0.1,
                  verbose=0,
                  save_emb=False,
                  compile_model=False,
@@ -138,6 +142,7 @@ class CARD(DeepDetector):
         self.subgraph_num_neigh = subgraph_num_neigh
         self.fp = fp
         self.gama = gama
+        self.alpha = alpha
 
     def process_graph(self, data):
         community_adj, self.diff_data = CARDBase.process_graph(data)
@@ -151,14 +156,15 @@ class CARD(DeepDetector):
                                    self.hid_dim)
 
         return CARDBase(in_dim=self.in_dim,
+                        subgraph_num_neigh=self.subgraph_num_neigh,
                         fp=self.fp,
                         gama=self.gama,
+                        alpha=self.alpha,
                         hid_dim=self.hid_dim,
                         num_layers=self.num_layers,
                         dropout=self.dropout,
                         act=self.act,
                         backbone=self.backbone,
-                        subgraph_num_neigh=self.subgraph_num_neigh,
                         **kwargs).to(self.device)
 
     def forward_model(self, data):
